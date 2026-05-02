@@ -1,60 +1,128 @@
-import React from "react";
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetPortfolio,
+  getGetPortfolioQueryKey,
+  useUpdateAssetStatus,
+} from "@workspace/api-client-react";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Activity, Bell, FileText, Settings, ShieldAlert, Zap } from "lucide-react";
+import { AlertTriangle, Zap, Activity, ShieldCheck } from "lucide-react";
 
-// Mock Data
+// ── Static sparkline data ─────────────────────────────────────────────────────
 const techSectorData = [
-  { name: 'Jan', value: 4000 },
-  { name: 'Feb', value: 3000 },
-  { name: 'Mar', value: 2000 },
-  { name: 'Apr', value: 2780 },
-  { name: 'May', value: 1890 },
-  { name: 'Jun', value: 2390 },
-  { name: 'Jul', value: 3490 },
-  { name: 'Aug', value: 4100 },
-  { name: 'Sep', value: 4800 },
-  { name: 'Oct', value: 5100 },
-  { name: 'Nov', value: 5900 },
-  { name: 'Dec', value: 6200 },
+  { v: 4000 }, { v: 3000 }, { v: 2000 }, { v: 2780 }, { v: 1890 },
+  { v: 2390 }, { v: 3490 }, { v: 4100 }, { v: 4800 }, { v: 5100 },
+  { v: 5900 }, { v: 6200 },
 ];
-
 const volatilityData = [
-  { name: '1', value: 15 },
-  { name: '2', value: 18 },
-  { name: '3', value: 12 },
-  { name: '4', value: 22 },
-  { name: '5', value: 28 },
-  { name: '6', value: 25 },
-  { name: '7', value: 19 },
-  { name: '8', value: 14 },
-  { name: '9', value: 12 },
-  { name: '10', value: 16 },
-  { name: '11', value: 24 },
-  { name: '12', value: 20 },
+  { v: 15 }, { v: 18 }, { v: 12 }, { v: 22 }, { v: 28 },
+  { v: 25 }, { v: 19 }, { v: 14 }, { v: 12 }, { v: 16 },
+  { v: 24 }, { v: 20 },
 ];
 
+// ── Static transactions ───────────────────────────────────────────────────────
 const transactions = [
-  { asset: 'SpaceX PE', type: 'BUY', amount: '$420,000', date: '2026-03-12', status: 'SETTLED' },
-  { asset: 'NVIDIA Opt', type: 'SELL', amount: '$150,000', date: '2026-03-14', status: 'PROCESSING' },
-  { asset: 'Palantir War', type: 'BUY', amount: '$85,000', date: '2026-03-15', status: 'PENDING' },
-  { asset: 'OpenAI Note', type: 'CONVERT', amount: '$500,000', date: '2026-03-16', status: 'SETTLED' },
+  { asset: "SpaceX PE",     type: "BUY",     amount: "$420,000", date: "2026-03-12", status: "SETTLED" },
+  { asset: "NVIDIA Opt",    type: "SELL",    amount: "$150,000", date: "2026-03-14", status: "PROCESSING" },
+  { asset: "Palantir War",  type: "BUY",     amount: "$85,000",  date: "2026-03-15", status: "PENDING" },
+  { asset: "OpenAI Note",   type: "CONVERT", amount: "$500,000", date: "2026-03-16", status: "SETTLED" },
 ];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function formatDollars(n: number): string {
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+}
+
+type StatusType = "HOLD" | "LIQUIDATE" | "IN_TRANSIT" | "ACTION_REQUIRED";
+
+const STATUS_LABELS: Record<StatusType, string> = {
+  HOLD: "HOLD",
+  LIQUIDATE: "LIQUIDATE",
+  IN_TRANSIT: "IN TRANSIT",
+  ACTION_REQUIRED: "ACTION REQUIRED",
+};
+
+const STATUS_COLORS: Record<StatusType, string> = {
+  HOLD: "rgba(145,38,239,0.8)",
+  LIQUIDATE: "#ef4444",
+  IN_TRANSIT: "#f59e0b",
+  ACTION_REQUIRED: "#32CD32",
+};
 
 export default function Home() {
+  const queryClient = useQueryClient();
+  const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
+  const [liquidatingIds, setLiquidatingIds] = useState<Set<string>>(new Set());
+
+  const { data, isLoading } = useGetPortfolio({
+    query: { queryKey: getGetPortfolioQueryKey() },
+  });
+
+  const updateStatus = useUpdateAssetStatus({
+    mutation: {
+      onMutate: async ({ id, data: body }) => {
+        // ── OPTIMISTIC UPDATE ──────────────────────────────────────────────
+        if (body.status === "LIQUIDATE") {
+          setLiquidatingIds((prev) => new Set(prev).add(id));
+
+          // Snapshot current net worth for rollback
+          const prev = data?.metrics.totalNetWorth ?? null;
+
+          // Subtract this asset's value from the displayed total instantly
+          const asset = data?.portfolio.find((a) => a.id === id);
+          if (asset && data) {
+            const newNetWorth = data.metrics.totalNetWorth - asset.currentValue / 100;
+            setOptimisticNetWorth(newNetWorth);
+          }
+          return { previousNetWorth: prev };
+        }
+      },
+      onError: (_err, _vars, context: { previousNetWorth?: number | null } | undefined) => {
+        // Rollback on error
+        setOptimisticNetWorth(context?.previousNetWorth ?? null);
+        setLiquidatingIds(new Set());
+      },
+      onSettled: () => {
+        // Re-sync with server
+        setLiquidatingIds(new Set());
+        setOptimisticNetWorth(null);
+        queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
+      },
+    },
+  });
+
+  const handleStatusChange = (id: string, status: StatusType) => {
+    updateStatus.mutate({ id, data: { status } });
+  };
+
+  const portfolio = data?.portfolio ?? [];
+  const metrics = data?.metrics;
+  const displayedNetWorth = optimisticNetWorth !== null
+    ? optimisticNetWorth
+    : metrics?.totalNetWorth ?? 0;
+
+  const actionRequiredAssets = portfolio.filter((a) => a.status === "ACTION_REQUIRED");
+  const urgentCliffs = portfolio.filter((a) => a.depreciationCliff.daysAway < 15);
+
   return (
     <div className="min-h-[100dvh] w-full text-foreground flex flex-col" style={{ backgroundColor: "#0B0B0B" }}>
-      
-      {/* Top Navigation */}
+
+      {/* ── Top Navigation ─────────────────────────────────────────────────── */}
       <nav className="w-full flex flex-col border-b border-purple-glow">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-8">
-            <span className="font-poppins font-light text-2xl tracking-wider" style={{ color: "#9126EF" }}>LIQUID</span>
+            <span className="font-poppins font-light text-2xl tracking-wider" style={{ color: "#9126EF" }}>
+              LIQUID
+            </span>
             <div className="hidden md:flex items-center gap-6">
-              {['Portfolio', 'Markets', 'Assets', 'Alerts'].map(link => (
-                <button key={link} className="font-montserrat text-sm text-[#9126EF]/70 hover:text-[#9126EF] transition-colors" data-testid={`nav-link-${link.toLowerCase()}`}>
+              {["Portfolio", "Markets", "Assets", "Alerts"].map((link) => (
+                <button
+                  key={link}
+                  className="font-montserrat text-sm text-[#9126EF]/70 hover:text-[#9126EF] transition-colors"
+                  data-testid={`nav-link-${link.toLowerCase()}`}
+                >
                   {link}
                 </button>
               ))}
@@ -62,194 +130,280 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full border border-purple-glow" style={{ backgroundColor: "#0D0D0F" }}>
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#32CD32", boxShadow: "0 0 8px #32CD32" }}></div>
-              <span className="font-montserrat text-xs uppercase font-semibold" style={{ color: "#32CD32" }}>Pro Terminal</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#32CD32", boxShadow: "0 0 8px #32CD32" }} />
+              <span className="font-montserrat text-xs uppercase font-semibold" style={{ color: "#32CD32" }}>
+                Pro Terminal
+              </span>
             </div>
             <Avatar className="h-8 w-8 border border-purple-glow cursor-pointer">
               <AvatarFallback className="bg-[#0D0D0F] text-[#9126EF] font-montserrat text-xs">UHN</AvatarFallback>
             </Avatar>
           </div>
         </div>
-        
-        {/* Ticker Tape */}
+
+        {/* Ticker tape */}
         <div className="w-full overflow-hidden flex items-center h-8 border-t border-purple-glow bg-[#0B0B0B] whitespace-nowrap">
           <div className="inline-block ticker-tape font-inter text-xs text-[#9126EF]/80 font-medium space-x-8">
-            <span>GOLD $3,247.80 <span className="text-[#32CD32]">+1.2% ▲</span></span>
-            <span>|</span>
-            <span>SILVER $32.41 <span className="text-[#ef2626]">-0.4% ▼</span></span>
-            <span>|</span>
-            <span>PLATINUM $1,018.00 <span className="text-[#32CD32]">+0.8% ▲</span></span>
-            <span>|</span>
-            <span>REAL ESTATE IDX $842.50 <span className="text-[#32CD32]">+2.1% ▲</span></span>
-            <span>|</span>
-            <span>RARE WHISKY IDX $2,104.00 <span className="text-[#32CD32]">+0.3% ▲</span></span>
-            <span>|</span>
-            <span>FINE ART IDX $5,880.00 <span className="text-[#ef2626]">-1.1% ▼</span></span>
-            <span>|</span>
-            <span>DIAMONDS $8,240.00 <span className="text-[#32CD32]">+0.6% ▲</span></span>
-            <span>|</span>
-            {/* Duplicate for infinite effect */}
-            <span>GOLD $3,247.80 <span className="text-[#32CD32]">+1.2% ▲</span></span>
-            <span>|</span>
-            <span>SILVER $32.41 <span className="text-[#ef2626]">-0.4% ▼</span></span>
-            <span>|</span>
-            <span>PLATINUM $1,018.00 <span className="text-[#32CD32]">+0.8% ▲</span></span>
-            <span>|</span>
-            <span>REAL ESTATE IDX $842.50 <span className="text-[#32CD32]">+2.1% ▲</span></span>
-            <span>|</span>
-            <span>RARE WHISKY IDX $2,104.00 <span className="text-[#32CD32]">+0.3% ▲</span></span>
-            <span>|</span>
-            <span>FINE ART IDX $5,880.00 <span className="text-[#ef2626]">-1.1% ▼</span></span>
-            <span>|</span>
-            <span>DIAMONDS $8,240.00 <span className="text-[#32CD32]">+0.6% ▲</span></span>
+            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲", "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲", "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
+              <span key={i}>
+                {t.split(" ").map((word, wi) => {
+                  const isChange = word.includes("%");
+                  const isUp = word.includes("▲");
+                  return (
+                    <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>
+                  );
+                })}
+                <span className="mx-4 opacity-30">|</span>
+              </span>
+            ))}
+            {/* Duplicate for seamless loop */}
+            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲", "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲", "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
+              <span key={`dup-${i}`}>
+                {t.split(" ").map((word, wi) => {
+                  const isChange = word.includes("%");
+                  const isUp = word.includes("▲");
+                  return (
+                    <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>
+                  );
+                })}
+                <span className="mx-4 opacity-30">|</span>
+              </span>
+            ))}
           </div>
         </div>
       </nav>
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto p-6 md:p-8 lg:p-12 flex flex-col gap-16">
-        
-        {/* Hero Metric */}
+
+        {/* ── Hero Metric ──────────────────────────────────────────────────── */}
         <section className="flex flex-col items-center text-center gap-4 py-8">
-          <h2 className="font-montserrat text-sm uppercase tracking-[0.2em] text-[#9126EF]/70">Total Liquid Net Worth</h2>
-          <h1 className="font-poppins font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight leading-none">
-            $24,847,320.00
-          </h1>
-          <div className="font-montserrat text-sm md:text-base font-semibold" style={{ color: "#32CD32" }}>
-            +$312,440 today (+1.27%)
-          </div>
-          
-          <div className="w-24 h-px mt-4" style={{ backgroundColor: "rgba(145, 38, 239, 0.5)" }}></div>
-          
+          <h2 className="font-montserrat text-sm uppercase tracking-[0.2em] text-[#9126EF]/70">
+            Total Liquid Net Worth
+          </h2>
+
+          {isLoading ? (
+            <div className="font-poppins font-bold text-5xl sm:text-6xl md:text-7xl text-white tracking-tight leading-none opacity-30 animate-pulse">
+              $—,———,———.——
+            </div>
+          ) : (
+            <h1
+              className="font-poppins font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight leading-none transition-all duration-500"
+              data-testid="metric-total-net-worth"
+              style={optimisticNetWorth !== null ? { color: "#32CD32" } : {}}
+            >
+              {formatDollars(displayedNetWorth)}
+            </h1>
+          )}
+
+          {metrics && (
+            <div className="flex flex-col items-center gap-1">
+              <div className="font-montserrat text-sm font-semibold" style={{ color: "#32CD32" }}>
+                +$312,440 today (+1.27%)
+              </div>
+              {metrics.capitalAtRisk > 0 && (
+                <div className="flex items-center gap-2 font-montserrat text-xs text-red-400 mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>{formatDollars(metrics.capitalAtRisk)} at risk — {urgentCliffs.length} cliff{urgentCliffs.length !== 1 ? "s" : ""} within 15 days</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="w-24 h-px mt-4" style={{ backgroundColor: "rgba(145,38,239,0.5)" }} />
+
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-            <Button variant="outline" className="font-montserrat uppercase tracking-wider text-xs border-purple-glow hover:bg-[#9126EF]/10 text-[#9126EF] h-10 px-6 rounded-none bg-transparent" data-testid="btn-view-report">
+            <Button
+              variant="outline"
+              className="font-montserrat uppercase tracking-wider text-xs border-purple-glow hover:bg-[#9126EF]/10 text-[#9126EF] h-10 px-6 rounded-none bg-transparent"
+              data-testid="btn-view-report"
+            >
               View Report
             </Button>
-            <Button className="btn-lime-pulse font-montserrat uppercase tracking-wider text-sm h-12 px-8 rounded-none border-0" data-testid="btn-rebalance">
+            <Button
+              className="btn-lime-pulse font-montserrat uppercase tracking-wider text-sm h-12 px-8 rounded-none border-0"
+              data-testid="btn-rebalance"
+            >
               Rebalance Portfolio
             </Button>
-            <Button variant="outline" className="font-montserrat uppercase tracking-wider text-xs border-purple-glow hover:bg-[#9126EF]/10 text-[#9126EF] h-10 px-6 rounded-none bg-transparent" data-testid="btn-set-alert">
+            <Button
+              variant="outline"
+              className="font-montserrat uppercase tracking-wider text-xs border-purple-glow hover:bg-[#9126EF]/10 text-[#9126EF] h-10 px-6 rounded-none bg-transparent"
+              data-testid="btn-set-alert"
+            >
               Set Alert
             </Button>
           </div>
         </section>
 
-        {/* Tech Portfolio Grid */}
+        {/* ── Digital Twin Tech Portfolio ──────────────────────────────────── */}
         <section className="flex flex-col gap-6">
-          <div className="flex items-center gap-3 border-l-2 pl-3" style={{ borderColor: "#9126EF" }}>
-            <h3 className="font-montserrat text-sm uppercase tracking-widest text-[#9126EF]/80 font-medium">Tech Portfolio</h3>
+          <div className="flex items-center justify-between border-l-2 pl-3" style={{ borderColor: "#9126EF" }}>
+            <h3 className="font-montserrat text-sm uppercase tracking-widest text-[#9126EF]/80 font-medium">
+              Tech Portfolio — Digital Twin
+            </h3>
+            {isLoading && (
+              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider animate-pulse">
+                Syncing…
+              </span>
+            )}
+            {!isLoading && (
+              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider">
+                {portfolio.length} assets
+              </span>
+            )}
           </div>
-          
+
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            
-            {/* Alert Card */}
+
+            {/* AI Signal card — only if ACTION_REQUIRED assets exist */}
+            {(actionRequiredAssets.length > 0 || isLoading) && (
+              <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" style={{ color: "#9126EF" }} />
+                  <h4 className="font-montserrat font-bold text-sm tracking-wider" style={{ color: "#9126EF" }}>
+                    AI SIGNAL DETECTED
+                  </h4>
+                </div>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-3 rounded bg-[#9126EF]/10 animate-pulse w-full" />
+                    <div className="h-3 rounded bg-[#9126EF]/10 animate-pulse w-3/4" />
+                  </div>
+                ) : (
+                  <>
+                    {actionRequiredAssets.map((a) => (
+                      <div key={a.id} className="border-t border-purple-glow pt-3 first:border-t-0 first:pt-0">
+                        <p className="font-inter text-xs text-gray-300 leading-relaxed mb-3">
+                          <span className="text-white font-medium">{a.model}</span>
+                          {" "}— cliff in{" "}
+                          <span style={{ color: "#32CD32" }} className="font-bold">{a.depreciationCliff.daysAway}d</span>
+                          {" "}({a.depreciationCliff.reason}).{" "}
+                          Projected drop:{" "}
+                          <span className="text-red-400 font-bold">
+                            −{formatDollars(a.depreciationCliff.projectedDrop / 100)}
+                          </span>
+                        </p>
+                        <Button
+                          className="btn-lime-pulse font-montserrat uppercase text-xs h-9 rounded-none w-full"
+                          data-testid={`btn-liquidate-${a.id}`}
+                          disabled={liquidatingIds.has(a.id) || updateStatus.isPending}
+                          onClick={() => handleStatusChange(a.id, "LIQUIDATE")}
+                        >
+                          {liquidatingIds.has(a.id) ? "Liquidating…" : "Liquidate Now"}
+                        </Button>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Dynamic asset cards from API */}
+            {isLoading
+              ? [1, 2, 3].map((i) => (
+                  <div key={i} className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid animate-pulse">
+                    <div className="h-3 bg-[#9126EF]/10 rounded w-2/3" />
+                    <div className="h-7 bg-[#9126EF]/10 rounded w-1/2 mt-1" />
+                    <div className="h-1 bg-[#9126EF]/10 rounded w-full mt-3" />
+                  </div>
+                ))
+              : portfolio.map((asset) => (
+                  <AssetCard
+                    key={asset.id}
+                    asset={asset}
+                    isUpdating={liquidatingIds.has(asset.id)}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
+
+            {/* Tech Sector Performance sparkline */}
             <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
               <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5" style={{ color: "#9126EF" }} />
-                <h4 className="font-montserrat font-bold text-sm tracking-wider" style={{ color: "#9126EF" }}>AI SIGNAL DETECTED</h4>
+                <Activity className="w-4 h-4 text-[#9126EF]/60" />
+                <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase">
+                  Tech Sector Performance
+                </h4>
               </div>
-              <p className="font-inter text-sm text-gray-300 leading-relaxed">
-                NVIDIA call options showing unusual volume. 94% confidence breakout within 72h.
-              </p>
-              <Button className="btn-lime-pulse font-montserrat uppercase text-xs h-10 mt-2 rounded-none w-full" data-testid="btn-act-now">
-                Act Now
-              </Button>
-            </div>
-
-            {/* Asset Card 1 */}
-            <AssetCard name="Apple Inc. Equity" value="$1,847,200" change="+8.4%" changeDir="up" allocation="7.4%" />
-
-            {/* Chart Card 1 */}
-            <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
-              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase">Tech Sector Performance</h4>
-              <div className="h-32 w-full mt-2">
+              <div className="h-32 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={techSectorData}>
                     <defs>
                       <linearGradient id="colorTech" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#9126EF" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#9126EF" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#9126EF" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#9126EF" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="value" stroke="#9126EF" strokeWidth={2} fillOpacity={1} fill="url(#colorTech)" />
+                    <Area type="monotone" dataKey="v" stroke="#9126EF" strokeWidth={2} fillOpacity={1} fill="url(#colorTech)" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Asset Card 2 */}
-            <AssetCard name="SpaceX Private Equity" value="$4,200,000" change="+18.7%" changeDir="up" allocation="16.9%" />
-
             {/* Portfolio Health */}
             <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
-              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase mb-2">Portfolio Health</h4>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#9126EF]/60" />
+                <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase mb-0">
+                  Portfolio Health
+                </h4>
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="font-montserrat text-[10px] text-[#9126EF]/80 uppercase">Diversification</span>
-                  <span className="font-poppins font-bold text-lg text-white">87<span className="text-xs text-gray-500 font-normal">/100</span></span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="font-montserrat text-[10px] text-[#9126EF]/80 uppercase">Liquidity Score</span>
-                  <span className="font-poppins font-bold text-lg text-white">72<span className="text-xs text-gray-500 font-normal">/100</span></span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="font-montserrat text-[10px] text-[#9126EF]/80 uppercase">Risk Rating</span>
-                  <span className="font-poppins font-bold text-sm text-yellow-500 uppercase mt-1">Moderate</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="font-montserrat text-[10px] text-[#9126EF]/80 uppercase">Yield</span>
-                  <span className="font-poppins font-bold text-lg" style={{ color: "#32CD32" }}>4.2% <span className="text-[10px] font-normal uppercase">APY</span></span>
-                </div>
+                <HealthMetric label="Diversification" value="87" suffix="/100" />
+                <HealthMetric label="Liquidity Score" value="72" suffix="/100" />
+                <HealthMetric label="Risk Rating" value="MODERATE" valueColor="#f59e0b" />
+                <HealthMetric label="Yield" value="4.2%" suffix=" APY" valueColor="#32CD32" />
               </div>
             </div>
 
-            {/* Asset Card 3 */}
-            <AssetCard name="Palantir Warrants" value="$228,000" change="-12.1%" changeDir="down" allocation="0.9%" />
-
-            {/* Asset Card 4 */}
-            <AssetCard name="NVIDIA Options" value="$842,000" change="+34.2%" changeDir="up" allocation="3.4%" />
-
-            {/* Chart Card 2 */}
+            {/* Volatility Index sparkline */}
             <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
-              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase">Volatility Index</h4>
-              <div className="h-32 w-full mt-2">
+              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase">
+                Volatility Index
+              </h4>
+              <div className="h-32 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={volatilityData}>
                     <defs>
                       <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#32CD32" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#32CD32" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#32CD32" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#32CD32" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="value" stroke="#32CD32" strokeWidth={2} fillOpacity={1} fill="url(#colorVol)" />
+                    <Area type="monotone" dataKey="v" stroke="#32CD32" strokeWidth={2} fillOpacity={1} fill="url(#colorVol)" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Table Card - Conceptually spans, but fits in masonry */}
+            {/* Recent Transactions */}
             <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
-              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase mb-2">Recent Transactions</h4>
+              <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase mb-1">
+                Recent Transactions
+              </h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-purple-glow">
-                      <th className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium">Asset</th>
-                      <th className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium">Type</th>
-                      <th className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium">Amount</th>
-                      <th className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium">Status</th>
+                      {["Asset", "Type", "Amount", "Status"].map((h) => (
+                        <th key={h} className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium pr-3">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="font-inter text-xs">
                     {transactions.map((tx, i) => (
-                      <tr key={i} className="border-b border-purple-glow/30 hover:bg-white/5 transition-colors">
-                        <td className="py-3 font-medium text-gray-200">{tx.asset}</td>
-                        <td className={`py-3 font-bold ${tx.type === 'BUY' ? 'text-[#32CD32]' : tx.type === 'SELL' ? 'text-red-500' : 'text-[#9126EF]'}`}>{tx.type}</td>
-                        <td className="py-3 font-mono text-gray-300">{tx.amount}</td>
+                      <tr key={i} className="border-b border-purple-glow/30 hover:bg-white/5 transition-colors" data-testid={`row-tx-${i}`}>
+                        <td className="py-3 font-medium text-gray-200 pr-3">{tx.asset}</td>
+                        <td className={`py-3 font-bold pr-3 ${tx.type === "BUY" ? "text-[#32CD32]" : tx.type === "SELL" ? "text-red-400" : "text-[#9126EF]"}`}>
+                          {tx.type}
+                        </td>
+                        <td className="py-3 font-mono text-gray-300 pr-3">{tx.amount}</td>
                         <td className="py-3">
                           <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider border rounded-sm ${
-                            tx.status === 'SETTLED' ? 'border-[#32CD32] text-[#32CD32] bg-[#32CD32]/10' :
-                            tx.status === 'PENDING' ? 'border-yellow-500 text-yellow-500 bg-yellow-500/10' :
-                            'border-[#9126EF] text-[#9126EF] bg-[#9126EF]/10'
+                            tx.status === "SETTLED"    ? "border-[#32CD32] text-[#32CD32] bg-[#32CD32]/10" :
+                            tx.status === "PENDING"    ? "border-yellow-500 text-yellow-500 bg-yellow-500/10" :
+                                                         "border-[#9126EF] text-[#9126EF] bg-[#9126EF]/10"
                           }`}>
                             {tx.status}
                           </span>
@@ -260,9 +414,6 @@ export default function Home() {
                 </table>
               </div>
             </div>
-
-            {/* Asset Card 5 */}
-            <AssetCard name="OpenAI Convertible Note" value="$500,000" change="+2.1%" changeDir="up" allocation="2.0%" />
 
           </div>
         </section>
@@ -279,28 +430,114 @@ export default function Home() {
   );
 }
 
-function AssetCard({ name, value, change, changeDir, allocation }: { name: string, value: string, change: string, changeDir: 'up'|'down', allocation: string }) {
-  const isUp = changeDir === 'up';
-  const color = isUp ? "#32CD32" : "#ef2626";
-  const arrow = isUp ? "▲" : "▼";
-  const allocNum = parseFloat(allocation);
-  
+// ── Asset Card ────────────────────────────────────────────────────────────────
+interface AssetCardProps {
+  asset: {
+    id: string;
+    model: string;
+    category: string;
+    currentValue: number;
+    purchasePrice: number;
+    depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
+    status: string;
+  };
+  isUpdating: boolean;
+  onStatusChange: (id: string, status: StatusType) => void;
+}
+
+function AssetCard({ asset, isUpdating, onStatusChange }: AssetCardProps) {
+  const currentDollars = asset.currentValue / 100;
+  const purchaseDollars = asset.purchasePrice / 100;
+  const pnl = ((currentDollars - purchaseDollars) / purchaseDollars) * 100;
+  const isUp = pnl >= 0;
+  const pnlColor = isUp ? "#32CD32" : "#ef4444";
+  const status = asset.status as StatusType;
+  const isUrgent = asset.depreciationCliff.daysAway < 15;
+  const isLiquidated = status === "LIQUIDATE" || status === "IN_TRANSIT";
+
   return (
-    <div className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid">
-      <h4 className="font-montserrat font-semibold text-sm text-gray-300">{name}</h4>
-      <div className="flex items-baseline justify-between">
-        <span className="font-poppins font-bold text-2xl text-white">{value}</span>
-        <span className="font-inter font-medium text-sm" style={{ color }}>{change} {arrow}</span>
-      </div>
-      <div className="flex flex-col gap-1.5 mt-2">
-        <div className="flex justify-between font-inter text-[10px] text-gray-500 uppercase tracking-wider">
-          <span>Allocation</span>
-          <span>{allocation}</span>
+    <div
+      className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid"
+      data-testid={`card-asset-${asset.id}`}
+      style={isUrgent && !isLiquidated ? { borderColor: "rgba(239,68,68,0.5)" } : {}}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h4 className="font-montserrat font-semibold text-sm text-gray-200 leading-tight">{asset.model}</h4>
+          <p className="font-inter text-[10px] text-[#9126EF]/60 uppercase tracking-wider mt-0.5">{asset.category}</p>
         </div>
-        <div className="w-full h-1 bg-[#0B0B0B] rounded-full overflow-hidden border border-purple-glow/30">
-          <div className="h-full rounded-full" style={{ width: `${Math.min(allocNum * 5, 100)}%`, backgroundColor: "#9126EF" }}></div>
-        </div>
+        <span
+          className="font-montserrat text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm border shrink-0"
+          style={{ color: STATUS_COLORS[status], borderColor: STATUS_COLORS[status] + "55", backgroundColor: STATUS_COLORS[status] + "15" }}
+        >
+          {STATUS_LABELS[status]}
+        </span>
       </div>
+
+      <div className="flex items-baseline justify-between mt-1">
+        <span className="font-poppins font-bold text-2xl text-white">{formatDollars(currentDollars)}</span>
+        <span className="font-inter font-medium text-sm" style={{ color: pnlColor }}>
+          {isUp ? "+" : ""}{pnl.toFixed(1)}% {isUp ? "▲" : "▼"}
+        </span>
+      </div>
+
+      {/* Depreciation Cliff Warning */}
+      {isUrgent && !isLiquidated && (
+        <div className="flex items-start gap-2 p-2.5 rounded-sm mt-1" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
+          <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-inter text-[10px] text-red-300 leading-tight">
+              Cliff in <span className="font-bold">{asset.depreciationCliff.daysAway}d</span> — {asset.depreciationCliff.reason}
+            </p>
+            <p className="font-inter text-[10px] text-red-400 font-bold mt-0.5">
+              −{formatDollars(asset.depreciationCliff.projectedDrop / 100)} projected
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 mt-auto pt-2">
+        {!isLiquidated ? (
+          <>
+            <Button
+              className="btn-lime-pulse font-montserrat uppercase text-[10px] h-8 flex-1 rounded-none"
+              data-testid={`btn-liquidate-${asset.id}`}
+              disabled={isUpdating || status === "ACTION_REQUIRED" && false}
+              onClick={() => onStatusChange(asset.id, "LIQUIDATE")}
+            >
+              {isUpdating ? "…" : "Liquidate"}
+            </Button>
+            <Button
+              variant="outline"
+              className="font-montserrat uppercase text-[10px] h-8 px-3 rounded-none border-purple-glow text-[#9126EF]/80 hover:bg-[#9126EF]/10 bg-transparent"
+              data-testid={`btn-hold-${asset.id}`}
+              onClick={() => onStatusChange(asset.id, "HOLD")}
+            >
+              Hold
+            </Button>
+          </>
+        ) : (
+          <div className="font-montserrat text-[10px] uppercase tracking-wider text-red-400 font-bold pt-1">
+            {status === "LIQUIDATE" ? "Pending liquidation…" : "In transit"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Health Metric ─────────────────────────────────────────────────────────────
+function HealthMetric({ label, value, suffix = "", valueColor = "#ffffff" }: {
+  label: string; value: string; suffix?: string; valueColor?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-montserrat text-[10px] text-[#9126EF]/80 uppercase tracking-wide">{label}</span>
+      <span className="font-poppins font-bold text-lg leading-none" style={{ color: valueColor }}>
+        {value}
+        {suffix && <span className="text-[10px] font-normal text-gray-500 ml-0.5">{suffix}</span>}
+      </span>
     </div>
   );
 }

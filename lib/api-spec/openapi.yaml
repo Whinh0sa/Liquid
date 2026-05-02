@@ -2,14 +2,16 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 0.2.0
+  description: Liquid Financial Terminal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: portfolio
+    description: Portfolio valuation engine
 paths:
   /healthz:
     get:
@@ -24,6 +26,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /portfolio:
+    get:
+      operationId: getPortfolio
+      tags: [portfolio]
+      summary: Get full portfolio with metrics
+      description: Returns the Digital Twin asset database and computed financial metrics
+      responses:
+        "200":
+          description: Portfolio data with metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioResponse"
+
+  /portfolio/{id}:
+    patch:
+      operationId: updateAssetStatus
+      tags: [portfolio]
+      summary: Update asset status
+      description: Update the status of a specific asset (HOLD, LIQUIDATE, IN_TRANSIT, ACTION_REQUIRED)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAssetStatusBody"
+      responses:
+        "200":
+          description: Updated asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "404":
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +83,95 @@ components:
       required:
         - status
 
+    DepreciationCliff:
+      type: object
+      description: Upcoming event that will cause value depreciation
+      properties:
+        daysAway:
+          type: integer
+          description: Days until the depreciation event
+        projectedDrop:
+          type: integer
+          description: Projected value drop in cents
+        reason:
+          type: string
+          description: Human-readable reason for the depreciation
+      required:
+        - daysAway
+        - projectedDrop
+        - reason
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "AST-001"
+        category:
+          type: string
+          example: "Hardware"
+        model:
+          type: string
+          example: "iPhone 14 Pro - 256GB"
+        purchasePrice:
+          type: integer
+          description: Purchase price in cents
+        currentValue:
+          type: integer
+          description: Current market value in cents
+        depreciationCliff:
+          $ref: "#/components/schemas/DepreciationCliff"
+        status:
+          type: string
+          enum: [HOLD, LIQUIDATE, IN_TRANSIT, ACTION_REQUIRED]
+      required:
+        - id
+        - category
+        - model
+        - purchasePrice
+        - currentValue
+        - depreciationCliff
+        - status
+
+    PortfolioMetrics:
+      type: object
+      properties:
+        totalNetWorth:
+          type: number
+          description: Total net worth in dollars
+        capitalAtRisk:
+          type: number
+          description: Capital at risk (cliffs within 15 days) in dollars
+      required:
+        - totalNetWorth
+        - capitalAtRisk
+
+    PortfolioResponse:
+      type: object
+      properties:
+        portfolio:
+          type: array
+          items:
+            $ref: "#/components/schemas/Asset"
+        metrics:
+          $ref: "#/components/schemas/PortfolioMetrics"
+      required:
+        - portfolio
+        - metrics
+
+    UpdateAssetStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [HOLD, LIQUIDATE, IN_TRANSIT, ACTION_REQUIRED]
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
