@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetPortfolio,
@@ -104,6 +105,13 @@ export default function Home() {
   const urgentAssets = portfolio.filter(
     (a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT",
   );
+
+  // Total depreciation avoided across all sold assets this session
+  const totalSaved = useMemo(() => {
+    let sum = 0;
+    soldRecords.forEach((r) => { sum += r.dropAvoided; });
+    return sum;
+  }, [soldRecords]);
 
   // Count assets currently in their sell window
   const windowOpenCount = portfolio.filter((a) => {
@@ -213,6 +221,43 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Total Saved counter — appears after first sale */}
+          <AnimatePresence>
+            {totalSaved > 0 && (
+              <motion.div
+                key="total-saved"
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ type: "spring", stiffness: 280, damping: 28 }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Depreciation avoided this session</p>
+                      <p className="text-xs text-emerald-700 font-medium">
+                        {soldRecords.size} asset{soldRecords.size > 1 ? "s" : ""} sold at optimal price
+                      </p>
+                    </div>
+                  </div>
+                  <motion.span
+                    key={totalSaved}
+                    initial={{ scale: 1.15, color: "#059669" }}
+                    animate={{ scale: 1, color: "#059669" }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="font-poppins font-bold text-xl text-emerald-600"
+                  >
+                    +{fmt(totalSaved)}
+                  </motion.span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
