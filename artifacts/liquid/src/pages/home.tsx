@@ -5,7 +5,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, Clock } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, Clock, CheckCircle, ShieldCheck } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
@@ -47,6 +47,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
   const [sellingIds, setSellingIds] = useState<Set<string>>(new Set());
+  const [soldRecords, setSoldRecords] = useState<Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>>(new Map());
   const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
 
   const { data, isLoading } = useGetPortfolio({
@@ -79,6 +80,18 @@ export default function Home() {
   });
 
   const handleSell = (id: string) => {
+    const asset = portfolio.find((a) => a.id === id);
+    if (asset) {
+      setSoldRecords((prev) => {
+        const next = new Map(prev);
+        next.set(id, {
+          saleValue:   asset.currentValue / 100,
+          dropAvoided: asset.depreciationCliff.projectedDrop / 100,
+          soldAt:      Date.now(),
+        });
+        return next;
+      });
+    }
     updateStatus.mutate({ id, data: { status: "LIQUIDATE" } });
   };
 
@@ -288,6 +301,7 @@ export default function Home() {
                     key={asset.id}
                     asset={asset as PortfolioAsset}
                     isSelling={sellingIds.has(asset.id)}
+                    soldRecord={soldRecords.get(asset.id)}
                     onSell={handleSell}
                     onOpen={setDrawerAsset}
                   />
@@ -320,20 +334,28 @@ export default function Home() {
 }
 
 // ── Asset Card ────────────────────────────────────────────────────────────────
+interface SoldRecord { saleValue: number; dropAvoided: number; soldAt: number }
+
 interface AssetCardProps {
   asset: PortfolioAsset;
   isSelling: boolean;
+  soldRecord?: SoldRecord;
   onSell: (id: string) => void;
   onOpen: (asset: PortfolioAsset) => void;
 }
 
-function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
+function AssetCard({ asset, isSelling, soldRecord, onSell, onOpen }: AssetCardProps) {
   const current  = asset.currentValue / 100;
   const purchase = asset.purchasePrice / 100;
   const pnl      = ((current - purchase) / purchase) * 100;
   const isDown   = pnl < 0;
   const cliff    = asset.depreciationCliff;
   const isSold   = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
+
+  // Swap to the Recovery Card as soon as selling begins or API confirms sale
+  if (isSelling || isSold) {
+    return <RecoveryCard asset={asset} soldRecord={soldRecord} />;
+  }
 
   const sellWindow = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
   const urgencyPill = URGENCY_PILL[sellWindow.urgency];
@@ -422,6 +444,78 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
               Analyse
             </button>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Recovery Card ─────────────────────────────────────────────────────────────
+function formatTimeAgo(ts: number): string {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  return `${Math.floor(m / 60)}h ago`;
+}
+
+function RecoveryCard({ asset, soldRecord }: { asset: PortfolioAsset; soldRecord?: SoldRecord }) {
+  const saleValue   = soldRecord?.saleValue   ?? asset.currentValue / 100;
+  const dropAvoided = soldRecord?.dropAvoided ?? asset.depreciationCliff.projectedDrop / 100;
+  const wouldBeWorth = Math.max(saleValue - dropAvoided, 0);
+  const barPct = saleValue > 0 ? Math.round((wouldBeWorth / saleValue) * 100) : 0;
+
+  return (
+    <div
+      className="rounded-2xl border border-emerald-200 p-5 flex flex-col gap-4"
+      style={{ background: "linear-gradient(145deg, #f0fdf4 0%, #ffffff 55%)" }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p>
+          <h3 className="font-semibold text-gray-900 text-sm leading-tight">{asset.model}</h3>
+        </div>
+        <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0">
+          <CheckCircle className="w-3 h-3" />
+          PROTECTED
+        </span>
+      </div>
+
+      {/* Values: locked-in vs would-be */}
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Locked in</p>
+          <span className="font-poppins font-bold text-2xl text-emerald-600">{fmt(saleValue)}</span>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Market now</p>
+          <span className="font-poppins font-bold text-lg text-red-400 line-through decoration-red-300">{fmt(wouldBeWorth)}</span>
+        </div>
+      </div>
+
+      {/* Comparison bar */}
+      <div>
+        <div className="relative h-2.5 bg-red-100 rounded-full overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full bg-emerald-400"
+            style={{ width: `${Math.max(barPct, 4)}%`, transition: "width 0.8s ease" }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] mt-1 font-medium">
+          <span className="text-emerald-600">You: {fmt(saleValue)}</span>
+          <span className="text-red-400">Market: {fmt(wouldBeWorth)}</span>
+        </div>
+      </div>
+
+      {/* Saved pill + timestamp */}
+      <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-xs font-bold text-emerald-700">+{fmt(dropAvoided)} saved</span>
+        </div>
+        {soldRecord && (
+          <span className="text-[11px] text-gray-400 font-medium">{formatTimeAgo(soldRecord.soldAt)}</span>
         )}
       </div>
     </div>
