@@ -75,22 +75,39 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 // ── Main Drawer ───────────────────────────────────────────────────────────────
 export default function AssetDrawer({ asset, onClose, onSell, isSelling }: AssetDrawerProps) {
-  const [confirming, setConfirming] = useState(false);
+  type SellStage = "idle" | "processing" | "success";
+  const [sellStage, setSellStage] = useState<SellStage>("idle");
 
-  useEffect(() => { setConfirming(false); }, [asset?.id]);
+  // Reset stage when a different asset opens
+  useEffect(() => { setSellStage("idle"); }, [asset?.id]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && sellStage === "idle") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, sellStage]);
 
   const handleSell = useCallback(() => {
-    if (!asset) return;
-    if (!confirming) { setConfirming(true); return; }
-    onSell(asset.id);
-    onClose();
-  }, [asset, confirming, onSell, onClose]);
+    if (!asset || sellStage !== "idle") return;
+
+    // Step 1 — immediate: gray "PROCESSING..." state
+    setSellStage("processing");
+
+    // Step 2 — after 1.2 s: fire the API call + show success
+    const t1 = setTimeout(() => {
+      onSell(asset.id);
+      setSellStage("success");
+
+      // Step 3 — after 2 more seconds: close the drawer
+      const t2 = setTimeout(() => {
+        onClose();
+      }, 2000);
+
+      return () => clearTimeout(t2);
+    }, 1200);
+
+    return () => clearTimeout(t1);
+  }, [asset, sellStage, onSell, onClose]);
 
   const currentValue  = asset ? asset.currentValue / 100 : 0;
   const purchaseValue = asset ? asset.purchasePrice / 100 : 0;
@@ -462,35 +479,60 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 <>
                   <button
                     data-testid="btn-drawer-sell"
-                    disabled={isSelling}
+                    disabled={sellStage !== "idle"}
                     onClick={handleSell}
-                    className="w-full h-14 rounded-xl text-white font-bold text-base tracking-wide transition-all duration-150"
+                    className="w-full h-14 rounded-xl font-bold text-base tracking-wide transition-all duration-300"
                     style={{
-                      backgroundColor: confirming ? "#059669" : "#10B981",
-                      boxShadow: confirming
-                        ? "0 4px 20px rgba(5,150,105,0.4)"
-                        : "0 2px 8px rgba(16,185,129,0.25)",
+                      backgroundColor:
+                        sellStage === "processing" ? "#9CA3AF"
+                        : sellStage === "success"  ? "#10B981"
+                        : "#10B981",
+                      color: "#FFFFFF",
+                      boxShadow:
+                        sellStage === "success"
+                          ? "0 4px 20px rgba(16,185,129,0.45)"
+                          : sellStage === "processing"
+                          ? "none"
+                          : "0 2px 8px rgba(16,185,129,0.25)",
+                      cursor: sellStage !== "idle" ? "not-allowed" : "pointer",
                     }}
                   >
-                    {isSelling
-                      ? "Processing…"
-                      : confirming
-                      ? `✓ Confirm — Lock in ${fmt(currentValue)}`
+                    {sellStage === "processing"
+                      ? "PROCESSING..."
+                      : sellStage === "success"
+                      ? "FUNDS SECURED!"
                       : `SELL NOW TO LOCK IN ${fmt(currentValue)}`}
                   </button>
-                  {confirming ? (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center text-xs text-gray-400 mt-2"
-                    >
-                      Tap again to confirm. This will execute a market sale.
-                    </motion.p>
-                  ) : (
-                    <p className="text-center text-xs text-gray-400 mt-2">
-                      {sellWindow?.sellByLabel ?? `Avoid the projected ${fmt(dropDollars)} loss`}
-                    </p>
-                  )}
+                  <AnimatePresence mode="wait">
+                    {sellStage === "success" ? (
+                      <motion.p
+                        key="success-msg"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center text-xs text-emerald-600 font-semibold mt-2"
+                      >
+                        Sale confirmed — funds will be transferred within 1–2 business days.
+                      </motion.p>
+                    ) : sellStage === "processing" ? (
+                      <motion.p
+                        key="processing-msg"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-center text-xs text-gray-400 mt-2"
+                      >
+                        Submitting your order…
+                      </motion.p>
+                    ) : (
+                      <motion.p
+                        key="idle-msg"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-center text-xs text-gray-400 mt-2"
+                      >
+                        {sellWindow?.sellByLabel ?? `Avoid the projected ${fmt(dropDollars)} loss`}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
             </div>

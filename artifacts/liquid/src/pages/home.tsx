@@ -340,9 +340,14 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
 
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-4 cursor-pointer group hover:shadow-md hover:border-gray-300 transition-all duration-200"
+      className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-4 cursor-pointer group hover:shadow-md hover:border-gray-300 transition-all duration-500"
       data-testid={`card-asset-${asset.id}`}
-      onClick={() => onOpen(asset)}
+      onClick={() => !isSelling && !isSold && onOpen(asset)}
+      style={{
+        opacity: isSelling ? 0.5 : 1,
+        pointerEvents: isSelling ? "none" : "auto",
+        transition: "opacity 0.4s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+      }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
@@ -352,17 +357,17 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
             {asset.model}
           </h3>
         </div>
-        {!isSold && (
+        {/* SOLD badge — shown when selling or already sold */}
+        {(isSelling || isSold) ? (
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0">
+            SOLD
+          </span>
+        ) : (
           <span
             className="text-[10px] font-bold px-2 py-1 rounded-full border shrink-0 whitespace-nowrap"
             style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}
           >
             {urgencyPill.label}
-          </span>
-        )}
-        {isSold && (
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-400 shrink-0">
-            Sold
           </span>
         )}
       </div>
@@ -376,8 +381,8 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
         </span>
       </div>
 
-      {/* Sell-by date pill */}
-      {!isSold && (
+      {/* Sell-by date pill — hidden once selling begins */}
+      {!isSelling && !isSold && (
         <div className="flex items-center justify-between">
           <div
             className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
@@ -394,9 +399,9 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
 
       {/* CTAs */}
       <div className="flex gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
-        {isSold ? (
-          <div className="text-sm font-medium text-gray-400 py-1">
-            {asset.status === "LIQUIDATE" ? "Pending sale…" : "In transit"}
+        {(isSelling || isSold) ? (
+          <div className="text-sm font-medium text-emerald-600 py-1 font-semibold">
+            {isSelling ? "Processing sale…" : asset.status === "LIQUIDATE" ? "Pending sale…" : "In transit"}
           </div>
         ) : (
           <>
@@ -405,9 +410,9 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
               disabled={isSelling}
               onClick={(e) => { e.stopPropagation(); onSell(asset.id); }}
               className="flex-1 h-9 rounded-xl text-xs font-bold text-white transition-all"
-              style={{ backgroundColor: isSelling ? "#6EE7B7" : "#10B981" }}
+              style={{ backgroundColor: "#10B981" }}
             >
-              {isSelling ? "Selling…" : "Sell Now"}
+              Sell Now
             </button>
             <button
               className="h-9 px-4 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
