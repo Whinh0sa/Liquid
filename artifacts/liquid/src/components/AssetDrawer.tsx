@@ -9,8 +9,10 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   ReferenceLine,
+  ReferenceArea,
 } from "recharts";
-import { X, AlertTriangle, TrendingDown, Calendar, DollarSign } from "lucide-react";
+import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Asset {
@@ -30,30 +32,43 @@ interface AssetDrawerProps {
   isSelling: boolean;
 }
 
-// ── Price history — derived from the depreciation data ───────────────────────
-// Generates a simple 4-point history matching the user's sample data format
-function buildPriceHistory(asset: Asset): { time: string; price: number }[] {
-  const current = asset.currentValue / 100;
-  const drop = asset.depreciationCliff.projectedDrop / 100;
-  // Work backwards: each week was slightly higher before the slide began
-  const weeklyDrift = drop / 4; // spread projected drop evenly across 4 weeks
-  return [
-    { time: "Last Month",     price: parseFloat((current + weeklyDrift * 3.2).toFixed(2)) },
-    { time: "Two Weeks Ago",  price: parseFloat((current + weeklyDrift * 2.1).toFixed(2)) },
-    { time: "Last Week",      price: parseFloat((current + weeklyDrift * 0.9).toFixed(2)) },
-    { time: "Today",          price: current },
-  ];
-}
+// ── Urgency config ────────────────────────────────────────────────────────────
+const URGENCY_CONFIG: Record<UrgencyLevel, {
+  bg: string; border: string; text: string; badge: string; badgeBg: string; label: string;
+}> = {
+  PLANNED: {
+    bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8",
+    badge: "#2563EB", badgeBg: "#DBEAFE", label: "Plan ahead",
+  },
+  WINDOW: {
+    bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D",
+    badge: "#10B981", badgeBg: "#D1FAE5", label: "⚡ Sell now — optimal window",
+  },
+  URGENT: {
+    bg: "#FFF7ED", border: "#FED7AA", text: "#C2410C",
+    badge: "#F97316", badgeBg: "#FFEDD5", label: "Last chance",
+  },
+  CLIFF: {
+    bg: "#FEF2F2", border: "#FECACA", text: "#DC2626",
+    badge: "#EF4444", badgeBg: "#FEE2E2", label: "Window closed",
+  },
+};
 
-// ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+// ── Custom Tooltip ─────────────────────────────────────────────────────────────
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null;
+  const isCliff = typeof label === "string" && label.includes("cliff");
+  const isWindow = typeof label === "string" && label.includes("★");
   return (
-    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2.5 shadow-lg min-w-[130px]">
+      <p className="text-xs font-semibold text-gray-500 mb-1">
+        {isCliff ? "⚠️ Cliff Event" : isWindow ? "⭐ Ideal sell-by" : label}
+      </p>
       <p className="text-sm font-bold text-gray-900">
         {payload[0].value.toLocaleString("en-US", { style: "currency", currency: "USD" })}
       </p>
+      {isCliff && <p className="text-[10px] text-red-500 mt-1">Value drops sharply here</p>}
+      {isWindow && <p className="text-[10px] text-emerald-600 mt-1">Best price-to-risk balance</p>}
     </div>
   );
 }
@@ -62,10 +77,8 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 export default function AssetDrawer({ asset, onClose, onSell, isSelling }: AssetDrawerProps) {
   const [confirming, setConfirming] = useState(false);
 
-  // Reset confirm state when a different asset is opened
   useEffect(() => { setConfirming(false); }, [asset?.id]);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -79,20 +92,23 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
     onClose();
   }, [asset, confirming, onSell, onClose]);
 
-  const history = asset ? buildPriceHistory(asset) : [];
-  const currentValue = asset ? asset.currentValue / 100 : 0;
-  const projectedDrop = asset ? asset.depreciationCliff.projectedDrop / 100 : 0;
-  const postCliffValue = currentValue - projectedDrop;
+  const currentValue  = asset ? asset.currentValue / 100 : 0;
   const purchaseValue = asset ? asset.purchasePrice / 100 : 0;
-  const totalPnl = ((currentValue - purchaseValue) / purchaseValue) * 100;
-  const isDown = totalPnl < 0;
-  const daysAway = asset?.depreciationCliff.daysAway ?? 0;
-  const isUrgent = daysAway <= 14;
+  const dropDollars   = asset ? asset.depreciationCliff.projectedDrop / 100 : 0;
+  const daysAway      = asset?.depreciationCliff.daysAway ?? 0;
+  const totalPnl      = ((currentValue - purchaseValue) / purchaseValue) * 100;
+  const isDown        = totalPnl < 0;
+  const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
+
+  const sellWindow = asset ? computeSellWindow(daysAway, dropDollars) : null;
+  const urgencyConf = sellWindow ? URGENCY_CONFIG[sellWindow.urgency] : null;
+
+  const { data: chartData, windowStartLabel, windowEndLabel, cliffLabel } = asset
+    ? buildExtendedChart(asset.currentValue, asset.depreciationCliff.projectedDrop, daysAway)
+    : { data: [], windowStartLabel: null, windowEndLabel: null, cliffLabel: "" };
 
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-  const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
 
   return (
     <AnimatePresence>
@@ -120,7 +136,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
             className="fixed top-0 right-0 h-full flex flex-col bg-white overflow-hidden"
             style={{
               zIndex: 51,
-              width: "min(480px, 100vw)",
+              width: "min(500px, 100vw)",
               boxShadow: "-4px 0 32px rgba(0,0,0,0.12)",
             }}
             data-testid="asset-drawer"
@@ -145,9 +161,9 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
             </div>
 
             {/* ── Scrollable body ──────────────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-              {/* Current value + P&L row */}
+              {/* Current value row */}
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-xs text-gray-400 font-medium mb-1">Current Value</p>
@@ -162,108 +178,275 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </div>
               </div>
 
-              {/* ── Warning box ──────────────────────────────────────────── */}
+              {/* ── Best Time to Sell recommendation ─────────────────────── */}
+              {sellWindow && urgencyConf && (
+                <div
+                  className="rounded-xl p-4"
+                  style={{ backgroundColor: urgencyConf.bg, border: `1px solid ${urgencyConf.border}` }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" style={{ color: urgencyConf.badge }} />
+                      <span className="text-sm font-bold" style={{ color: urgencyConf.text }}>
+                        Best Time to Sell
+                      </span>
+                    </div>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                      style={{ color: urgencyConf.badge, backgroundColor: urgencyConf.badgeBg }}
+                    >
+                      {urgencyConf.label}
+                    </span>
+                  </div>
+
+                  {sellWindow.urgency === "PLANNED" && (
+                    <div className="space-y-2">
+                      <p className="text-sm" style={{ color: urgencyConf.text }}>
+                        Ideal listing window opens in{" "}
+                        <strong>{sellWindow.daysUntilWindow} days</strong> —
+                        sell by <strong>{sellWindow.sellByLabel.replace("Sell by ", "")}</strong> to maximise value.
+                      </p>
+                      <SellWindowTimeline sellWindow={sellWindow} />
+                    </div>
+                  )}
+
+                  {sellWindow.urgency === "WINDOW" && (
+                    <div className="space-y-2">
+                      <p className="text-sm" style={{ color: urgencyConf.text }}>
+                        You're in the optimal sell window right now.{" "}
+                        <strong>{sellWindow.daysUntilClose} day{sellWindow.daysUntilClose !== 1 ? "s" : ""} remaining</strong> before it closes.
+                        Listing today protects <strong>{fmt(dropDollars)}</strong> in value.
+                      </p>
+                      <SellWindowTimeline sellWindow={sellWindow} />
+                    </div>
+                  )}
+
+                  {sellWindow.urgency === "URGENT" && (
+                    <p className="text-sm" style={{ color: urgencyConf.text }}>
+                      Ideal window has closed — cliff hits in{" "}
+                      <strong>{daysAway} day{daysAway !== 1 ? "s" : ""}</strong>.
+                      Selling now may still recover most of the <strong>{fmt(dropDollars)}</strong> projected drop.
+                    </p>
+                  )}
+
+                  {sellWindow.urgency === "CLIFF" && (
+                    <p className="text-sm" style={{ color: urgencyConf.text }}>
+                      The depreciation event has occurred. Value has dropped approximately{" "}
+                      <strong>{fmt(dropDollars)}</strong>. Consider holding for the next cycle.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* ── Depreciation warning ──────────────────────────────────── */}
               <div
                 className="rounded-xl p-4 flex gap-3"
-                style={{ backgroundColor: isUrgent ? "#FEF2F2" : "#FFFBEB", border: `1px solid ${isUrgent ? "#FECACA" : "#FDE68A"}` }}
+                style={{
+                  backgroundColor: daysAway <= 14 ? "#FEF2F2" : "#FFFBEB",
+                  border: `1px solid ${daysAway <= 14 ? "#FECACA" : "#FDE68A"}`,
+                }}
               >
                 <AlertTriangle
                   className="w-5 h-5 shrink-0 mt-0.5"
-                  style={{ color: isUrgent ? "#EF4444" : "#F59E0B" }}
+                  style={{ color: daysAway <= 14 ? "#EF4444" : "#F59E0B" }}
                 />
                 <div>
-                  <p className="font-semibold text-sm mb-1" style={{ color: isUrgent ? "#DC2626" : "#B45309" }}>
-                    Value expected to drop {fmt(projectedDrop)} in {daysAway} days
+                  <p className="font-semibold text-sm mb-1" style={{ color: daysAway <= 14 ? "#DC2626" : "#B45309" }}>
+                    Value expected to drop {fmt(dropDollars)} in {daysAway} days
                   </p>
-                  <p className="text-xs leading-relaxed" style={{ color: isUrgent ? "#EF4444" : "#D97706" }}>
-                    Reason: {asset.depreciationCliff.reason}. After this event, estimated resale value drops to approximately <strong>{fmt(postCliffValue)}</strong>.
+                  <p className="text-xs leading-relaxed" style={{ color: daysAway <= 14 ? "#EF4444" : "#D97706" }}>
+                    Reason: {asset.depreciationCliff.reason}.
                   </p>
                 </div>
               </div>
 
-              {/* ── Price history chart ──────────────────────────────────── */}
+              {/* ── Extended chart with sell window ──────────────────────── */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Price History</h3>
-                  <span className="text-xs text-red-500 font-medium flex items-center gap-1">
-                    <TrendingDown className="w-3.5 h-3.5" />
-                    Declining trend
-                  </span>
+                  <h3 className="text-sm font-semibold text-gray-700">Price Trajectory</h3>
+                  <div className="flex items-center gap-3 text-[10px] text-gray-400 font-medium">
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-0.5 bg-red-400 inline-block rounded" />
+                      Actual
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-0.5 bg-orange-300 inline-block rounded" style={{ backgroundImage: "repeating-linear-gradient(90deg,#f97316 0,#f97316 3px,transparent 3px,transparent 6px)", height: 1 }} />
+                      Projected
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-2 rounded-sm inline-block" style={{ backgroundColor: "rgba(16,185,129,0.15)" }} />
+                      Sell window
+                    </span>
+                  </div>
                 </div>
-                <div className="h-[180px] w-full">
+                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={history} margin={{ top: 5, right: 4, bottom: 0, left: 0 }}>
+                    <LineChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+
+                      {/* Sell window highlight — green band */}
+                      {windowStartLabel && windowEndLabel && (
+                        <ReferenceArea
+                          x1={windowStartLabel}
+                          x2={windowEndLabel}
+                          fill="rgba(16,185,129,0.12)"
+                          stroke="rgba(16,185,129,0.4)"
+                          strokeWidth={1}
+                          strokeDasharray="3 3"
+                          label={{
+                            value: "Sell window",
+                            position: "insideTop",
+                            fill: "#10B981",
+                            fontSize: 9,
+                            fontFamily: "Inter",
+                            fontWeight: 600,
+                          }}
+                        />
+                      )}
+                      {/* If window is open now, shade Today → windowEnd */}
+                      {!windowStartLabel && windowEndLabel && (
+                        <ReferenceArea
+                          x1="Today"
+                          x2={windowEndLabel}
+                          fill="rgba(16,185,129,0.12)"
+                          stroke="rgba(16,185,129,0.4)"
+                          strokeWidth={1}
+                          strokeDasharray="3 3"
+                        />
+                      )}
+
+                      {/* Cliff reference line */}
+                      <ReferenceLine
+                        x={cliffLabel}
+                        stroke="rgba(239,68,68,0.6)"
+                        strokeDasharray="4 3"
+                        label={{
+                          value: "⚠ Cliff",
+                          position: "top",
+                          fill: "#EF4444",
+                          fontSize: 9,
+                          fontFamily: "Montserrat",
+                          fontWeight: 700,
+                        }}
+                      />
+
+                      {/* Today divider */}
+                      <ReferenceLine
+                        x="Today"
+                        stroke="rgba(37,99,235,0.3)"
+                        strokeDasharray="2 3"
+                        label={{
+                          value: "Now",
+                          position: "top",
+                          fill: "#2563EB",
+                          fontSize: 9,
+                          fontFamily: "Inter",
+                        }}
+                      />
+
                       <XAxis
-                        dataKey="time"
-                        tick={{ fill: "#9CA3AF", fontSize: 10, fontFamily: "Inter" }}
+                        dataKey="label"
+                        tick={{ fill: "#9CA3AF", fontSize: 9, fontFamily: "Inter" }}
                         tickLine={false}
                         axisLine={false}
+                        interval={0}
+                        angle={-25}
+                        textAnchor="end"
+                        height={36}
+                        tickFormatter={(v: string) => v.replace(" cliff", "").replace(" ★", "★")}
                       />
                       <YAxis
                         tick={{ fill: "#9CA3AF", fontSize: 10, fontFamily: "Inter" }}
                         tickLine={false}
                         axisLine={false}
-                        tickFormatter={(v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`}
+                        tickFormatter={(v: number) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`}
                         width={46}
                         domain={["auto", "auto"]}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      <ReferenceLine
-                        y={postCliffValue}
-                        stroke="#EF4444"
-                        strokeDasharray="4 3"
-                        strokeOpacity={0.5}
-                        label={{
-                          value: "Post-cliff floor",
-                          position: "insideTopRight",
-                          fill: "#EF4444",
-                          fontSize: 9,
-                          fontFamily: "Inter",
-                        }}
-                      />
+
+                      {/* Historical line — solid red */}
                       <Line
-                        type="monotone"
+                        data={chartData.filter((p) => !p.projected)}
                         dataKey="price"
                         stroke="#EF4444"
                         strokeWidth={2.5}
                         dot={{ r: 4, fill: "#EF4444", strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: "#EF4444" }}
+                        activeDot={{ r: 5 }}
                         isAnimationActive
-                        animationDuration={600}
+                        animationDuration={500}
+                        connectNulls
+                      />
+                      {/* Projected line — dashed orange */}
+                      <Line
+                        data={chartData}
+                        dataKey="price"
+                        stroke="#F97316"
+                        strokeWidth={2}
+                        strokeDasharray="6 3"
+                        dot={(props: { cx?: number; cy?: number; index?: number }) => {
+                          const p = chartData[props.index ?? 0];
+                          if (!p?.projected) return <g key={props.index} />;
+                          const isCliffPoint = p.label.includes("cliff");
+                          const isWindowPoint = p.label.includes("★");
+                          if (!isCliffPoint && !isWindowPoint) return <g key={props.index} />;
+                          return (
+                            <circle
+                              key={props.index}
+                              cx={props.cx}
+                              cy={props.cy}
+                              r={isCliffPoint ? 5 : 4}
+                              fill={isCliffPoint ? "#EF4444" : "#10B981"}
+                              stroke="white"
+                              strokeWidth={1.5}
+                            />
+                          );
+                        }}
+                        activeDot={{ r: 4 }}
+                        isAnimationActive
+                        animationDuration={800}
+                        animationBegin={200}
+                        connectNulls
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* ── Stats grid ──────────────────────────────────────────── */}
+              {/* ── Stats grid ────────────────────────────────────────────── */}
               <div className="grid grid-cols-2 gap-3">
                 <StatTile
-                  icon={<DollarSign className="w-4 h-4 text-blue-500" />}
-                  label="Post-Cliff Floor"
-                  value={fmt(postCliffValue)}
-                  sub="estimated floor value"
+                  icon={<Calendar className="w-4 h-4 text-blue-500" />}
+                  label="Recommended Sell By"
+                  value={sellWindow ? sellWindow.sellByLabel : "—"}
+                  sub={sellWindow?.urgency === "WINDOW" ? "Window open now" : `Cliff: +${daysAway}d`}
+                  valueColor={urgencyConf?.badge ?? "#1F2937"}
                 />
                 <StatTile
-                  icon={<Calendar className="w-4 h-4 text-amber-500" />}
-                  label="Days to Cliff"
-                  value={`${daysAway} days`}
-                  sub={isUrgent ? "Act soon" : "Monitor closely"}
-                  valueColor={isUrgent ? "#EF4444" : "#F59E0B"}
-                />
-                <StatTile
-                  icon={<TrendingDown className="w-4 h-4 text-red-500" />}
-                  label="Projected Drop"
-                  value={fmt(projectedDrop)}
-                  sub={`${((projectedDrop / currentValue) * 100).toFixed(1)}% of current value`}
+                  icon={<DollarSign className="w-4 h-4 text-red-500" />}
+                  label="At-Risk Value"
+                  value={fmt(dropDollars)}
+                  sub="if you miss the cliff"
                   valueColor="#EF4444"
                 />
                 <StatTile
-                  icon={<DollarSign className="w-4 h-4 text-blue-500" />}
-                  label="Purchase Price"
-                  value={fmt(purchaseValue)}
-                  sub="original cost"
+                  icon={<TrendingDown className="w-4 h-4 text-gray-400" />}
+                  label="Post-Cliff Floor"
+                  value={fmt(currentValue - dropDollars)}
+                  sub="estimated after drop"
+                />
+                <StatTile
+                  icon={<CheckCircle className="w-4 h-4 text-emerald-500" />}
+                  label="Window Duration"
+                  value={sellWindow ? `${Math.max(0, sellWindow.windowEndDay - sellWindow.windowStartDay)}d` : "—"}
+                  sub={
+                    sellWindow?.urgency === "WINDOW"
+                      ? `${sellWindow.daysUntilClose}d remaining`
+                      : sellWindow?.urgency === "PLANNED"
+                      ? `Opens in ${sellWindow.daysUntilWindow}d`
+                      : "Closed"
+                  }
+                  valueColor={urgencyConf?.badge ?? "#1F2937"}
                 />
               </div>
 
@@ -295,7 +478,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                       ? `✓ Confirm — Lock in ${fmt(currentValue)}`
                       : `SELL NOW TO LOCK IN ${fmt(currentValue)}`}
                   </button>
-                  {confirming && (
+                  {confirming ? (
                     <motion.p
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -303,10 +486,9 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                     >
                       Tap again to confirm. This will execute a market sale.
                     </motion.p>
-                  )}
-                  {!confirming && (
+                  ) : (
                     <p className="text-center text-xs text-gray-400 mt-2">
-                      Avoid the projected {fmt(projectedDrop)} loss — sell before the cliff.
+                      {sellWindow?.sellByLabel ?? `Avoid the projected ${fmt(dropDollars)} loss`}
                     </p>
                   )}
                 </>
@@ -319,7 +501,56 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   );
 }
 
-// ── Stat tile ─────────────────────────────────────────────────────────────────
+// ── Sell Window Timeline Bar ──────────────────────────────────────────────────
+function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof computeSellWindow> }) {
+  const cliff = sellWindow.cliffDay;
+  if (cliff <= 0) return null;
+
+  const total = cliff + 3;
+  const windowStartPct = (sellWindow.windowStartDay / total) * 100;
+  const windowWidthPct = ((sellWindow.windowEndDay - sellWindow.windowStartDay) / total) * 100;
+  const cliffPct = (cliff / total) * 100;
+  const todayPct = 0;
+
+  return (
+    <div className="mt-3">
+      <div className="relative h-5 bg-gray-100 rounded-full overflow-hidden">
+        {/* Sell window zone — green */}
+        <div
+          className="absolute top-0 h-full rounded-full"
+          style={{
+            left: `${windowStartPct}%`,
+            width: `${Math.max(windowWidthPct, 2)}%`,
+            backgroundColor: "rgba(16,185,129,0.35)",
+          }}
+        />
+        {/* Danger zone — red (cliff onwards) */}
+        <div
+          className="absolute top-0 h-full"
+          style={{
+            left: `${cliffPct}%`,
+            width: `${100 - cliffPct}%`,
+            backgroundColor: "rgba(239,68,68,0.2)",
+          }}
+        />
+        {/* Today marker */}
+        <div
+          className="absolute top-0 h-full w-0.5 bg-blue-500"
+          style={{ left: `${todayPct}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-[9px] text-gray-400 font-medium mt-1 px-0.5">
+        <span className="text-blue-500">Today</span>
+        {sellWindow.windowStartDay > 0 && (
+          <span className="text-emerald-600">Window +{sellWindow.windowStartDay}d</span>
+        )}
+        <span className="text-red-400">Cliff +{cliff}d</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Stat Tile ─────────────────────────────────────────────────────────────────
 function StatTile({
   icon, label, value, sub, valueColor = "#1F2937",
 }: { icon: React.ReactNode; label: string; value: string; sub: string; valueColor?: string }) {

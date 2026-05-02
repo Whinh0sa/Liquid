@@ -5,8 +5,9 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, Clock } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
+import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(n: number): string {
@@ -25,16 +26,22 @@ interface PortfolioAsset {
   status: string;
 }
 
-// ── Ticker items ──────────────────────────────────────────────────────────────
 const TICKERS = [
-  { label: "GOLD",           price: "$3,247.80", change: "+1.2%", up: true },
-  { label: "SILVER",         price: "$32.41",    change: "-0.4%", up: false },
-  { label: "PLATINUM",       price: "$1,018.00", change: "+0.8%", up: true },
-  { label: "REAL ESTATE",    price: "$842.50",   change: "+2.1%", up: true },
-  { label: "RARE WHISKY",    price: "$2,104.00", change: "+0.3%", up: true },
-  { label: "FINE ART IDX",   price: "$5,880.00", change: "-1.1%", up: false },
-  { label: "DIAMONDS",       price: "$8,240.00", change: "+0.6%", up: true },
+  { label: "GOLD",         price: "$3,247.80", change: "+1.2%", up: true },
+  { label: "SILVER",       price: "$32.41",    change: "-0.4%", up: false },
+  { label: "PLATINUM",     price: "$1,018.00", change: "+0.8%", up: true },
+  { label: "REAL ESTATE",  price: "$842.50",   change: "+2.1%", up: true },
+  { label: "RARE WHISKY",  price: "$2,104.00", change: "+0.3%", up: true },
+  { label: "FINE ART IDX", price: "$5,880.00", change: "-1.1%", up: false },
+  { label: "DIAMONDS",     price: "$8,240.00", change: "+0.6%", up: true },
 ];
+
+const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
+  PLANNED:  { label: "Plan ahead", bg: "#DBEAFE", text: "#1D4ED8", border: "#BFDBFE" },
+  WINDOW:   { label: "⚡ Sell now", bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
+  URGENT:   { label: "Last chance", bg: "#FFEDD5", text: "#9A3412", border: "#FED7AA" },
+  CLIFF:    { label: "Window closed", bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
+};
 
 export default function Home() {
   const queryClient = useQueryClient();
@@ -76,17 +83,24 @@ export default function Home() {
   };
 
   const portfolio = data?.portfolio ?? [];
-  const metrics = data?.metrics;
+  const metrics   = data?.metrics;
   const displayedNetWorth = optimisticNetWorth !== null
     ? optimisticNetWorth
     : metrics?.totalNetWorth ?? 0;
 
-  const urgentAssets = portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT");
+  const urgentAssets = portfolio.filter(
+    (a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT",
+  );
+
+  // Count assets currently in their sell window
+  const windowOpenCount = portfolio.filter((a) => {
+    const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+    return sw.urgency === "WINDOW";
+  }).length;
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col" style={{ backgroundColor: "#F9FAFB" }}>
 
-      {/* Drawer overlay */}
       <AssetDrawer
         asset={drawerAsset}
         onClose={() => setDrawerAsset(null)}
@@ -171,7 +185,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
             <div className="flex gap-3">
               <button
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
@@ -188,13 +201,46 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Summary stat row */}
+          {/* Stats row */}
           <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
             <SummaryTile label="Items Tracked" value={isLoading ? "—" : `${portfolio.length}`} icon={<BarChart2 className="w-4 h-4 text-blue-500" />} />
+            <SummaryTile label="Sell Windows Open" value={isLoading ? "—" : `${windowOpenCount}`} valueColor={windowOpenCount > 0 ? "#10B981" : "#1F2937"} icon={<Clock className="w-4 h-4 text-emerald-500" />} />
             <SummaryTile label="Urgent Alerts" value={isLoading ? "—" : `${urgentAssets.length}`} valueColor={urgentAssets.length > 0 ? "#EF4444" : "#1F2937"} icon={<AlertTriangle className="w-4 h-4 text-red-400" />} />
-            <SummaryTile label="Portfolio Health" value="Good" valueColor="#10B981" icon={<Shield className="w-4 h-4 text-emerald-500" />} />
           </div>
         </section>
+
+        {/* ── Sell window open banner ──────────────────────────────────────── */}
+        {windowOpenCount > 0 && !isLoading && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-emerald-800 mb-1">
+                {windowOpenCount} item{windowOpenCount > 1 ? "s" : ""} in optimal sell window right now
+              </p>
+              <p className="text-sm text-emerald-700">
+                {portfolio
+                  .filter((a) => {
+                    const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+                    return sw.urgency === "WINDOW";
+                  })
+                  .map((a) => {
+                    const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+                    return (
+                      <button
+                        key={a.id}
+                        className="underline underline-offset-2 hover:text-emerald-900 mr-3 font-medium"
+                        onClick={() => setDrawerAsset(a as PortfolioAsset)}
+                      >
+                        {a.model} — {sw.sellByLabel}
+                      </button>
+                    );
+                  })}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Urgent alerts banner ─────────────────────────────────────────── */}
         {urgentAssets.length > 0 && !isLoading && (
@@ -249,19 +295,18 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Tip card ─────────────────────────────────────────────────────── */}
+        {/* ── How it works ─────────────────────────────────────────────────── */}
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
-            <TrendingDown className="w-5 h-5 text-white" />
+            <Clock className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-blue-900 mb-1">How depreciation cliffs work</p>
+            <p className="text-sm font-semibold text-blue-900 mb-1">How sell windows are calculated</p>
             <p className="text-sm text-blue-700 leading-relaxed">
-              Consumer electronics lose value fastest around product cycle events — new model launches, major software releases, or seasonal demand drops. Liquid tracks these cliffs so you can sell before they happen.
+              Each item's optimal sell window opens 7 days before the depreciation cliff and closes 3 days before — giving resale platforms time to process. Selling inside the window maximises your price before the market reprices.
             </p>
           </div>
         </div>
-
       </main>
 
       <footer className="border-t border-gray-200 py-6 bg-white">
@@ -283,13 +328,15 @@ interface AssetCardProps {
 }
 
 function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
-  const current = asset.currentValue / 100;
+  const current  = asset.currentValue / 100;
   const purchase = asset.purchasePrice / 100;
-  const pnl = ((current - purchase) / purchase) * 100;
-  const isDown = pnl < 0;
-  const cliff = asset.depreciationCliff;
-  const isUrgent = cliff.daysAway <= 14;
-  const isSold = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
+  const pnl      = ((current - purchase) / purchase) * 100;
+  const isDown   = pnl < 0;
+  const cliff    = asset.depreciationCliff;
+  const isSold   = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
+
+  const sellWindow = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
+  const urgencyPill = URGENCY_PILL[sellWindow.urgency];
 
   return (
     <div
@@ -297,28 +344,25 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
       data-testid={`card-asset-${asset.id}`}
       onClick={() => onOpen(asset)}
     >
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            {asset.category}
-          </p>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p>
           <h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-blue-600 transition-colors">
             {asset.model}
           </h3>
         </div>
-        {isSold ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-500 border border-red-100 shrink-0">
+        {!isSold && (
+          <span
+            className="text-[10px] font-bold px-2 py-1 rounded-full border shrink-0 whitespace-nowrap"
+            style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}
+          >
+            {urgencyPill.label}
+          </span>
+        )}
+        {isSold && (
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-400 shrink-0">
             Sold
-          </span>
-        ) : isUrgent ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-50 text-red-500 border border-red-100 shrink-0 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            Alert
-          </span>
-        ) : (
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0">
-            Tracking
           </span>
         )}
       </div>
@@ -332,23 +376,23 @@ function AssetCard({ asset, isSelling, onSell, onOpen }: AssetCardProps) {
         </span>
       </div>
 
-      {/* Depreciation warning */}
+      {/* Sell-by date pill */}
       {!isSold && (
-        <div
-          className="rounded-xl px-3 py-2.5 text-xs"
-          style={{
-            backgroundColor: isUrgent ? "#FEF2F2" : "#FFFBEB",
-            border: `1px solid ${isUrgent ? "#FECACA" : "#FDE68A"}`,
-          }}
-        >
-          <span style={{ color: isUrgent ? "#DC2626" : "#B45309" }} className="font-semibold">
+        <div className="flex items-center justify-between">
+          <div
+            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+            style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}
+          >
+            <Clock className="w-3 h-3" />
+            {sellWindow.sellByLabel}
+          </div>
+          <span className="text-xs text-gray-400">
             −{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d
           </span>
-          <span className="text-gray-500 ml-1">— {cliff.reason}</span>
         </div>
       )}
 
-      {/* CTA */}
+      {/* CTAs */}
       <div className="flex gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
         {isSold ? (
           <div className="text-sm font-medium text-gray-400 py-1">
