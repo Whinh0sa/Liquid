@@ -9,6 +9,7 @@ import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Zap, Activity, ShieldCheck } from "lucide-react";
+import AssetDrawer from "@/components/AssetDrawer";
 
 // ── Static sparkline data ─────────────────────────────────────────────────────
 const techSectorData = [
@@ -24,10 +25,10 @@ const volatilityData = [
 
 // ── Static transactions ───────────────────────────────────────────────────────
 const transactions = [
-  { asset: "SpaceX PE",     type: "BUY",     amount: "$420,000", date: "2026-03-12", status: "SETTLED" },
-  { asset: "NVIDIA Opt",    type: "SELL",    amount: "$150,000", date: "2026-03-14", status: "PROCESSING" },
-  { asset: "Palantir War",  type: "BUY",     amount: "$85,000",  date: "2026-03-15", status: "PENDING" },
-  { asset: "OpenAI Note",   type: "CONVERT", amount: "$500,000", date: "2026-03-16", status: "SETTLED" },
+  { asset: "SpaceX PE",    type: "BUY",     amount: "$420,000", date: "2026-03-12", status: "SETTLED" },
+  { asset: "NVIDIA Opt",   type: "SELL",    amount: "$150,000", date: "2026-03-14", status: "PROCESSING" },
+  { asset: "Palantir War", type: "BUY",     amount: "$85,000",  date: "2026-03-15", status: "PENDING" },
+  { asset: "OpenAI Note",  type: "CONVERT", amount: "$500,000", date: "2026-03-16", status: "SETTLED" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,10 +52,22 @@ const STATUS_COLORS: Record<StatusType, string> = {
   ACTION_REQUIRED: "#32CD32",
 };
 
+// ── Portfolio asset type ──────────────────────────────────────────────────────
+interface PortfolioAsset {
+  id: string;
+  model: string;
+  category: string;
+  currentValue: number;
+  purchasePrice: number;
+  depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
+  status: string;
+}
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
   const [liquidatingIds, setLiquidatingIds] = useState<Set<string>>(new Set());
+  const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
 
   const { data, isLoading } = useGetPortfolio({
     query: { queryKey: getGetPortfolioQueryKey() },
@@ -63,29 +76,21 @@ export default function Home() {
   const updateStatus = useUpdateAssetStatus({
     mutation: {
       onMutate: async ({ id, data: body }) => {
-        // ── OPTIMISTIC UPDATE ──────────────────────────────────────────────
         if (body.status === "LIQUIDATE") {
           setLiquidatingIds((prev) => new Set(prev).add(id));
-
-          // Snapshot current net worth for rollback
           const prev = data?.metrics.totalNetWorth ?? null;
-
-          // Subtract this asset's value from the displayed total instantly
           const asset = data?.portfolio.find((a) => a.id === id);
           if (asset && data) {
-            const newNetWorth = data.metrics.totalNetWorth - asset.currentValue / 100;
-            setOptimisticNetWorth(newNetWorth);
+            setOptimisticNetWorth(data.metrics.totalNetWorth - asset.currentValue / 100);
           }
           return { previousNetWorth: prev };
         }
       },
       onError: (_err, _vars, context: { previousNetWorth?: number | null } | undefined) => {
-        // Rollback on error
         setOptimisticNetWorth(context?.previousNetWorth ?? null);
         setLiquidatingIds(new Set());
       },
       onSettled: () => {
-        // Re-sync with server
         setLiquidatingIds(new Set());
         setOptimisticNetWorth(null);
         queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
@@ -109,6 +114,14 @@ export default function Home() {
   return (
     <div className="min-h-[100dvh] w-full text-foreground flex flex-col" style={{ backgroundColor: "#0B0B0B" }}>
 
+      {/* Drawer — z-index 51, overlays everything */}
+      <AssetDrawer
+        asset={drawerAsset}
+        onClose={() => setDrawerAsset(null)}
+        onLiquidate={(id) => handleStatusChange(id, "LIQUIDATE")}
+        isLiquidating={drawerAsset ? liquidatingIds.has(drawerAsset.id) : false}
+      />
+
       {/* ── Top Navigation ─────────────────────────────────────────────────── */}
       <nav className="w-full flex flex-col border-b border-purple-glow">
         <div className="flex items-center justify-between px-6 py-3">
@@ -129,7 +142,8 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full border border-purple-glow" style={{ backgroundColor: "#0D0D0F" }}>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full border border-purple-glow"
+              style={{ backgroundColor: "#0D0D0F" }}>
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#32CD32", boxShadow: "0 0 8px #32CD32" }} />
               <span className="font-montserrat text-xs uppercase font-semibold" style={{ color: "#32CD32" }}>
                 Pro Terminal
@@ -144,27 +158,26 @@ export default function Home() {
         {/* Ticker tape */}
         <div className="w-full overflow-hidden flex items-center h-8 border-t border-purple-glow bg-[#0B0B0B] whitespace-nowrap">
           <div className="inline-block ticker-tape font-inter text-xs text-[#9126EF]/80 font-medium space-x-8">
-            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲", "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲", "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
+            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲",
+              "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲",
+              "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
               <span key={i}>
                 {t.split(" ").map((word, wi) => {
                   const isChange = word.includes("%");
                   const isUp = word.includes("▲");
-                  return (
-                    <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>
-                  );
+                  return <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>;
                 })}
                 <span className="mx-4 opacity-30">|</span>
               </span>
             ))}
-            {/* Duplicate for seamless loop */}
-            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲", "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲", "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
+            {["GOLD $3,247.80 +1.2% ▲", "SILVER $32.41 -0.4% ▼", "PLATINUM $1,018.00 +0.8% ▲",
+              "REAL ESTATE IDX $842.50 +2.1% ▲", "RARE WHISKY IDX $2,104.00 +0.3% ▲",
+              "FINE ART IDX $5,880.00 -1.1% ▼", "DIAMONDS $8,240.00 +0.6% ▲"].map((t, i) => (
               <span key={`dup-${i}`}>
                 {t.split(" ").map((word, wi) => {
                   const isChange = word.includes("%");
                   const isUp = word.includes("▲");
-                  return (
-                    <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>
-                  );
+                  return <span key={wi} style={isChange ? { color: isUp ? "#32CD32" : "#ef4444" } : {}}>{word} </span>;
                 })}
                 <span className="mx-4 opacity-30">|</span>
               </span>
@@ -203,7 +216,9 @@ export default function Home() {
               {metrics.capitalAtRisk > 0 && (
                 <div className="flex items-center gap-2 font-montserrat text-xs text-red-400 mt-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>{formatDollars(metrics.capitalAtRisk)} at risk — {urgentCliffs.length} cliff{urgentCliffs.length !== 1 ? "s" : ""} within 15 days</span>
+                  <span>
+                    {formatDollars(metrics.capitalAtRisk)} at risk — {urgentCliffs.length} cliff{urgentCliffs.length !== 1 ? "s" : ""} within 15 days
+                  </span>
                 </div>
               )}
             </div>
@@ -241,21 +256,16 @@ export default function Home() {
             <h3 className="font-montserrat text-sm uppercase tracking-widest text-[#9126EF]/80 font-medium">
               Tech Portfolio — Digital Twin
             </h3>
-            {isLoading && (
-              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider animate-pulse">
-                Syncing…
-              </span>
-            )}
-            {!isLoading && (
-              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider">
-                {portfolio.length} assets
-              </span>
+            {isLoading ? (
+              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider animate-pulse">Syncing…</span>
+            ) : (
+              <span className="font-inter text-[10px] text-[#9126EF]/40 uppercase tracking-wider">{portfolio.length} assets</span>
             )}
           </div>
 
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
 
-            {/* AI Signal card — only if ACTION_REQUIRED assets exist */}
+            {/* AI Signal card */}
             {(actionRequiredAssets.length > 0 || isLoading) && (
               <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
                 <div className="flex items-center gap-2">
@@ -278,19 +288,25 @@ export default function Home() {
                           {" "}— cliff in{" "}
                           <span style={{ color: "#32CD32" }} className="font-bold">{a.depreciationCliff.daysAway}d</span>
                           {" "}({a.depreciationCliff.reason}).{" "}
-                          Projected drop:{" "}
-                          <span className="text-red-400 font-bold">
-                            −{formatDollars(a.depreciationCliff.projectedDrop / 100)}
-                          </span>
+                          <span className="text-red-400 font-bold">−{formatDollars(a.depreciationCliff.projectedDrop / 100)}</span> projected.
                         </p>
-                        <Button
-                          className="btn-lime-pulse font-montserrat uppercase text-xs h-9 rounded-none w-full"
-                          data-testid={`btn-liquidate-${a.id}`}
-                          disabled={liquidatingIds.has(a.id) || updateStatus.isPending}
-                          onClick={() => handleStatusChange(a.id, "LIQUIDATE")}
-                        >
-                          {liquidatingIds.has(a.id) ? "Liquidating…" : "Liquidate Now"}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            className="btn-lime-pulse font-montserrat uppercase text-xs h-9 rounded-none flex-1"
+                            data-testid={`btn-liquidate-signal-${a.id}`}
+                            disabled={liquidatingIds.has(a.id) || updateStatus.isPending}
+                            onClick={() => handleStatusChange(a.id, "LIQUIDATE")}
+                          >
+                            {liquidatingIds.has(a.id) ? "Liquidating…" : "Liquidate Now"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="font-montserrat uppercase text-xs h-9 px-3 rounded-none border-purple-glow text-[#9126EF]/80 hover:bg-[#9126EF]/10 bg-transparent"
+                            onClick={() => setDrawerAsset(a as PortfolioAsset)}
+                          >
+                            Analyse
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </>
@@ -298,7 +314,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* Dynamic asset cards from API */}
+            {/* Dynamic asset cards */}
             {isLoading
               ? [1, 2, 3].map((i) => (
                   <div key={i} className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid animate-pulse">
@@ -310,9 +326,10 @@ export default function Home() {
               : portfolio.map((asset) => (
                   <AssetCard
                     key={asset.id}
-                    asset={asset}
+                    asset={asset as PortfolioAsset}
                     isUpdating={liquidatingIds.has(asset.id)}
                     onStatusChange={handleStatusChange}
+                    onOpenDrawer={setDrawerAsset}
                   />
                 ))}
 
@@ -343,7 +360,7 @@ export default function Home() {
             <div className="card-terminal p-5 flex flex-col gap-4 rounded-sm break-inside-avoid">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#9126EF]/60" />
-                <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase mb-0">
+                <h4 className="font-montserrat font-semibold text-xs tracking-wider text-gray-400 uppercase">
                   Portfolio Health
                 </h4>
               </div>
@@ -385,9 +402,7 @@ export default function Home() {
                   <thead>
                     <tr className="border-b border-purple-glow">
                       {["Asset", "Type", "Amount", "Status"].map((h) => (
-                        <th key={h} className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium pr-3">
-                          {h}
-                        </th>
+                        <th key={h} className="font-montserrat text-[10px] uppercase text-[#9126EF]/70 pb-2 font-medium pr-3">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -401,12 +416,10 @@ export default function Home() {
                         <td className="py-3 font-mono text-gray-300 pr-3">{tx.amount}</td>
                         <td className="py-3">
                           <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider border rounded-sm ${
-                            tx.status === "SETTLED"    ? "border-[#32CD32] text-[#32CD32] bg-[#32CD32]/10" :
-                            tx.status === "PENDING"    ? "border-yellow-500 text-yellow-500 bg-yellow-500/10" :
-                                                         "border-[#9126EF] text-[#9126EF] bg-[#9126EF]/10"
-                          }`}>
-                            {tx.status}
-                          </span>
+                            tx.status === "SETTLED"   ? "border-[#32CD32] text-[#32CD32] bg-[#32CD32]/10" :
+                            tx.status === "PENDING"   ? "border-yellow-500 text-yellow-500 bg-yellow-500/10" :
+                                                        "border-[#9126EF] text-[#9126EF] bg-[#9126EF]/10"
+                          }`}>{tx.status}</span>
                         </td>
                       </tr>
                     ))}
@@ -432,20 +445,13 @@ export default function Home() {
 
 // ── Asset Card ────────────────────────────────────────────────────────────────
 interface AssetCardProps {
-  asset: {
-    id: string;
-    model: string;
-    category: string;
-    currentValue: number;
-    purchasePrice: number;
-    depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
-    status: string;
-  };
+  asset: PortfolioAsset;
   isUpdating: boolean;
   onStatusChange: (id: string, status: StatusType) => void;
+  onOpenDrawer: (asset: PortfolioAsset) => void;
 }
 
-function AssetCard({ asset, isUpdating, onStatusChange }: AssetCardProps) {
+function AssetCard({ asset, isUpdating, onStatusChange, onOpenDrawer }: AssetCardProps) {
   const currentDollars = asset.currentValue / 100;
   const purchaseDollars = asset.purchasePrice / 100;
   const pnl = ((currentDollars - purchaseDollars) / purchaseDollars) * 100;
@@ -457,13 +463,16 @@ function AssetCard({ asset, isUpdating, onStatusChange }: AssetCardProps) {
 
   return (
     <div
-      className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid"
+      className="card-terminal p-5 flex flex-col gap-3 rounded-sm break-inside-avoid cursor-pointer group"
       data-testid={`card-asset-${asset.id}`}
       style={isUrgent && !isLiquidated ? { borderColor: "rgba(239,68,68,0.5)" } : {}}
+      onClick={() => onOpenDrawer(asset)}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h4 className="font-montserrat font-semibold text-sm text-gray-200 leading-tight">{asset.model}</h4>
+          <h4 className="font-montserrat font-semibold text-sm text-gray-200 leading-tight group-hover:text-white transition-colors">
+            {asset.model}
+          </h4>
           <p className="font-inter text-[10px] text-[#9126EF]/60 uppercase tracking-wider mt-0.5">{asset.category}</p>
         </div>
         <span
@@ -496,15 +505,20 @@ function AssetCard({ asset, isUpdating, onStatusChange }: AssetCardProps) {
         </div>
       )}
 
+      {/* Tap hint */}
+      <div className="font-inter text-[9px] text-[#9126EF]/30 uppercase tracking-wider group-hover:text-[#9126EF]/60 transition-colors">
+        Tap to analyse →
+      </div>
+
       {/* Action Buttons */}
-      <div className="flex gap-2 mt-auto pt-2">
+      <div className="flex gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
         {!isLiquidated ? (
           <>
             <Button
               className="btn-lime-pulse font-montserrat uppercase text-[10px] h-8 flex-1 rounded-none"
               data-testid={`btn-liquidate-${asset.id}`}
-              disabled={isUpdating || status === "ACTION_REQUIRED" && false}
-              onClick={() => onStatusChange(asset.id, "LIQUIDATE")}
+              disabled={isUpdating}
+              onClick={(e) => { e.stopPropagation(); onStatusChange(asset.id, "LIQUIDATE"); }}
             >
               {isUpdating ? "…" : "Liquidate"}
             </Button>
@@ -512,7 +526,7 @@ function AssetCard({ asset, isUpdating, onStatusChange }: AssetCardProps) {
               variant="outline"
               className="font-montserrat uppercase text-[10px] h-8 px-3 rounded-none border-purple-glow text-[#9126EF]/80 hover:bg-[#9126EF]/10 bg-transparent"
               data-testid={`btn-hold-${asset.id}`}
-              onClick={() => onStatusChange(asset.id, "HOLD")}
+              onClick={(e) => { e.stopPropagation(); onStatusChange(asset.id, "HOLD"); }}
             >
               Hold
             </Button>
