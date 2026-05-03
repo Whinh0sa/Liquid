@@ -78,10 +78,12 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   type SellStage = "idle" | "processing" | "success";
   const [sellStage, setSellStage] = useState<SellStage>("idle");
   const [sellOffsetDays, setSellOffsetDays] = useState(0);
+  const [condition, setCondition] = useState<ConditionKey>("good");
 
   // Reset stage when a different asset opens
   useEffect(() => { setSellStage("idle"); }, [asset?.id]);
   useEffect(() => { setSellOffsetDays(0); }, [asset?.id]);
+  useEffect(() => { setCondition("good"); }, [asset?.id]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && sellStage === "idle") onClose(); };
@@ -118,6 +120,8 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const totalPnl      = ((currentValue - purchaseValue) / purchaseValue) * 100;
   const isDown        = totalPnl < 0;
   const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
+  const conditionMultiplier    = CONDITIONS[condition].multiplier;
+  const conditionAdjustedValue = currentValue * conditionMultiplier;
   const simulatedDaysAway = Math.max(0, daysAway - sellOffsetDays);
   const simulatedDrop = asset ? Math.max(0, asset.depreciationCliff.projectedDrop / 100 * (simulatedDaysAway / Math.max(daysAway, 1))) : 0;
   const simulatedValue = Math.max(0, currentValue - simulatedDrop);
@@ -496,9 +500,17 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 simulatedWindow={simulatedWindow}
               />
 
+              {/* ── Condition Grader ─────────────────────────────────────── */}
+              <ConditionGrader
+                currentValue={currentValue}
+                condition={condition}
+                setCondition={setCondition}
+              />
+
               {/* ── Platform estimates ───────────────────────────────────── */}
               <PlatformEstimates
                 currentValue={currentValue}
+                conditionMultiplier={conditionMultiplier}
                 urgency={sellWindow?.urgency ?? "PLANNED"}
               />
 
@@ -539,7 +551,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                       ? "PROCESSING..."
                       : sellStage === "success"
                       ? "FUNDS SECURED!"
-                      : `SELL NOW TO LOCK IN ${fmt(currentValue)}`}
+                      : `SELL NOW · ${fmt(conditionAdjustedValue)}`}
                   </button>
                   <AnimatePresence mode="wait">
                     {sellStage === "success" ? (
@@ -820,7 +832,92 @@ function WhatIfSimulator({
   );
 }
 
+// ── Condition Grader ──────────────────────────────────────────────────────────
+function ConditionGrader({
+  currentValue,
+  condition,
+  setCondition,
+}: {
+  currentValue: number;
+  condition: ConditionKey;
+  setCondition: (c: ConditionKey) => void;
+}) {
+  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const conf = CONDITIONS[condition];
+  const adjusted = currentValue * conf.multiplier;
+  const discount = currentValue - adjusted;
+
+  return (
+    <div className="rounded-2xl border border-gray-200 p-5 shadow-sm" style={{ backgroundColor: "#FAFAFA" }}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-blue-500" />
+          Condition Grader
+        </h3>
+        <span
+          className="text-[10px] font-bold px-2.5 py-1 rounded-full"
+          style={{ backgroundColor: conf.bg, color: conf.color, border: `1px solid ${conf.border}` }}
+        >
+          {conf.label} · {(conf.multiplier * 100).toFixed(0)}%
+        </span>
+      </div>
+
+      {/* 4-button selector */}
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        {(["mint", "good", "fair", "poor"] as ConditionKey[]).map((key) => {
+          const c = CONDITIONS[key];
+          const selected = condition === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setCondition(key)}
+              className="flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition-all"
+              style={{
+                borderColor: selected ? c.color : "#E5E7EB",
+                backgroundColor: selected ? c.bg : "#FFFFFF",
+              }}
+            >
+              <span className="text-xs font-bold" style={{ color: selected ? c.color : "#6B7280" }}>
+                {c.label}
+              </span>
+              <span className="text-[9px] font-medium" style={{ color: selected ? c.color : "#9CA3AF" }}>
+                {(c.multiplier * 100).toFixed(0)}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-gray-400 italic mb-3">{conf.sub}</p>
+
+      {/* Adjusted value box */}
+      <div
+        className="flex items-center justify-between px-4 py-3 rounded-xl border"
+        style={{ backgroundColor: conf.bg, borderColor: conf.border }}
+      >
+        <div>
+          <p className="text-xs font-semibold" style={{ color: conf.color }}>Condition-adjusted value</p>
+          {condition !== "mint" && discount > 0 && (
+            <p className="text-[10px] text-gray-400 mt-0.5">−{f(discount)} from wear &amp; condition</p>
+          )}
+        </div>
+        <p className="font-poppins font-bold text-lg" style={{ color: conf.color }}>{f(adjusted)}</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Platform Estimates ────────────────────────────────────────────────────────
+// ── Condition Config ──────────────────────────────────────────────────────────
+const CONDITIONS = {
+  mint: { label: "Mint",  sub: "Like new — original box, no marks",   multiplier: 1.00, color: "#10B981", bg: "#F0FDF4", border: "#6EE7B7" },
+  good: { label: "Good",  sub: "Minor wear — fully functional",        multiplier: 0.92, color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  fair: { label: "Fair",  sub: "Visible scratches — works perfectly",  multiplier: 0.78, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
+  poor: { label: "Poor",  sub: "Heavy wear or cosmetic damage",        multiplier: 0.60, color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
+} as const;
+type ConditionKey = keyof typeof CONDITIONS;
+
 const PLATFORMS_DATA = [
   { code: "FB", name: "Facebook Marketplace", fee: 0.02,   tag: "No listing fee",     speed: "3–7 days"  },
   { code: "SW", name: "Swappa",               fee: 0.03,   tag: "Electronics only",   speed: "1–3 days"  },
@@ -828,10 +925,11 @@ const PLATFORMS_DATA = [
   { code: "BM", name: "Back Market",          fee: 0.20,   tag: "Certified refurb",   speed: "5–14 days" },
 ];
 
-function PlatformEstimates({ currentValue, urgency }: { currentValue: number; urgency: UrgencyLevel }) {
+function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { currentValue: number; conditionMultiplier: number; urgency: UrgencyLevel }) {
   const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const adjusted = currentValue * conditionMultiplier;
   const ranked = [...PLATFORMS_DATA]
-    .map((p) => ({ ...p, net: currentValue * (1 - p.fee) }))
+    .map((p) => ({ ...p, net: adjusted * (1 - p.fee) }))
     .sort((a, b) => b.net - a.net);
 
   const fastCode = urgency === "WINDOW" || urgency === "URGENT" ? "SW" : null;

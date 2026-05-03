@@ -6,7 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X, Zap, ArrowRight, Timer, Trophy, Package, Award, CalendarDays, Flame } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X, Zap, ArrowRight, Timer, Trophy, Package, Award, CalendarDays, Flame, Activity } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
@@ -745,6 +745,16 @@ export default function Home() {
           </section>
         )}
 
+        {/* ── Portfolio Rings ───────────────────────────────────────────────── */}
+        {!isLoading && (
+          <PortfolioRings
+            healthScore={healthScore}
+            totalSaved={totalSaved}
+            portfolio={portfolio}
+            soldRecordsSize={soldRecords.size}
+          />
+        )}
+
         {/* ── Release Cycle Events ─────────────────────────────────────────── */}
         {!isLoading && (
           <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
@@ -882,6 +892,104 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// ── Portfolio Rings ───────────────────────────────────────────────────────────
+function PortfolioRings({
+  healthScore,
+  totalSaved,
+  portfolio,
+  soldRecordsSize,
+}: {
+  healthScore: { score: number; grade: string; color: string; label: string };
+  totalSaved: number;
+  portfolio: { depreciationCliff: { projectedDrop: number } }[];
+  soldRecordsSize: number;
+}) {
+  const totalAtRisk   = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);
+  const capitalPct    = totalAtRisk > 0 ? Math.min(100, Math.round((totalSaved / totalAtRisk) * 100)) : 0;
+  const efficiencyPct = portfolio.length > 0 ? Math.round((soldRecordsSize / portfolio.length) * 100) : 0;
+
+  const SIZE = 190;
+  const CX = 95;
+  const CY = 95;
+  const SW = 13;
+
+  const rings = [
+    { label: "Portfolio Health",  value: healthScore.score, color: "#2563EB", track: "#DBEAFE", radius: 72, detail: `${healthScore.grade} — ${healthScore.label}` },
+    { label: "Capital Protected", value: capitalPct,        color: "#10B981", track: "#D1FAE5", radius: 55, detail: `${capitalPct}% of at-risk saved` },
+    { label: "Sell Efficiency",   value: efficiencyPct,     color: "#F59E0B", track: "#FEF3C7", radius: 38, detail: `${soldRecordsSize} of ${portfolio.length} items sold` },
+  ];
+
+  return (
+    <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-blue-500" />
+          Portfolio Rings
+        </h3>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Live status</span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center gap-8">
+        {/* SVG Rings */}
+        <div className="shrink-0">
+          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+            {rings.map((ring) => {
+              const circ   = 2 * Math.PI * ring.radius;
+              const filled = Math.max(0, (ring.value / 100) * circ);
+              return (
+                <g key={ring.label}>
+                  <circle cx={CX} cy={CY} r={ring.radius} fill="none" stroke={ring.track}  strokeWidth={SW} />
+                  <circle
+                    cx={CX} cy={CY} r={ring.radius}
+                    fill="none"
+                    stroke={ring.color}
+                    strokeWidth={SW}
+                    strokeLinecap="round"
+                    strokeDasharray={`${filled} ${circ}`}
+                    transform={`rotate(-90 ${CX} ${CY})`}
+                    style={{ transition: "stroke-dasharray 1.2s ease" }}
+                  />
+                </g>
+              );
+            })}
+            {/* Centre label */}
+            <text x={CX} y={CY - 9} textAnchor="middle" fontSize="28" fontWeight="800" fill="#1F2937" fontFamily="'Poppins', sans-serif">
+              {healthScore.grade}
+            </text>
+            <text x={CX} y={CY + 11} textAnchor="middle" fontSize="10" fill="#9CA3AF" fontFamily="Inter, sans-serif" fontWeight="600" letterSpacing="0.5">
+              {healthScore.label.toUpperCase()}
+            </text>
+          </svg>
+        </div>
+
+        {/* Legend bars */}
+        <div className="flex-1 space-y-4 w-full">
+          {rings.map((ring) => (
+            <div key={ring.label}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ring.color }} />
+                  <span className="text-xs font-semibold text-gray-700">{ring.label}</span>
+                </div>
+                <span className="text-xs font-bold" style={{ color: ring.color }}>{ring.detail}</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: ring.track }}>
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{ width: `${ring.value}%`, backgroundColor: ring.color }}
+                />
+              </div>
+            </div>
+          ))}
+          <p className="text-[11px] text-gray-400 pt-1 leading-relaxed">
+            Rings update in real time as you sell. Hit the outer ring by selling all assets in their optimal window.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
