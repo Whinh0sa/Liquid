@@ -242,6 +242,10 @@ export default function Home() {
               <Link href="/rings" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Assets</Link>
               <Link href="/alerts" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Alerts</Link>
             </div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button type="button" className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"><Bell className="w-4 h-4" /></button>
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center"><span className="text-white text-xs font-bold">UH</span></div>
             <button
               type="button"
               className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
@@ -250,10 +254,6 @@ export default function Home() {
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button type="button" className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"><Bell className="w-4 h-4" /></button>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center"><span className="text-white text-xs font-bold">UH</span></div>
           </div>
         </div>
         {mobileMenuOpen && (
