@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { eq } from "drizzle-orm";
+import { db } from "@workspace/db";
+import { assetsTable, releaseEventsTable } from "@workspace/db/schema";
 import {
   UpdateAssetStatusParams,
   UpdateAssetStatusBody,
@@ -6,113 +9,39 @@ import {
 
 const router = Router();
 
-// ─── THE DIGITAL TWIN DATABASE ───────────────────────────────────────────────
-// Structure: Fixed tech assets with algorithmic depreciation curves.
-// Values stored in cents to prevent floating-point math errors.
-// Mutable in-process for demo; in production this would be Drizzle/Postgres.
-interface DepreciationCliff {
-  daysAway: number;
-  projectedDrop: number;
-  reason: string;
-}
-
-type AssetStatus = "HOLD" | "LIQUIDATE" | "IN_TRANSIT" | "ACTION_REQUIRED";
-
-interface Asset {
-  id: string;
-  category: string;
-  model: string;
-  purchasePrice: number;
-  currentValue: number;
-  depreciationCliff: DepreciationCliff;
-  status: AssetStatus;
-}
-
-const userPortfolio: Asset[] = [
-  {
-    id: "AST-001",
-    category: "Hardware",
-    model: "iPhone 14 Pro - 256GB",
-    purchasePrice: 109900,
-    currentValue: 65000,
-    depreciationCliff: {
-      daysAway: 12,
-      projectedDrop: 15000,
-      reason: "Apple Fall Keynote Expected",
-    },
-    status: "HOLD",
-  },
-  {
-    id: "AST-002",
-    category: "Hardware",
-    model: "MacBook Pro M2 - 14 inch",
-    purchasePrice: 199900,
-    currentValue: 120000,
-    depreciationCliff: {
-      daysAway: 85,
-      projectedDrop: 20000,
-      reason: "Historical Q4 hardware cycle",
-    },
-    status: "HOLD",
-  },
-  {
-    id: "AST-003",
-    category: "Optics",
-    model: "Sony A7IV Body",
-    purchasePrice: 249800,
-    currentValue: 210000,
-    depreciationCliff: {
-      daysAway: 3,
-      projectedDrop: 35000,
-      reason: "Competitor Firmware Release",
-    },
-    status: "ACTION_REQUIRED",
-  },
-  {
-    id: "AST-004",
-    category: "Hardware",
-    model: "iPad Pro M4 - 13 inch",
-    purchasePrice: 139900,
-    currentValue: 105000,
-    depreciationCliff: {
-      daysAway: 42,
-      projectedDrop: 12000,
-      reason: "Expected iPadOS refresh cycle",
-    },
-    status: "HOLD",
-  },
-  {
-    id: "AST-005",
-    category: "Audio",
-    model: "Sony WH-1000XM5",
-    purchasePrice: 39900,
-    currentValue: 28000,
-    depreciationCliff: {
-      daysAway: 8,
-      projectedDrop: 8000,
-      reason: "New model rumored — XM6",
-    },
-    status: "ACTION_REQUIRED",
-  },
-];
+const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 // ─── GET /api/portfolio ───────────────────────────────────────────────────────
 router.get("/portfolio", async (req, res) => {
-  // Simulate network latency for realism
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  const assets = await db
+    .select()
+    .from(assetsTable)
+    .where(eq(assetsTable.userId, DEMO_USER_ID))
+    .orderBy(assetsTable.cliffDaysAway);
 
-  const totalValueCents = userPortfolio.reduce(
-    (acc, item) => acc + item.currentValue,
-    0,
-  );
+  const portfolio = assets.map((a) => ({
+    id: a.id,
+    category: a.category,
+    model: a.model,
+    condition: a.condition,
+    purchasePrice: a.purchasePrice,
+    currentValue: a.currentValue,
+    depreciationCliff: {
+      daysAway: a.cliffDaysAway,
+      projectedDrop: a.cliffProjectedDrop,
+      reason: a.cliffReason,
+    },
+    status: a.status,
+    notes: a.notes,
+  }));
 
-  // Capital at risk: cliffs within 15 days
-  const totalAtRiskCents = userPortfolio
-    .filter((item) => item.depreciationCliff.daysAway < 15)
-    .reduce((acc, item) => acc + item.depreciationCliff.projectedDrop, 0);
+  const totalValueCents = portfolio.reduce((acc, a) => acc + a.currentValue, 0);
+  const totalAtRiskCents = portfolio
+    .filter((a) => a.depreciationCliff.daysAway < 15)
+    .reduce((acc, a) => acc + a.depreciationCliff.projectedDrop, 0);
 
   res.json({
-    portfolio: userPortfolio,
+    portfolio,
     metrics: {
       totalNetWorth: totalValueCents / 100,
       capitalAtRisk: totalAtRiskCents / 100,
@@ -121,7 +50,7 @@ router.get("/portfolio", async (req, res) => {
 });
 
 // ─── PATCH /api/portfolio/:id ─────────────────────────────────────────────────
-router.patch("/portfolio/:id", (req, res) => {
+router.patch("/portfolio/:id", async (req, res) => {
   const paramsResult = UpdateAssetStatusParams.safeParse(req.params);
   if (!paramsResult.success) {
     res.status(400).json({ error: "Invalid asset ID" });
@@ -137,16 +66,44 @@ router.patch("/portfolio/:id", (req, res) => {
   const { id } = paramsResult.data;
   const { status } = bodyResult.data;
 
-  const asset = userPortfolio.find((a) => a.id === id);
-  if (!asset) {
+  const [updated] = await db
+    .update(assetsTable)
+    .set({ status: status as typeof assetsTable.$inferInsert["status"], updatedAt: new Date() })
+    .where(eq(assetsTable.id, id))
+    .returning();
+
+  if (!updated) {
     res.status(404).json({ error: `Asset ${id} not found` });
     return;
   }
 
-  asset.status = status as AssetStatus;
   req.log.info({ id, status }, "Asset status updated");
 
-  res.json(asset);
+  res.json({
+    id: updated.id,
+    category: updated.category,
+    model: updated.model,
+    condition: updated.condition,
+    purchasePrice: updated.purchasePrice,
+    currentValue: updated.currentValue,
+    depreciationCliff: {
+      daysAway: updated.cliffDaysAway,
+      projectedDrop: updated.cliffProjectedDrop,
+      reason: updated.cliffReason,
+    },
+    status: updated.status,
+    notes: updated.notes,
+  });
+});
+
+// ─── GET /api/release-events ──────────────────────────────────────────────────
+router.get("/release-events", async (req, res) => {
+  const events = await db
+    .select()
+    .from(releaseEventsTable)
+    .orderBy(releaseEventsTable.daysAway);
+
+  res.json({ events });
 });
 
 export default router;
