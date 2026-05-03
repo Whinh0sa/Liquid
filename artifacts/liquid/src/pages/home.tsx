@@ -71,6 +71,30 @@ const TIMELINE_STEPS = [
   { title: "Exit cleanly", description: "Liquidate leftovers before the cliff." },
 ];
 
+const PRODUCT_BENEFITS = [
+  {
+    title: "Sell at the right time",
+    body: "Liquid surfaces the resale window before depreciation erodes your value.",
+    icon: CalendarDays,
+    color: "#2563EB",
+    bg: "#EFF6FF",
+  },
+  {
+    title: "Know what is at risk",
+    body: "Track capital at risk, daily decay, and urgency without spreadsheet guesswork.",
+    icon: ShieldCheck,
+    color: "#10B981",
+    bg: "#F0FDF4",
+  },
+  {
+    title: "Act with confidence",
+    body: "Use condition-aware estimates and clear alerts to make better liquidation decisions.",
+    icon: BellRing,
+    color: "#F59E0B",
+    bg: "#FFFBEB",
+  },
+];
+
 const RELEASE_EVENTS = [
   { id: 1, daysAway: 12, title: "Apple iPhone 16 Series", affects: "iPhone 14 Pro - 256GB", impact: -20, severity: "critical" as const },
   { id: 2, daysAway: 38, title: "Sony A7R VI Announcement", affects: "Sony A7IV Body", impact: -15, severity: "high" as const },
@@ -279,6 +303,44 @@ export default function Home() {
       </nav>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
+        <section className="grid lg:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+            <p className="text-xs font-bold tracking-[0.25em] uppercase text-blue-600 mb-3">
+              Liquid
+            </p>
+            <h1 className="font-poppins font-black text-4xl sm:text-5xl text-gray-900 tracking-tight max-w-xl">
+              Know exactly when to sell your physical assets.
+            </h1>
+            <p className="text-gray-500 mt-4 text-base leading-7 max-w-2xl">
+              Liquid is a resale intelligence platform for electronics and other
+              high-value physical assets. It shows when value is about to decay,
+              what is at risk, and what to do next.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/" className="px-4 py-2.5 rounded-xl font-semibold text-white bg-blue-600 shadow-sm">
+                View portfolio
+              </Link>
+              <Link href="/analysis" className="px-4 py-2.5 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">
+                See analysis
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {PRODUCT_BENEFITS.map((item) => (
+              <div key={item.title} className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm flex gap-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.bg }}>
+                  <item.icon className="w-5 h-5" style={{ color: item.color }} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-1">{item.title}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">{item.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <AnimatePresence>
           {urgentAssets.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }}>
