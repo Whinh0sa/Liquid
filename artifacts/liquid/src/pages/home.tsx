@@ -6,7 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, Clock, CheckCircle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
@@ -49,6 +49,16 @@ export default function Home() {
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
   const [sellingIds, setSellingIds] = useState<Set<string>>(new Set());
   const [soldRecords, setSoldRecords] = useState<Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>>(new Map());
+  const [priceAlerts, setPriceAlerts] = useState<Map<string, number>>(new Map());
+
+  const onSetAlert = (id: string, price: number | null) => {
+    setPriceAlerts((prev) => {
+      const next = new Map(prev);
+      if (price === null) next.delete(id);
+      else next.set(id, price);
+      return next;
+    });
+  };
   const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
 
   const { data, isLoading } = useGetPortfolio({
@@ -105,6 +115,12 @@ export default function Home() {
   const urgentAssets = portfolio.filter(
     (a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT",
   );
+
+  const firedAlerts = portfolio.filter((a) => {
+    const floor = priceAlerts.get(a.id);
+    return floor !== undefined && a.currentValue / 100 <= floor &&
+      a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT" && !sellingIds.has(a.id);
+  });
 
   // Total depreciation avoided across all sold assets this session
   const totalSaved = useMemo(() => {
@@ -323,6 +339,38 @@ export default function Home() {
           </div>
         )}
 
+        {/* ── Price alert fired banner ──────────────────────────────────────── */}
+        <AnimatePresence>
+          {firedAlerts.length > 0 && !isLoading && (
+            <motion.div
+              key="fired-alerts"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3"
+            >
+              <BellRing className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" style={{ animation: "bounce 1s infinite" }} />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 mb-1">
+                  {firedAlerts.length} price floor alert{firedAlerts.length > 1 ? "s" : ""} triggered
+                </p>
+                <p className="text-sm text-amber-700">
+                  {firedAlerts.map((a) => (
+                    <button
+                      key={a.id}
+                      className="underline underline-offset-2 hover:text-amber-900 mr-3 font-medium"
+                      onClick={() => setDrawerAsset(a as PortfolioAsset)}
+                    >
+                      {a.model} — floor {fmt(priceAlerts.get(a.id)!)}
+                    </button>
+                  ))}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Asset Grid ───────────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -347,8 +395,10 @@ export default function Home() {
                     asset={asset as PortfolioAsset}
                     isSelling={sellingIds.has(asset.id)}
                     soldRecord={soldRecords.get(asset.id)}
+                    alertPrice={priceAlerts.get(asset.id)}
                     onSell={handleSell}
                     onOpen={setDrawerAsset}
+                    onSetAlert={onSetAlert}
                   />
                 ))}
           </div>
@@ -385,11 +435,16 @@ interface AssetCardProps {
   asset: PortfolioAsset;
   isSelling: boolean;
   soldRecord?: SoldRecord;
+  alertPrice?: number;
   onSell: (id: string) => void;
   onOpen: (asset: PortfolioAsset) => void;
+  onSetAlert: (id: string, price: number | null) => void;
 }
 
-function AssetCard({ asset, isSelling, soldRecord, onSell, onOpen }: AssetCardProps) {
+function AssetCard({ asset, isSelling, soldRecord, alertPrice, onSell, onOpen, onSetAlert }: AssetCardProps) {
+  const [showAlertInput, setShowAlertInput] = useState(false);
+  const [alertInput, setAlertInput]         = useState("");
+
   const current  = asset.currentValue / 100;
   const purchase = asset.purchasePrice / 100;
   const pnl      = ((current - purchase) / purchase) * 100;
@@ -397,23 +452,37 @@ function AssetCard({ asset, isSelling, soldRecord, onSell, onOpen }: AssetCardPr
   const cliff    = asset.depreciationCliff;
   const isSold   = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
 
-  // Swap to the Recovery Card as soon as selling begins or API confirms sale
+  // Swap to Recovery Card once selling starts or API confirms sale
   if (isSelling || isSold) {
     return <RecoveryCard asset={asset} soldRecord={soldRecord} />;
   }
 
-  const sellWindow = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
-  const urgencyPill = URGENCY_PILL[sellWindow.urgency];
+  const sellWindow      = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
+  const urgencyPill     = URGENCY_PILL[sellWindow.urgency];
+  const isAlertFired    = alertPrice !== undefined && current <= alertPrice;
+  const alertHasBeenSet = alertPrice !== undefined;
+
+  const confirmAlert = () => {
+    const v = parseFloat(alertInput);
+    if (!isNaN(v) && v > 0) {
+      onSetAlert(asset.id, v);
+      setShowAlertInput(false);
+      setAlertInput("");
+    }
+  };
 
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-4 cursor-pointer group hover:shadow-md hover:border-gray-300 transition-all duration-500"
+      className="bg-white rounded-2xl p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300"
       data-testid={`card-asset-${asset.id}`}
-      onClick={() => !isSelling && !isSold && onOpen(asset)}
+      onClick={() => onOpen(asset)}
       style={{
-        opacity: isSelling ? 0.5 : 1,
-        pointerEvents: isSelling ? "none" : "auto",
-        transition: "opacity 0.4s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+        border: isAlertFired
+          ? "1.5px solid #F59E0B"
+          : alertHasBeenSet
+          ? "1.5px solid #FCD34D"
+          : "1px solid #E5E7EB",
+        boxShadow: isAlertFired ? "0 0 0 3px rgba(245,158,11,0.12)" : undefined,
       }}
     >
       {/* Header */}
@@ -424,20 +493,39 @@ function AssetCard({ asset, isSelling, soldRecord, onSell, onOpen }: AssetCardPr
             {asset.model}
           </h3>
         </div>
-        {/* SOLD badge — shown when selling or already sold */}
-        {(isSelling || isSold) ? (
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0">
-            SOLD
-          </span>
-        ) : (
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Amber bell badge if alert is set */}
+          {alertHasBeenSet && (
+            <span
+              className="flex items-center gap-0.5 text-[10px] font-bold px-2 py-1 rounded-full border"
+              style={isAlertFired
+                ? { color: "#92400E", backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }
+                : { color: "#B45309", backgroundColor: "#FFFBEB", borderColor: "#FDE68A" }}
+            >
+              {isAlertFired
+                ? <BellRing className="w-2.5 h-2.5" />
+                : <Bell className="w-2.5 h-2.5" />}
+              {fmt(alertPrice)}
+            </span>
+          )}
           <span
-            className="text-[10px] font-bold px-2 py-1 rounded-full border shrink-0 whitespace-nowrap"
+            className="text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap"
             style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}
           >
             {urgencyPill.label}
           </span>
-        )}
+        </div>
       </div>
+
+      {/* Alert fired callout */}
+      {isAlertFired && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
+          <BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <p className="text-xs font-semibold text-amber-800 flex-1">
+            Floor hit — value at or below your {fmt(alertPrice)} alert
+          </p>
+        </div>
+      )}
 
       {/* Value */}
       <div className="flex items-baseline justify-between">
@@ -448,47 +536,87 @@ function AssetCard({ asset, isSelling, soldRecord, onSell, onOpen }: AssetCardPr
         </span>
       </div>
 
-      {/* Sell-by date pill — hidden once selling begins */}
-      {!isSelling && !isSold && (
-        <div className="flex items-center justify-between">
-          <div
-            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
-            style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}
-          >
-            <Clock className="w-3 h-3" />
-            {sellWindow.sellByLabel}
-          </div>
-          <span className="text-xs text-gray-400">
-            −{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d
-          </span>
+      {/* Sell-by date pill */}
+      <div className="flex items-center justify-between">
+        <div
+          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+          style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}
+        >
+          <Clock className="w-3 h-3" />
+          {sellWindow.sellByLabel}
         </div>
-      )}
+        <span className="text-xs text-gray-400">
+          −{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d
+        </span>
+      </div>
 
       {/* CTAs */}
-      <div className="flex gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
-        {(isSelling || isSold) ? (
-          <div className="text-sm font-medium text-emerald-600 py-1 font-semibold">
-            {isSelling ? "Processing sale…" : asset.status === "LIQUIDATE" ? "Pending sale…" : "In transit"}
-          </div>
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <button
+          data-testid={`btn-sell-${asset.id}`}
+          onClick={(e) => { e.stopPropagation(); onSell(asset.id); }}
+          className="flex-1 h-9 rounded-xl text-xs font-bold text-white transition-all"
+          style={{ backgroundColor: "#10B981" }}
+        >
+          Sell Now
+        </button>
+        <button
+          className="h-9 px-4 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+          data-testid={`btn-analyse-${asset.id}`}
+          onClick={(e) => { e.stopPropagation(); onOpen(asset); }}
+        >
+          Analyse
+        </button>
+      </div>
+
+      {/* Price floor alert row */}
+      <div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
+        {!alertHasBeenSet ? (
+          showAlertInput ? (
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <span className="text-xs text-gray-400 shrink-0">Floor $</span>
+              <input
+                type="number"
+                value={alertInput}
+                onChange={(e) => setAlertInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") confirmAlert(); if (e.key === "Escape") { setShowAlertInput(false); setAlertInput(""); }}}
+                placeholder={current.toFixed(0)}
+                autoFocus
+                className="flex-1 h-7 px-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-amber-400 min-w-0"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); confirmAlert(); }}
+                className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0"
+              >Set</button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }}
+                className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"
+              ><X className="w-3.5 h-3.5" /></button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowAlertInput(true); setAlertInput(current.toFixed(0)); }}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-amber-500 transition-colors"
+            >
+              <Bell className="w-3 h-3" />
+              Set price floor alert
+            </button>
+          )
         ) : (
-          <>
+          <div className="flex items-center justify-between">
+            <span className={`flex items-center gap-1.5 text-xs font-semibold ${isAlertFired ? "text-amber-600" : "text-amber-500"}`}>
+              <Bell className="w-3 h-3" />
+              Alert set at {fmt(alertPrice)}
+            </span>
             <button
-              data-testid={`btn-sell-${asset.id}`}
-              disabled={isSelling}
-              onClick={(e) => { e.stopPropagation(); onSell(asset.id); }}
-              className="flex-1 h-9 rounded-xl text-xs font-bold text-white transition-all"
-              style={{ backgroundColor: "#10B981" }}
+              onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }}
+              className="text-gray-300 hover:text-gray-500 transition-colors"
+              title="Remove alert"
             >
-              Sell Now
+              <X className="w-3.5 h-3.5" />
             </button>
-            <button
-              className="h-9 px-4 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
-              data-testid={`btn-analyse-${asset.id}`}
-              onClick={(e) => { e.stopPropagation(); onOpen(asset); }}
-            >
-              Analyse
-            </button>
-          </>
+          </div>
         )}
       </div>
     </div>
