@@ -293,6 +293,18 @@ export default function Home() {
           </div>
         </section>
 
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Your Items</h2>
+            <span className="text-sm text-gray-400">{portfolio.length} items tracked</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {isLoading
+              ? [1,2,3,4].map((i) => <div key={i} className="bg-white rounded-2xl border border-gray-200 p-5 animate-pulse"><div className="h-3 bg-gray-100 rounded w-1/3 mb-3" /><div className="h-6 bg-gray-100 rounded w-2/3 mb-4" /><div className="h-8 bg-gray-100 rounded w-full" /></div>)
+              : portfolio.map((asset) => <AssetCard key={asset.id} asset={asset as PortfolioAsset} isSelling={sellingIds.has(asset.id)} soldRecord={soldRecords.get(asset.id)} alertPrice={priceAlerts.get(asset.id)} onSell={handleSell} onOpen={setDrawerAsset} onSetAlert={onSetAlert} />)}
+          </div>
+        </section>
+
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><BarChart2 className="w-4 h-4 text-blue-500" />Heatmap</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-50 text-gray-500">By urgency</span></div>
@@ -313,11 +325,6 @@ export default function Home() {
         {!isLoading && <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />Portfolio Rings</h3><Link href="/rings" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">Detail view <ArrowRight className="w-3 h-3" /></Link></div><div className="flex flex-col sm:flex-row items-center gap-8"><div className="shrink-0"><RingsGraphic grade={healthScore.grade} label={healthScore.label} score={healthScore.score} totalSaved={totalSaved} portfolio={portfolio} /></div><div className="flex-1 space-y-4 w-full"><RingRows healthScore={healthScore} totalSaved={totalSaved} portfolio={portfolio} soldRecordsSize={soldRecords.size} /></div></div></section>}
 
         {!isLoading && <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" />Upcoming Release Events</h3><Link href="/alerts" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">All alerts <ArrowRight className="w-3 h-3" /></Link></div><div className="space-y-3">{RELEASE_EVENTS.slice(0, 3).map((event) => { const sevConfig = { critical: { bg: "#FEE2E2", color: "#991B1B", countBg: "#FEF2F2", countColor: "#DC2626" }, high: { bg: "#FFEDD5", color: "#9A3412", countBg: "#FFF7ED", countColor: "#B45309" }, medium: { bg: "#FEF3C7", color: "#92400E", countBg: "#FFFBEB", countColor: "#B45309" }, low: { bg: "#DBEAFE", color: "#1D4ED8", countBg: "#EFF6FF", countColor: "#2563EB" } }[event.severity]; return <div key={event.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors bg-gray-50"><div className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: sevConfig.countBg }}><span className="font-poppins font-bold text-lg leading-none" style={{ color: sevConfig.countColor }}>{event.daysAway}</span><span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">days</span></div><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{event.title}</p><p className="text-xs text-gray-400 truncate mt-0.5">Affects: <span className="font-medium text-gray-600">{event.affects}</span></p></div><div className="text-right shrink-0"><p className="text-lg font-bold text-red-500">{event.impact}%</p><span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: sevConfig.bg, color: sevConfig.color }}>{event.severity}</span></div></div>; })}</div></section>}
-
-        <section>
-          <div className="flex items-center justify-between mb-4"><h2 className="text-base font-semibold text-gray-900">Your Items</h2><span className="text-sm text-gray-400">{portfolio.length} items tracked</span></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{isLoading ? [1,2,3,4].map((i) => <div key={i} className="bg-white rounded-2xl border border-gray-200 p-5 animate-pulse"><div className="h-3 bg-gray-100 rounded w-1/3 mb-3" /><div className="h-6 bg-gray-100 rounded w-2/3 mb-4" /><div className="h-8 bg-gray-100 rounded w-full" /></div>) : portfolio.map((asset) => <AssetCard key={asset.id} asset={asset as PortfolioAsset} isSelling={sellingIds.has(asset.id)} soldRecord={soldRecords.get(asset.id)} alertPrice={priceAlerts.get(asset.id)} onSell={handleSell} onOpen={setDrawerAsset} onSetAlert={onSetAlert} />)}</div>
-        </section>
 
         {soldRecords.size > 0 && <SessionPerformanceCard soldRecords={soldRecords} portfolio={portfolio} totalSaved={totalSaved} />}
 
