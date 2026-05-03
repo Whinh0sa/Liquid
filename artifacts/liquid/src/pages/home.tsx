@@ -6,7 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X, Zap, ArrowRight, Timer, Trophy } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
@@ -84,6 +84,7 @@ export default function Home() {
           }
           return { previousNetWorth: prev };
         }
+        return undefined;
       },
       onError: (_err, _vars, context: { previousNetWorth?: number | null } | undefined) => {
         setOptimisticNetWorth(context?.previousNetWorth ?? null);
@@ -141,6 +142,54 @@ export default function Home() {
     const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
     return sw.urgency === "WINDOW";
   }).length;
+
+  // Portfolio health score A–F
+  const healthScore = useMemo(() => {
+    if (portfolio.length === 0) return { grade: "A", score: 100, color: "#10B981", label: "Excellent" };
+    let score = 100;
+    portfolio.forEach((a) => {
+      const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+      if (sw.urgency === "CLIFF")   score -= 28;
+      else if (sw.urgency === "URGENT") score -= 18;
+      else if (sw.urgency === "WINDOW") score -= 5;
+      else score += 3;
+    });
+    score = Math.min(100, Math.max(0, score));
+    const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 45 ? "D" : "F";
+    const color = score >= 75 ? "#10B981" : score >= 55 ? "#F59E0B" : "#EF4444";
+    const label = score >= 90 ? "Excellent" : score >= 75 ? "Good" : score >= 60 ? "Fair" : score >= 45 ? "At risk" : "Critical";
+    return { grade, score, color, label };
+  }, [portfolio]);
+
+  // Daily portfolio decay — amortised cost of missing all cliffs
+  const dailyDecay = useMemo(() => {
+    return portfolio.reduce((sum, a) => {
+      const days = a.depreciationCliff.daysAway;
+      const drop = a.depreciationCliff.projectedDrop / 100;
+      if (days > 0) sum += drop / days;
+      return sum;
+    }, 0);
+  }, [portfolio]);
+
+  // Smart moves: WINDOW/URGENT assets with an upgrade suggestion
+  const smartMoves = useMemo(() => {
+    const UPGRADE: Record<string, string> = {
+      Hardware: "iPhone 15 Pro",
+      Optics:   "Sony A7R V",
+      Audio:    "Reinvest cash",
+    };
+    return portfolio
+      .filter((a) => {
+        const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+        return sw.urgency === "WINDOW" || sw.urgency === "URGENT";
+      })
+      .map((a) => ({
+        asset:    a,
+        proceeds: a.currentValue / 100,
+        target:   UPGRADE[a.category] ?? "Rebalance portfolio",
+        urgency:  computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100).urgency,
+      }));
+  }, [portfolio]);
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col" style={{ backgroundColor: "#F9FAFB" }}>
@@ -283,10 +332,32 @@ export default function Home() {
           </AnimatePresence>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
             <SummaryTile label="Items Tracked" value={isLoading ? "—" : `${portfolio.length}`} icon={<BarChart2 className="w-4 h-4 text-blue-500" />} />
             <SummaryTile label="Sell Windows Open" value={isLoading ? "—" : `${windowOpenCount}`} valueColor={windowOpenCount > 0 ? "#10B981" : "#1F2937"} icon={<Clock className="w-4 h-4 text-emerald-500" />} />
             <SummaryTile label="Urgent Alerts" value={isLoading ? "—" : `${urgentAssets.length}`} valueColor={urgentAssets.length > 0 ? "#EF4444" : "#1F2937"} icon={<AlertTriangle className="w-4 h-4 text-red-400" />} />
+            {!isLoading && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1.5 text-gray-400">
+                  <Trophy className="w-4 h-4" style={{ color: healthScore.color }} />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-bold" style={{ color: healthScore.color }}>
+                    {healthScore.grade}
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: healthScore.color }}>
+                    {healthScore.score.toFixed(0)}/100
+                  </span>
+                </div>
+                <span className="text-xs text-gray-400 font-medium">Health Score — {healthScore.label}</span>
+                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mt-0.5">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${healthScore.score}%`, backgroundColor: healthScore.color }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -460,6 +531,103 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Smart Moves + Cost of Holding ───────────────────────────────── */}
+        {!isLoading && (
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            {/* Smart Moves */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-blue-500" />
+                  Smart Moves
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Trade-up ideas</span>
+              </div>
+              {smartMoves.length === 0 ? (
+                <p className="text-sm text-gray-400 py-4 text-center">No urgent moves right now — portfolio is well-timed.</p>
+              ) : (
+                <div className="space-y-3">
+                  {smartMoves.map(({ asset, proceeds, target, urgency }) => (
+                    <button
+                      key={asset.id}
+                      onClick={() => setDrawerAsset(asset as PortfolioAsset)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all text-left"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{asset.category}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{asset.model}</p>
+                        <p className="text-xs text-emerald-600 font-semibold mt-0.5">Sell → {fmt(proceeds)}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-300 shrink-0" />
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] text-gray-400 font-medium">Upgrade to</p>
+                        <p className="text-sm font-bold text-blue-600">{target}</p>
+                        <span
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={urgency === "WINDOW"
+                            ? { backgroundColor: "#D1FAE5", color: "#065F46" }
+                            : { backgroundColor: "#FFEDD5", color: "#9A3412" }}
+                        >
+                          {urgency === "WINDOW" ? "⚡ Sell now" : "Urgent"}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Cost of Holding */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-red-500" />
+                  Cost of Holding
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-500">Daily decay</span>
+              </div>
+              <div className="flex items-end gap-3 mb-5">
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Portfolio decay rate</p>
+                  <p className="font-poppins font-bold text-3xl text-red-500">{fmt(dailyDecay)}<span className="text-base font-semibold text-gray-400">/day</span></p>
+                  <p className="text-xs text-gray-400 mt-1">if all cliffs are missed (amortised)</p>
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {[...portfolio]
+                  .sort((a, b) => {
+                    const aD = a.depreciationCliff.daysAway > 0 ? a.depreciationCliff.projectedDrop / 100 / a.depreciationCliff.daysAway : 0;
+                    const bD = b.depreciationCliff.daysAway > 0 ? b.depreciationCliff.projectedDrop / 100 / b.depreciationCliff.daysAway : 0;
+                    return bD - aD;
+                  })
+                  .slice(0, 4)
+                  .map((asset) => {
+                    const rate = asset.depreciationCliff.daysAway > 0
+                      ? (asset.depreciationCliff.projectedDrop / 100) / asset.depreciationCliff.daysAway
+                      : 0;
+                    const pct = dailyDecay > 0 ? (rate / dailyDecay) * 100 : 0;
+                    return (
+                      <button key={asset.id} onClick={() => setDrawerAsset(asset as PortfolioAsset)} className="w-full text-left">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-gray-700 truncate">{asset.model}</span>
+                          <span className="text-xs font-bold text-red-400 shrink-0 ml-2">{fmt(rate)}/d</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full rounded-full bg-red-400" style={{ width: `${pct}%`, transition: "width 0.8s ease" }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-4 flex items-center gap-1.5">
+                <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+                Each day you wait past the cliff window is a permanent loss.
+              </p>
             </div>
           </section>
         )}
