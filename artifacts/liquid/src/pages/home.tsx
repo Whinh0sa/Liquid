@@ -44,6 +44,13 @@ const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: stri
   CLIFF:    { label: "Window closed", bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
 };
 
+const TIMELINE_STEPS = [
+  { title: "Sell now", description: "Move the most urgent assets first." },
+  { title: "Prep alerts", description: "Set floors and queue the next exits." },
+  { title: "Catch the window", description: "Capture the best remaining prices." },
+  { title: "Exit cleanly", description: "Liquidate leftovers before the cliff." },
+];
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
@@ -370,6 +377,92 @@ export default function Home() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Command center ───────────────────────────────────────────────── */}
+        {!isLoading && (
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Portfolio Heatmap</h3>
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Urgency grid</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {portfolio.map((asset) => {
+                  const sw = computeSellWindow(asset.depreciationCliff.daysAway, asset.depreciationCliff.projectedDrop / 100);
+                  const heat = sw.urgency === "WINDOW" ? "#10B981" : sw.urgency === "URGENT" ? "#F59E0B" : sw.urgency === "CLIFF" ? "#EF4444" : "#2563EB";
+                  const label = sw.urgency === "WINDOW" ? "Now" : sw.urgency === "URGENT" ? "Soon" : sw.urgency === "CLIFF" ? "Late" : "Wait";
+                  return (
+                    <button
+                      key={asset.id}
+                      onClick={() => setDrawerAsset(asset as PortfolioAsset)}
+                      className="rounded-xl p-3 text-left border transition-transform hover:-translate-y-0.5"
+                      style={{ backgroundColor: `${heat}12`, borderColor: `${heat}33` }}
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{asset.category}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{asset.model}</p>
+                      <div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.max(12, 100 - asset.depreciationCliff.daysAway * 4)}%`, backgroundColor: heat }} />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${heat}20`, color: heat }}>{label}</span>
+                        <span className="text-[10px] text-gray-400">{asset.depreciationCliff.daysAway}d</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Opportunity Radar</h3>
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">Best exits</span>
+              </div>
+              <div className="space-y-3">
+                {[...portfolio]
+                  .map((asset) => {
+                    const sw = computeSellWindow(asset.depreciationCliff.daysAway, asset.depreciationCliff.projectedDrop / 100);
+                    const score = Math.max(1, 10 - Math.min(9, asset.depreciationCliff.daysAway / 4) + (sw.urgency === "WINDOW" ? 2 : sw.urgency === "URGENT" ? 1 : 0));
+                    return { asset, score };
+                  })
+                  .sort((a, b) => b.score - a.score)
+                  .slice(0, 4)
+                  .map(({ asset, score }) => (
+                    <button key={asset.id} onClick={() => setDrawerAsset(asset as PortfolioAsset)} className="w-full text-left">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-gray-900 truncate">{asset.model}</span>
+                        <span className="text-xs font-bold text-gray-500">{score.toFixed(1)}/10</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-blue-500" style={{ width: `${score * 10}%` }} />
+                      </div>
+                      <p className="mt-1 text-[10px] text-gray-400">{asset.category} · {asset.depreciationCliff.daysAway}d to cliff</p>
+                    </button>
+                  ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Sell Timeline</h3>
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">Action flow</span>
+              </div>
+              <div className="space-y-3">
+                {TIMELINE_STEPS.map((step, index) => (
+                  <div key={step.title} className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${index === 0 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"}`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">{step.title}</p>
+                      <p className="text-xs text-gray-400">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── Asset Grid ───────────────────────────────────────────────────── */}
         <section>
