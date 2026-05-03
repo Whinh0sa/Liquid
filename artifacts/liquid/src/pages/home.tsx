@@ -6,7 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X, Zap, ArrowRight, Timer, Trophy } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Shield, BarChart2, Bell, BellRing, Clock, CheckCircle, ShieldCheck, X, Zap, ArrowRight, Timer, Trophy, Package, Award, CalendarDays, Flame } from "lucide-react";
 import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
@@ -51,6 +51,14 @@ const TIMELINE_STEPS = [
   { title: "Exit cleanly", description: "Liquidate leftovers before the cliff." },
 ];
 
+const RELEASE_EVENTS = [
+  { id: 1, daysAway: 12,  title: "Apple iPhone 16 Series",   affects: "iPhone 14 Pro - 256GB", impact: -20, severity: "critical" as const },
+  { id: 2, daysAway: 38,  title: "Sony A7R VI Announcement", affects: "Sony A7IV Body",         impact: -15, severity: "high"     as const },
+  { id: 3, daysAway: 117, title: "Sony WH-1000XM6 Launch",   affects: "Sony WH-1000XM5",       impact: -18, severity: "high"     as const },
+  { id: 4, daysAway: 129, title: "iPad Pro M5 Event",        affects: "iPad Pro M4",           impact: -12, severity: "medium"   as const },
+  { id: 5, daysAway: 180, title: "MacBook Pro M4 Refresh",   affects: "MacBook Pro M2",        impact:  -8, severity: "low"      as const },
+];
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
@@ -66,7 +74,8 @@ export default function Home() {
       return next;
     });
   };
-  const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
+  const [drawerAsset, setDrawerAsset]     = useState<PortfolioAsset | null>(null);
+  const [showBatchModal, setShowBatchModal] = useState(false);
 
   const { data, isLoading } = useGetPortfolio({
     query: { queryKey: getGetPortfolioQueryKey() },
@@ -97,6 +106,11 @@ export default function Home() {
       },
     },
   });
+
+  const handleBatchSell = () => {
+    batchTargets.forEach((a) => handleSell(a.id));
+    setShowBatchModal(false);
+  };
 
   const handleSell = (id: string) => {
     const asset = portfolio.find((a) => a.id === id);
@@ -191,6 +205,15 @@ export default function Home() {
       }));
   }, [portfolio]);
 
+  const batchTargets = useMemo(() =>
+    portfolio.filter((a) => {
+      const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+      return (sw.urgency === "WINDOW" || sw.urgency === "URGENT")
+        && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT"
+        && !sellingIds.has(a.id) && !soldRecords.has(a.id);
+    }),
+  [portfolio, sellingIds, soldRecords]);
+
   return (
     <div className="min-h-[100dvh] w-full flex flex-col" style={{ backgroundColor: "#F9FAFB" }}>
 
@@ -200,6 +223,94 @@ export default function Home() {
         onSell={handleSell}
         isSelling={drawerAsset ? sellingIds.has(drawerAsset.id) : false}
       />
+
+      {/* ── Batch Liquidation Modal ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showBatchModal && (
+          <>
+            <motion.div
+              key="batch-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[60]"
+              onClick={() => setShowBatchModal(false)}
+            />
+            <motion.div
+              key="batch-modal"
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="fixed inset-x-4 sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 top-1/2 -translate-y-1/2 z-[61] bg-white rounded-2xl shadow-2xl w-full sm:w-[480px] overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-poppins font-bold text-lg text-gray-900">
+                      Liquidate {batchTargets.length} item{batchTargets.length !== 1 ? "s" : ""}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Sell all assets in sell-window or urgent zone
+                    </p>
+                  </div>
+                  <button onClick={() => setShowBatchModal(false)} className="p-2 rounded-full hover:bg-gray-100 text-gray-400">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-3 max-h-72 overflow-y-auto">
+                {batchTargets.map((a) => {
+                  const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+                  return (
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{a.category}</p>
+                        <p className="text-sm font-semibold text-gray-900">{a.model}</p>
+                        <span
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={sw.urgency === "WINDOW"
+                            ? { backgroundColor: "#D1FAE5", color: "#065F46" }
+                            : { backgroundColor: "#FFEDD5", color: "#9A3412" }}
+                        >
+                          {sw.urgency === "WINDOW" ? "⚡ In window" : "Urgent"}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-base font-bold text-emerald-600">{fmt(a.currentValue / 100)}</p>
+                        <p className="text-xs text-red-400">saves {fmt(a.depreciationCliff.projectedDrop / 100)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="p-6 border-t border-gray-100">
+                <p className="text-sm font-semibold text-center text-gray-900 mb-1">
+                  Total proceeds:{" "}
+                  <span className="text-emerald-600">{fmt(batchTargets.reduce((s, a) => s + a.currentValue / 100, 0))}</span>
+                </p>
+                <p className="text-xs text-center text-gray-400 mb-4">
+                  Protects {fmt(batchTargets.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0))} from depreciation
+                </p>
+                <button
+                  onClick={handleBatchSell}
+                  className="w-full h-12 rounded-xl font-bold text-white text-sm tracking-wide flex items-center justify-center gap-2"
+                  style={{ backgroundColor: "#10B981", boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}
+                >
+                  <Package className="w-4 h-4" />
+                  SELL ALL {batchTargets.length} ITEMS NOW
+                </button>
+                <button
+                  onClick={() => setShowBatchModal(false)}
+                  className="w-full mt-2 h-10 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── Navigation ──────────────────────────────────────────────────────── */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -632,6 +743,55 @@ export default function Home() {
           </section>
         )}
 
+        {/* ── Release Cycle Events ─────────────────────────────────────────── */}
+        {!isLoading && (
+          <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-blue-500" />
+                Upcoming Release Events
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-500">Portfolio impact</span>
+            </div>
+            <div className="space-y-3">
+              {RELEASE_EVENTS.map((event) => {
+                const sevConfig = {
+                  critical: { bg: "#FEE2E2", color: "#991B1B", countBg: "#FEF2F2", countColor: "#DC2626" },
+                  high:     { bg: "#FFEDD5", color: "#9A3412", countBg: "#FFF7ED", countColor: "#B45309" },
+                  medium:   { bg: "#FEF3C7", color: "#92400E", countBg: "#FFFBEB", countColor: "#B45309" },
+                  low:      { bg: "#DBEAFE", color: "#1D4ED8", countBg: "#EFF6FF", countColor: "#2563EB" },
+                }[event.severity];
+                return (
+                  <div key={event.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors bg-gray-50">
+                    <div
+                      className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0"
+                      style={{ backgroundColor: sevConfig.countBg }}
+                    >
+                      <span className="font-poppins font-bold text-lg leading-none" style={{ color: sevConfig.countColor }}>
+                        {event.daysAway}
+                      </span>
+                      <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">days</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{event.title}</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">Affects: <span className="font-medium text-gray-600">{event.affects}</span></p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-bold text-red-500">{event.impact}%</p>
+                      <span
+                        className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: sevConfig.bg, color: sevConfig.color }}
+                      >
+                        {event.severity}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ── Asset Grid ───────────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -665,6 +825,11 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── Session Performance ──────────────────────────────────────────── */}
+        {soldRecords.size > 0 && (
+          <SessionPerformanceCard soldRecords={soldRecords} portfolio={portfolio} totalSaved={totalSaved} />
+        )}
+
         {/* ── How it works ─────────────────────────────────────────────────── */}
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
@@ -679,6 +844,35 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ── Floating Batch Liquidation Button ─────────────────────────────── */}
+      <AnimatePresence>
+        {batchTargets.length > 0 && !isLoading && (
+          <motion.div
+            key="float-batch"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: "spring", stiffness: 360, damping: 28 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
+          >
+            <button
+              onClick={() => setShowBatchModal(true)}
+              className="flex items-center gap-2.5 px-5 py-3.5 rounded-full font-bold text-white text-sm shadow-2xl whitespace-nowrap"
+              style={{ backgroundColor: "#10B981", boxShadow: "0 8px 32px rgba(16,185,129,0.55)" }}
+            >
+              <Package className="w-4 h-4" />
+              Sell All Urgent
+              <span className="bg-white/25 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                {batchTargets.length}
+              </span>
+              <span className="ml-1 bg-emerald-700/40 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {fmt(batchTargets.reduce((s, a) => s + a.currentValue / 100, 0))}
+              </span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <footer className="border-t border-gray-200 py-6 bg-white">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <span className="font-poppins font-bold text-blue-600">Liquid</span>
@@ -686,6 +880,94 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// ── Session Performance Card ──────────────────────────────────────────────────
+interface SoldRecordMap { saleValue: number; dropAvoided: number; soldAt: number }
+
+function SessionPerformanceCard({
+  soldRecords,
+  portfolio,
+  totalSaved,
+}: {
+  soldRecords: Map<string, SoldRecordMap>;
+  portfolio: { depreciationCliff: { daysAway: number; projectedDrop: number } }[];
+  totalSaved: number;
+}) {
+  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+  const itemsSold = soldRecords.size;
+  const totalProceeds = Array.from(soldRecords.values()).reduce((s, r) => s + r.saleValue, 0);
+  const totalAtRisk   = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);
+  const efficiency    = totalAtRisk > 0 ? Math.min(100, Math.round((totalSaved / totalAtRisk) * 100)) : 0;
+
+  const trophies: { icon: string; label: string; unlocked: boolean }[] = [
+    { icon: "⚡", label: "First Exit",     unlocked: itemsSold >= 1 },
+    { icon: "🔥", label: "Hot Streak",     unlocked: itemsSold >= 3 },
+    { icon: "💰", label: "Big Earner",     unlocked: totalProceeds >= 1000 },
+    { icon: "🛡️", label: "Risk Shield",   unlocked: totalSaved >= 100 },
+    { icon: "🏆", label: "Window Master",  unlocked: efficiency >= 50 },
+    { icon: "🚀", label: "Full Liquidation", unlocked: itemsSold >= 5 },
+  ];
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"
+    >
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <Award className="w-4 h-4 text-amber-500" />
+          Session Performance
+        </h3>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">This session</span>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-3 mb-5">
+        {[
+          { label: "Sold",        value: `${itemsSold}`,      sub: "items",       color: "#2563EB" },
+          { label: "Proceeds",    value: f(totalProceeds),    sub: "collected",   color: "#10B981" },
+          { label: "Protected",   value: f(totalSaved),       sub: "from drops",  color: "#10B981" },
+          { label: "Efficiency",  value: `${efficiency}%`,    sub: "of at-risk",  color: efficiency >= 75 ? "#10B981" : efficiency >= 40 ? "#F59E0B" : "#EF4444" },
+        ].map((s) => (
+          <div key={s.label} className="rounded-xl p-3 bg-gray-50 border border-gray-100 text-center">
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">{s.label}</p>
+            <p className="font-poppins font-bold text-base leading-tight" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Trophy Wall */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5">
+          <Flame className="w-3.5 h-3.5 text-orange-400" />
+          Achievement Wall
+        </p>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {trophies.map((t) => (
+            <div
+              key={t.label}
+              className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border text-center transition-all"
+              style={{
+                backgroundColor: t.unlocked ? "#FFFBEB" : "#F9FAFB",
+                borderColor:     t.unlocked ? "#FDE68A" : "#E5E7EB",
+                opacity:         t.unlocked ? 1 : 0.5,
+              }}
+            >
+              <span className="text-xl leading-none" style={{ filter: t.unlocked ? "none" : "grayscale(1)" }}>
+                {t.icon}
+              </span>
+              <p className="text-[9px] font-semibold text-gray-600 leading-tight">{t.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.section>
   );
 }
 
