@@ -1,7 +1,4 @@
 import { Router } from "express";
-import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@workspace/db";
-import { assetsTable, priceAlertsTable, releaseEventsTable } from "@workspace/db/schema";
 import {
   UpdateAssetStatusParams,
   UpdateAssetStatusBody,
@@ -9,52 +6,113 @@ import {
 
 const router = Router();
 
-const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+// ─── THE DIGITAL TWIN DATABASE ───────────────────────────────────────────────
+// Structure: Fixed tech assets with algorithmic depreciation curves.
+// Values stored in cents to prevent floating-point math errors.
+// Mutable in-process for demo; in production this would be Drizzle/Postgres.
+interface DepreciationCliff {
+  daysAway: number;
+  projectedDrop: number;
+  reason: string;
+}
 
-router.get("/portfolio", async (req, res) => {
-  const assets = await db
-    .select()
-    .from(assetsTable)
-    .where(eq(assetsTable.userId, DEMO_USER_ID))
-    .orderBy(assetsTable.cliffDaysAway);
+type AssetStatus = "HOLD" | "LIQUIDATE" | "IN_TRANSIT" | "ACTION_REQUIRED";
 
-  const alerts = await db
-    .select()
-    .from(priceAlertsTable)
-    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.isActive, true)));
+interface Asset {
+  id: string;
+  category: string;
+  model: string;
+  purchasePrice: number;
+  currentValue: number;
+  depreciationCliff: DepreciationCliff;
+  status: AssetStatus;
+}
 
-  const alertByAssetId = new Map(alerts.map((alert) => [alert.assetId, alert]));
-
-  const portfolio = assets.map((a) => ({
-    id: a.id,
-    category: a.category,
-    model: a.model,
-    condition: a.condition,
-    purchasePrice: a.purchasePrice,
-    currentValue: a.currentValue,
+const userPortfolio: Asset[] = [
+  {
+    id: "AST-001",
+    category: "Hardware",
+    model: "iPhone 14 Pro - 256GB",
+    purchasePrice: 109900,
+    currentValue: 65000,
     depreciationCliff: {
-      daysAway: a.cliffDaysAway,
-      projectedDrop: a.cliffProjectedDrop,
-      reason: a.cliffReason,
+      daysAway: 12,
+      projectedDrop: 15000,
+      reason: "Apple Fall Keynote Expected",
     },
-    status: a.status,
-    notes: a.notes,
-    priceAlert: alertByAssetId.get(a.id)
-      ? {
-          floorPrice: alertByAssetId.get(a.id)?.floorPrice ?? null,
-          triggeredAt: alertByAssetId.get(a.id)?.triggeredAt ?? null,
-          isActive: alertByAssetId.get(a.id)?.isActive ?? false,
-        }
-      : null,
-  }));
+    status: "HOLD",
+  },
+  {
+    id: "AST-002",
+    category: "Hardware",
+    model: "MacBook Pro M2 - 14 inch",
+    purchasePrice: 199900,
+    currentValue: 120000,
+    depreciationCliff: {
+      daysAway: 85,
+      projectedDrop: 20000,
+      reason: "Historical Q4 hardware cycle",
+    },
+    status: "HOLD",
+  },
+  {
+    id: "AST-003",
+    category: "Optics",
+    model: "Sony A7IV Body",
+    purchasePrice: 249800,
+    currentValue: 210000,
+    depreciationCliff: {
+      daysAway: 3,
+      projectedDrop: 35000,
+      reason: "Competitor Firmware Release",
+    },
+    status: "ACTION_REQUIRED",
+  },
+  {
+    id: "AST-004",
+    category: "Hardware",
+    model: "iPad Pro M4 - 13 inch",
+    purchasePrice: 139900,
+    currentValue: 105000,
+    depreciationCliff: {
+      daysAway: 42,
+      projectedDrop: 12000,
+      reason: "Expected iPadOS refresh cycle",
+    },
+    status: "HOLD",
+  },
+  {
+    id: "AST-005",
+    category: "Audio",
+    model: "Sony WH-1000XM5",
+    purchasePrice: 39900,
+    currentValue: 28000,
+    depreciationCliff: {
+      daysAway: 8,
+      projectedDrop: 8000,
+      reason: "New model rumored — XM6",
+    },
+    status: "ACTION_REQUIRED",
+  },
+];
 
-  const totalValueCents = portfolio.reduce((acc, a) => acc + a.currentValue, 0);
-  const totalAtRiskCents = portfolio
-    .filter((a) => a.depreciationCliff.daysAway < 15)
-    .reduce((acc, a) => acc + a.depreciationCliff.projectedDrop, 0);
+// ─── GET /api/portfolio ───────────────────────────────────────────────────────
+router.get("/portfolio", async (req, res) => {
+  // Simulate network latency for realism
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  const totalValueCents = userPortfolio.reduce(
+    (acc, item) => acc + item.currentValue,
+    0,
+  );
+
+  // Capital at risk: cliffs within 15 days
+  const totalAtRiskCents = userPortfolio
+    .filter((item) => item.depreciationCliff.daysAway < 15)
+    .reduce((acc, item) => acc + item.depreciationCliff.projectedDrop, 0);
 
   res.json({
-    portfolio,
+    portfolio: userPortfolio,
     metrics: {
       totalNetWorth: totalValueCents / 100,
       capitalAtRisk: totalAtRiskCents / 100,
@@ -62,7 +120,8 @@ router.get("/portfolio", async (req, res) => {
   });
 });
 
-router.patch("/portfolio/:id", async (req, res) => {
+// ─── PATCH /api/portfolio/:id ─────────────────────────────────────────────────
+router.patch("/portfolio/:id", (req, res) => {
   const paramsResult = UpdateAssetStatusParams.safeParse(req.params);
   if (!paramsResult.success) {
     res.status(400).json({ error: "Invalid asset ID" });
@@ -78,107 +137,16 @@ router.patch("/portfolio/:id", async (req, res) => {
   const { id } = paramsResult.data;
   const { status } = bodyResult.data;
 
-  const [updated] = await db
-    .update(assetsTable)
-    .set({ status: status as typeof assetsTable.$inferInsert["status"], updatedAt: new Date() })
-    .where(eq(assetsTable.id, id))
-    .returning();
-
-  if (!updated) {
+  const asset = userPortfolio.find((a) => a.id === id);
+  if (!asset) {
     res.status(404).json({ error: `Asset ${id} not found` });
     return;
   }
 
+  asset.status = status as AssetStatus;
   req.log.info({ id, status }, "Asset status updated");
 
-  res.json({
-    id: updated.id,
-    category: updated.category,
-    model: updated.model,
-    condition: updated.condition,
-    purchasePrice: updated.purchasePrice,
-    currentValue: updated.currentValue,
-    depreciationCliff: {
-      daysAway: updated.cliffDaysAway,
-      projectedDrop: updated.cliffProjectedDrop,
-      reason: updated.cliffReason,
-    },
-    status: updated.status,
-    notes: updated.notes,
-  });
-});
-
-router.get("/release-events", async (req, res) => {
-  const events = await db
-    .select()
-    .from(releaseEventsTable)
-    .orderBy(releaseEventsTable.daysAway);
-
-  res.json({ events });
-});
-
-router.get("/price-alerts", async (req, res) => {
-  const alerts = await db
-    .select()
-    .from(priceAlertsTable)
-    .where(eq(priceAlertsTable.userId, DEMO_USER_ID));
-
-  res.json({ alerts });
-});
-
-router.put("/price-alerts/:assetId", async (req, res) => {
-  const assetId = String(req.params.assetId);
-  const floorPrice = Number(req.body?.floorPrice);
-
-  if (!assetId || !Number.isFinite(floorPrice) || floorPrice < 0) {
-    res.status(400).json({ error: "Invalid alert payload" });
-    return;
-  }
-
-  const existing = await db
-    .select()
-    .from(priceAlertsTable)
-    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.assetId, assetId)))
-    .limit(1);
-
-  const now = new Date();
-
-  if (existing[0]) {
-    const [updated] = await db
-      .update(priceAlertsTable)
-      .set({ floorPrice: Math.round(floorPrice), isActive: true, updatedAt: now })
-      .where(eq(priceAlertsTable.id, existing[0].id))
-      .returning();
-
-    res.json({ alert: updated });
-    return;
-  }
-
-  const [created] = await db
-    .insert(priceAlertsTable)
-    .values({
-      userId: DEMO_USER_ID,
-      assetId,
-      floorPrice: Math.round(floorPrice),
-      isActive: true,
-      triggeredAt: null,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
-
-  res.json({ alert: created });
-});
-
-router.delete("/price-alerts/:assetId", async (req, res) => {
-  const assetId = String(req.params.assetId);
-
-  await db
-    .update(priceAlertsTable)
-    .set({ isActive: false, updatedAt: new Date() })
-    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.assetId, assetId)));
-
-  res.status(204).send();
+  res.json(asset);
 });
 
 export default router;
