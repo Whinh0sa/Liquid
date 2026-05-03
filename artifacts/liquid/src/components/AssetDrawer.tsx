@@ -11,7 +11,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
-import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal } from "lucide-react";
+import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal, BellRing } from "lucide-react";
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 
 interface Asset {
@@ -22,6 +22,7 @@ interface Asset {
   currentValue: number;
   depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
   status: string;
+  priceAlert?: { floorPrice: number | null; triggeredAt: string | null; isActive: boolean } | null;
 }
 
 interface AssetDrawerProps {
@@ -76,12 +77,14 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const [sellOffsetDays, setSellOffsetDays] = useState(0);
   const [condition, setCondition] = useState<ConditionKey>("good");
   const [floorPrice, setFloorPrice] = useState(0);
+  const [savedAlert, setSavedAlert] = useState<Asset["priceAlert"]>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   useEffect(() => { setSellStage("idle"); }, [asset?.id]);
   useEffect(() => { setSellOffsetDays(0); }, [asset?.id]);
   useEffect(() => { setCondition("good"); }, [asset?.id]);
   useEffect(() => { setFloorPrice(asset ? Math.round((asset.currentValue / 100) * 0.9) : 0); }, [asset?.id]);
+  useEffect(() => { setSavedAlert(asset?.priceAlert ?? null); }, [asset?.id, asset?.priceAlert]);
   useEffect(() => { setAlertMessage(null); }, [asset?.id]);
 
   useEffect(() => {
@@ -115,12 +118,19 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
       setAlertMessage("Could not save alert.");
       return;
     }
+    const body = (await res.json()) as { alert: Asset["priceAlert"] };
+    setSavedAlert(body.alert ?? null);
     setAlertMessage(`Alert saved at ${fmt(floorPrice)}.`);
   };
 
   const handleClearAlert = async () => {
     if (!asset) return;
-    await fetch(`${import.meta.env.BASE_URL}api/price-alerts/${asset.id}`, { method: "DELETE" });
+    const res = await fetch(`${import.meta.env.BASE_URL}api/price-alerts/${asset.id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) {
+      setAlertMessage("Could not clear alert.");
+      return;
+    }
+    setSavedAlert(null);
     setAlertMessage("Alert cleared.");
   };
 
@@ -192,7 +202,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               </div>
               <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />Price Alert</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><BellRing className="w-4 h-4 text-blue-500" />Price Alert</h3>
                   <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Saved in DB</span>
                 </div>
                 <div className="space-y-3">
@@ -201,6 +211,10 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                   <div className="flex gap-2">
                     <button type="button" onClick={handleSaveAlert} disabled={!asset} className="flex-1 h-11 rounded-xl font-semibold text-white bg-blue-600 disabled:opacity-50">Save alert</button>
                     <button type="button" onClick={handleClearAlert} className="h-11 px-4 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">Clear</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {savedAlert?.isActive ? <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Alert saved · {fmt((savedAlert.floorPrice ?? 0) / 100)}</span> : <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-50 text-gray-500 border border-gray-200">No active alert</span>}
+                    {savedAlert?.triggeredAt && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">Triggered</span>}
                   </div>
                   {alertMessage && <p className="text-xs text-emerald-600">{alertMessage}</p>}
                 </div>
