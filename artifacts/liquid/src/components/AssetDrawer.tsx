@@ -11,7 +11,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
-import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users } from "lucide-react";
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -467,6 +467,23 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 />
               </div>
 
+              {/* ── Scenario comparison ──────────────────────────────────── */}
+              <ScenarioComparison
+                currentValue={currentValue}
+                dropDollars={dropDollars}
+                daysAway={daysAway}
+                sellWindow={sellWindow}
+              />
+
+              {/* ── Platform estimates ───────────────────────────────────── */}
+              <PlatformEstimates
+                currentValue={currentValue}
+                urgency={sellWindow?.urgency ?? "PLANNED"}
+              />
+
+              {/* ── Market demand ─────────────────────────────────────────── */}
+              <MarketDemand category={asset.category} daysAway={daysAway} />
+
             </div>
 
             {/* ── Sell button ──────────────────────────────────────────────── */}
@@ -588,6 +605,218 @@ function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof comp
         )}
         <span className="text-red-400">Cliff +{cliff}d</span>
       </div>
+    </div>
+  );
+}
+
+// ── Scenario Comparison ───────────────────────────────────────────────────────
+function ScenarioComparison({
+  currentValue, dropDollars, daysAway, sellWindow,
+}: {
+  currentValue: number;
+  dropDollars: number;
+  daysAway: number;
+  sellWindow: ReturnType<typeof computeSellWindow> | null;
+}) {
+  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const urgency   = sellWindow?.urgency ?? "PLANNED";
+  const postCliff = Math.max(0, currentValue - dropDollars);
+  const lossPct   = currentValue > 0 ? (dropDollars / currentValue) * 100 : 0;
+  const dailyCost = daysAway > 0 ? dropDollars / daysAway : dropDollars;
+
+  type Col = {
+    title: string; sub: string; value: number;
+    color: string; highlight: boolean; dimmed: boolean;
+    badge: { text: string; bg: string; color: string } | null;
+    pct: number | null;
+  };
+
+  const cols: Col[] = [
+    {
+      title: "Sell Today",
+      sub: urgency === "WINDOW"  ? "Window open ✓"
+         : urgency === "URGENT"  ? "Act fast"
+         : urgency === "CLIFF"   ? "Post-cliff"
+         : "Pre-window",
+      value: currentValue,
+      color: urgency === "WINDOW" ? "#059669" : urgency === "URGENT" ? "#EA580C" : "#1F2937",
+      highlight: urgency === "WINDOW" || urgency === "URGENT",
+      dimmed: false,
+      pct: null,
+      badge: urgency === "WINDOW"
+        ? { text: "Best time ✓", bg: "#D1FAE5", color: "#065F46" }
+        : urgency === "URGENT"
+        ? { text: "Act now", bg: "#FFEDD5", color: "#9A3412" }
+        : null,
+    },
+    {
+      title: urgency === "PLANNED" ? `+${sellWindow?.daysUntilWindow ?? "?"}d Window` : "Optimal window",
+      sub: urgency === "PLANNED" ? "Ideal listing zone"
+         : urgency === "WINDOW"  ? "You're here now"
+         : "Window closed",
+      value: currentValue,
+      color: urgency === "PLANNED" ? "#2563EB" : urgency === "WINDOW" ? "#059669" : "#9CA3AF",
+      highlight: urgency === "PLANNED",
+      dimmed: urgency === "URGENT" || urgency === "CLIFF",
+      pct: 0,
+      badge: urgency === "PLANNED"
+        ? { text: "Recommended", bg: "#DBEAFE", color: "#1D4ED8" }
+        : null,
+    },
+    {
+      title: "After cliff",
+      sub: `~${daysAway}d from now`,
+      value: postCliff,
+      color: "#DC2626",
+      highlight: false,
+      dimmed: false,
+      pct: -lossPct,
+      badge: { text: `−${f(dropDollars)}`, bg: "#FEE2E2", color: "#991B1B" },
+    },
+  ];
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <Activity className="w-4 h-4 text-blue-500" />
+        Sell Scenario Comparison
+      </h3>
+      <div className="grid grid-cols-3 gap-2">
+        {cols.map((col) => (
+          <div
+            key={col.title}
+            className="rounded-xl p-3 border flex flex-col gap-1"
+            style={{
+              backgroundColor: col.highlight ? "#F0FDF4" : "#F9FAFB",
+              borderColor: col.highlight ? "#6EE7B7" : "#E5E7EB",
+              opacity: col.dimmed ? 0.5 : 1,
+            }}
+          >
+            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">{col.title}</p>
+            <p className="font-poppins font-bold text-sm leading-tight" style={{ color: col.color }}>{f(col.value)}</p>
+            <p className="text-[10px] text-gray-400 leading-tight">{col.sub}</p>
+            {col.pct !== null && col.pct !== 0 && (
+              <p className="text-[10px] font-semibold text-red-500">{col.pct.toFixed(1)}%</p>
+            )}
+            {col.badge && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start mt-0.5"
+                style={{ backgroundColor: col.badge.bg, color: col.badge.color }}
+              >
+                {col.badge.text}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5">
+        <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+        Missing the cliff costs approx.{" "}
+        <strong className="text-gray-600 font-semibold">{f(dailyCost)}/day</strong> amortised over the window.
+      </p>
+    </div>
+  );
+}
+
+// ── Platform Estimates ────────────────────────────────────────────────────────
+const PLATFORMS_DATA = [
+  { code: "FB", name: "Facebook Marketplace", fee: 0.02,   tag: "No listing fee",     speed: "3–7 days"  },
+  { code: "SW", name: "Swappa",               fee: 0.03,   tag: "Electronics only",   speed: "1–3 days"  },
+  { code: "eB", name: "eBay",                 fee: 0.1325, tag: "Widest buyer reach",  speed: "3–10 days" },
+  { code: "BM", name: "Back Market",          fee: 0.20,   tag: "Certified refurb",   speed: "5–14 days" },
+];
+
+function PlatformEstimates({ currentValue, urgency }: { currentValue: number; urgency: UrgencyLevel }) {
+  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const ranked = [...PLATFORMS_DATA]
+    .map((p) => ({ ...p, net: currentValue * (1 - p.fee) }))
+    .sort((a, b) => b.net - a.net);
+
+  const fastCode = urgency === "WINDOW" || urgency === "URGENT" ? "SW" : null;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <ShoppingCart className="w-4 h-4 text-blue-500" />
+        Where to Sell
+      </h3>
+      <div className="space-y-2">
+        {ranked.map((p, i) => {
+          const isTop  = i === 0;
+          const isFast = p.code === fastCode;
+          return (
+            <div
+              key={p.code}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 border"
+              style={{
+                backgroundColor: isTop ? "#F0FDF4" : "#FAFAFA",
+                borderColor: isTop ? "#A7F3D0" : "#F3F4F6",
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-bold text-white"
+                style={{ backgroundColor: isTop ? "#10B981" : "#9CA3AF" }}
+              >
+                {p.code}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-semibold text-gray-800">{p.name}</span>
+                  {isTop && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Best $</span>
+                  )}
+                  {isFast && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">Fastest</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400">{p.tag} · {p.speed}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-sm font-bold" style={{ color: isTop ? "#059669" : "#1F2937" }}>{f(p.net)}</p>
+                <p className="text-[10px] text-gray-400">{((1 - p.fee) * 100).toFixed(0)}% net</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Market Demand ─────────────────────────────────────────────────────────────
+function MarketDemand({ category, daysAway }: { category: string; daysAway: number }) {
+  const BASE: Record<string, number> = { Hardware: 7, Optics: 6, Audio: 5 };
+  let score = BASE[category] ?? 6;
+  if (daysAway <= 7)       score += 2;
+  else if (daysAway <= 14) score += 1;
+  else if (daysAway >= 60) score -= 2;
+  score = Math.min(10, Math.max(1, score));
+
+  const level  = score >= 8 ? "High"   : score >= 5 ? "Moderate" : "Low";
+  const color  = score >= 8 ? "#10B981": score >= 5 ? "#F59E0B"  : "#EF4444";
+  const bgPill = score >= 8 ? "#D1FAE5": score >= 5 ? "#FEF3C7"  : "#FEE2E2";
+  const buyers = score >= 8 ? "100–180": score >= 5 ? "40–80"    : "10–30";
+  const trend  = daysAway <= 14 ? "↑ Rising — cliff creates buyer urgency" : daysAway >= 60 ? "→ Stable" : "→ Steady interest";
+
+  return (
+    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+      <div className="flex items-center justify-between mb-2.5">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-500" />
+          Market Demand
+        </h3>
+        <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color, backgroundColor: bgPill }}>
+          {level}
+        </span>
+      </div>
+      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+        <div
+          className="absolute left-0 top-0 h-full rounded-full"
+          style={{ width: `${score * 10}%`, backgroundColor: color, transition: "width 0.8s ease" }}
+        />
+      </div>
+      <p className="text-[11px] text-gray-500 font-medium">{trend}</p>
+      <p className="text-[10px] text-gray-400 mt-0.5">~{buyers} active buyers estimated for this category today</p>
     </div>
   );
 }
