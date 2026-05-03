@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { assetsTable, releaseEventsTable } from "@workspace/db/schema";
+import { assetsTable, priceAlertsTable, releaseEventsTable } from "@workspace/db/schema";
 import {
   UpdateAssetStatusParams,
   UpdateAssetStatusBody,
@@ -11,13 +11,19 @@ const router = Router();
 
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
-// ─── GET /api/portfolio ───────────────────────────────────────────────────────
 router.get("/portfolio", async (req, res) => {
   const assets = await db
     .select()
     .from(assetsTable)
     .where(eq(assetsTable.userId, DEMO_USER_ID))
     .orderBy(assetsTable.cliffDaysAway);
+
+  const alerts = await db
+    .select()
+    .from(priceAlertsTable)
+    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.isActive, true)));
+
+  const alertByAssetId = new Map(alerts.map((alert) => [alert.assetId, alert]));
 
   const portfolio = assets.map((a) => ({
     id: a.id,
@@ -33,6 +39,13 @@ router.get("/portfolio", async (req, res) => {
     },
     status: a.status,
     notes: a.notes,
+    priceAlert: alertByAssetId.get(a.id)
+      ? {
+          floorPrice: alertByAssetId.get(a.id)?.floorPrice ?? null,
+          triggeredAt: alertByAssetId.get(a.id)?.triggeredAt ?? null,
+          isActive: alertByAssetId.get(a.id)?.isActive ?? false,
+        }
+      : null,
   }));
 
   const totalValueCents = portfolio.reduce((acc, a) => acc + a.currentValue, 0);
@@ -49,7 +62,6 @@ router.get("/portfolio", async (req, res) => {
   });
 });
 
-// ─── PATCH /api/portfolio/:id ─────────────────────────────────────────────────
 router.patch("/portfolio/:id", async (req, res) => {
   const paramsResult = UpdateAssetStatusParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -96,7 +108,6 @@ router.patch("/portfolio/:id", async (req, res) => {
   });
 });
 
-// ─── GET /api/release-events ──────────────────────────────────────────────────
 router.get("/release-events", async (req, res) => {
   const events = await db
     .select()
@@ -104,6 +115,70 @@ router.get("/release-events", async (req, res) => {
     .orderBy(releaseEventsTable.daysAway);
 
   res.json({ events });
+});
+
+router.get("/price-alerts", async (req, res) => {
+  const alerts = await db
+    .select()
+    .from(priceAlertsTable)
+    .where(eq(priceAlertsTable.userId, DEMO_USER_ID));
+
+  res.json({ alerts });
+});
+
+router.put("/price-alerts/:assetId", async (req, res) => {
+  const assetId = String(req.params.assetId);
+  const floorPrice = Number(req.body?.floorPrice);
+
+  if (!assetId || !Number.isFinite(floorPrice) || floorPrice < 0) {
+    res.status(400).json({ error: "Invalid alert payload" });
+    return;
+  }
+
+  const existing = await db
+    .select()
+    .from(priceAlertsTable)
+    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.assetId, assetId)))
+    .limit(1);
+
+  const now = new Date();
+
+  if (existing[0]) {
+    const [updated] = await db
+      .update(priceAlertsTable)
+      .set({ floorPrice: Math.round(floorPrice), isActive: true, updatedAt: now })
+      .where(eq(priceAlertsTable.id, existing[0].id))
+      .returning();
+
+    res.json({ alert: updated });
+    return;
+  }
+
+  const [created] = await db
+    .insert(priceAlertsTable)
+    .values({
+      userId: DEMO_USER_ID,
+      assetId,
+      floorPrice: Math.round(floorPrice),
+      isActive: true,
+      triggeredAt: null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .returning();
+
+  res.json({ alert: created });
+});
+
+router.delete("/price-alerts/:assetId", async (req, res) => {
+  const assetId = String(req.params.assetId);
+
+  await db
+    .update(priceAlertsTable)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(and(eq(priceAlertsTable.userId, DEMO_USER_ID), eq(priceAlertsTable.assetId, assetId)));
+
+  res.status(204).send();
 });
 
 export default router;
