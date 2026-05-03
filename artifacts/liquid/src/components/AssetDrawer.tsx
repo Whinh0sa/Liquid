@@ -11,7 +11,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
-import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users } from "lucide-react";
+import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal } from "lucide-react";
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -77,9 +77,11 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 export default function AssetDrawer({ asset, onClose, onSell, isSelling }: AssetDrawerProps) {
   type SellStage = "idle" | "processing" | "success";
   const [sellStage, setSellStage] = useState<SellStage>("idle");
+  const [sellOffsetDays, setSellOffsetDays] = useState(0);
 
   // Reset stage when a different asset opens
   useEffect(() => { setSellStage("idle"); }, [asset?.id]);
+  useEffect(() => { setSellOffsetDays(0); }, [asset?.id]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && sellStage === "idle") onClose(); };
@@ -116,8 +118,13 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const totalPnl      = ((currentValue - purchaseValue) / purchaseValue) * 100;
   const isDown        = totalPnl < 0;
   const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
+  const simulatedDaysAway = Math.max(0, daysAway - sellOffsetDays);
+  const simulatedDrop = asset ? Math.max(0, asset.depreciationCliff.projectedDrop / 100 * (simulatedDaysAway / Math.max(daysAway, 1))) : 0;
+  const simulatedValue = Math.max(0, currentValue - simulatedDrop);
+  const simulatedLoss = Math.max(0, currentValue - simulatedValue);
 
   const sellWindow = asset ? computeSellWindow(daysAway, dropDollars) : null;
+  const simulatedWindow = asset ? computeSellWindow(simulatedDaysAway, simulatedDrop) : null;
   const urgencyConf = sellWindow ? URGENCY_CONFIG[sellWindow.urgency] : null;
 
   const { data: chartData, windowStartLabel, windowEndLabel, cliffLabel } = asset
@@ -475,6 +482,20 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 sellWindow={sellWindow}
               />
 
+              {/* ── What-if simulator ────────────────────────────────────── */}
+              <WhatIfSimulator
+                currentValue={currentValue}
+                purchaseValue={purchaseValue}
+                baseDrop={dropDollars}
+                daysAway={daysAway}
+                sellOffsetDays={sellOffsetDays}
+                setSellOffsetDays={setSellOffsetDays}
+                simulatedDaysAway={simulatedDaysAway}
+                simulatedValue={simulatedValue}
+                simulatedLoss={simulatedLoss}
+                simulatedWindow={simulatedWindow}
+              />
+
               {/* ── Platform estimates ───────────────────────────────────── */}
               <PlatformEstimates
                 currentValue={currentValue}
@@ -713,6 +734,87 @@ function ScenarioComparison({
         <Zap className="w-3 h-3 text-amber-400 shrink-0" />
         Missing the cliff costs approx.{" "}
         <strong className="text-gray-600 font-semibold">{f(dailyCost)}/day</strong> amortised over the window.
+      </p>
+    </div>
+  );
+}
+
+// ── What If Simulator ────────────────────────────────────────────────────────
+function WhatIfSimulator({
+  currentValue,
+  purchaseValue,
+  baseDrop,
+  daysAway,
+  sellOffsetDays,
+  setSellOffsetDays,
+  simulatedDaysAway,
+  simulatedValue,
+  simulatedLoss,
+  simulatedWindow,
+}: {
+  currentValue: number;
+  purchaseValue: number;
+  baseDrop: number;
+  daysAway: number;
+  sellOffsetDays: number;
+  setSellOffsetDays: (n: number) => void;
+  simulatedDaysAway: number;
+  simulatedValue: number;
+  simulatedLoss: number;
+  simulatedWindow: ReturnType<typeof computeSellWindow> | null;
+}) {
+  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const pctFromPurchase = purchaseValue > 0 ? ((simulatedValue - purchaseValue) / purchaseValue) * 100 : 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+          What-if Simulator
+        </h3>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Drag to explore</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Sell in</p>
+          <p className="text-2xl font-poppins font-bold text-gray-900">{sellOffsetDays}d</p>
+          <p className="text-xs text-gray-400 mt-1">{simulatedDaysAway}d until cliff</p>
+        </div>
+        <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Projected value</p>
+          <p className="text-2xl font-poppins font-bold text-emerald-600">{f(simulatedValue)}</p>
+          <p className="text-xs text-gray-400 mt-1">vs. now {f(currentValue)}</p>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={Math.max(0, Math.min(daysAway, 21))}
+        value={sellOffsetDays}
+        onChange={(e) => setSellOffsetDays(parseInt(e.target.value, 10))}
+        className="w-full accent-blue-600"
+      />
+      <div className="flex justify-between text-[10px] text-gray-400 font-medium mt-1">
+        <span>Sell now</span>
+        <span>+{Math.max(0, Math.min(daysAway, 21))}d</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="rounded-xl p-3 bg-red-50 border border-red-100">
+          <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-1">Value lost</p>
+          <p className="text-sm font-bold text-red-500">{f(simulatedLoss)}</p>
+        </div>
+        <div className="rounded-xl p-3 bg-blue-50 border border-blue-100">
+          <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1">PnL</p>
+          <p className="text-sm font-bold text-blue-600">{pctFromPurchase >= 0 ? "+" : ""}{pctFromPurchase.toFixed(1)}%</p>
+        </div>
+        <div className="rounded-xl p-3 bg-emerald-50 border border-emerald-100">
+          <p className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider mb-1">Sell state</p>
+          <p className="text-sm font-bold text-emerald-600">{simulatedWindow?.urgency === "WINDOW" ? "Ideal" : simulatedWindow?.urgency === "URGENT" ? "Urgent" : "Later"}</p>
+        </div>
+      </div>
+      <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+        This simulates waiting from today to a future sell date and estimates the remaining resale value.
       </p>
     </div>
   );
