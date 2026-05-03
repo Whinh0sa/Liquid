@@ -122,10 +122,13 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
   const conditionMultiplier    = CONDITIONS[condition].multiplier;
   const conditionAdjustedValue = currentValue * conditionMultiplier;
+  const cliffValue = Math.max(0, currentValue - dropDollars);
+  const dailyDecayRate = daysAway > 0 ? dropDollars / daysAway : 0;
   const simulatedDaysAway = Math.max(0, daysAway - sellOffsetDays);
-  const simulatedDrop = asset ? Math.max(0, asset.depreciationCliff.projectedDrop / 100 * (simulatedDaysAway / Math.max(daysAway, 1))) : 0;
-  const simulatedValue = Math.max(0, currentValue - simulatedDrop);
+  const simulatedDropAtSell = Math.min(dropDollars, dailyDecayRate * sellOffsetDays);
+  const simulatedValue = Math.max(0, currentValue - simulatedDropAtSell);
   const simulatedLoss = Math.max(0, currentValue - simulatedValue);
+  const simulatedDrop = Math.max(0, dropDollars - simulatedDropAtSell);
 
   const sellWindow = asset ? computeSellWindow(daysAway, dropDollars) : null;
   const simulatedWindow = asset ? computeSellWindow(simulatedDaysAway, simulatedDrop) : null;
