@@ -307,7 +307,7 @@ export default function Home() {
               <Link href="/alerts" className="px-4 py-2.5 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">Full Report</Link>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
             <SummaryTile label="Items Tracked" value={`${portfolio.length}`} icon={<Activity className="w-3.5 h-3.5" />} valueColor="#2563EB" />
             <SummaryTile label="Sell Windows Open" value={`${windowOpenCount}`} icon={<Clock className="w-3.5 h-3.5" />} valueColor="#10B981" />
             <SummaryTile label="Urgent Alerts" value={`${urgentAssets.length + firedAlerts.length}`} icon={<AlertTriangle className="w-3.5 h-3.5" />} valueColor="#EF4444" />
@@ -315,7 +315,7 @@ export default function Home() {
         </section>
 
         <section>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-end justify-between gap-3 mb-4">
             <div>
               <h2 className="text-base font-semibold text-gray-900">Your Items</h2>
               <span className="text-sm text-gray-400">{portfolio.length} items tracked</span>
