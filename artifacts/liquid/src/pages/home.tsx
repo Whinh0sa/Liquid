@@ -25,6 +25,8 @@ import {
   Activity,
   BarChart2,
   Shield,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link } from "wouter";
 import AssetDrawer from "@/components/AssetDrawer";
@@ -84,6 +86,7 @@ export default function Home() {
   const [priceAlerts, setPriceAlerts] = useState<Map<string, number>>(new Map());
   const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
 
@@ -229,7 +232,7 @@ export default function Home() {
 
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-8">
             <span className="font-poppins font-bold text-xl text-blue-600">Liquid</span>
             <div className="hidden md:flex items-center gap-1">
               <Link href="/" className="px-3 py-1.5 rounded-lg text-sm font-medium text-blue-600 bg-blue-50">Portfolio</Link>
@@ -237,12 +240,28 @@ export default function Home() {
               <Link href="/rings" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Assets</Link>
               <Link href="/alerts" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Alerts</Link>
             </div>
+            <button
+              type="button"
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Open menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button type="button" className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"><Bell className="w-4 h-4" /></button>
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center"><span className="text-white text-xs font-bold">UH</span></div>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
+            <Link href="/" className="block px-3 py-2 rounded-lg text-sm font-medium text-blue-600 bg-blue-50" onClick={() => setMobileMenuOpen(false)}>Portfolio</Link>
+            <Link href="/analysis" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Markets</Link>
+            <Link href="/rings" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Assets</Link>
+            <Link href="/alerts" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Alerts</Link>
+          </div>
+        )}
         <div className="w-full overflow-hidden h-8 bg-gray-50 border-t border-gray-100 flex items-center whitespace-nowrap">
           <div className="inline-block ticker-tape font-inter text-xs font-medium text-gray-500 space-x-6">
             {[...TICKERS, ...TICKERS].map((t, i) => (
@@ -257,7 +276,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col gap-8">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
         <AnimatePresence>
           {urgentAssets.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }}>
@@ -286,7 +305,7 @@ export default function Home() {
               <Link href="/alerts" className="px-4 py-2.5 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">Full Report</Link>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-100">
             <SummaryTile label="Items Tracked" value={`${portfolio.length}`} icon={<Activity className="w-3.5 h-3.5" />} valueColor="#2563EB" />
             <SummaryTile label="Sell Windows Open" value={`${windowOpenCount}`} icon={<Clock className="w-3.5 h-3.5" />} valueColor="#10B981" />
             <SummaryTile label="Urgent Alerts" value={`${urgentAssets.length + firedAlerts.length}`} icon={<AlertTriangle className="w-3.5 h-3.5" />} valueColor="#EF4444" />
@@ -298,14 +317,14 @@ export default function Home() {
             <h2 className="text-base font-semibold text-gray-900">Your Items</h2>
             <span className="text-sm text-gray-400">{portfolio.length} items tracked</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {isLoading
               ? [1,2,3,4].map((i) => <div key={i} className="bg-white rounded-2xl border border-gray-200 p-5 animate-pulse"><div className="h-3 bg-gray-100 rounded w-1/3 mb-3" /><div className="h-6 bg-gray-100 rounded w-2/3 mb-4" /><div className="h-8 bg-gray-100 rounded w-full" /></div>)
               : portfolio.map((asset) => <AssetCard key={asset.id} asset={asset as PortfolioAsset} isSelling={sellingIds.has(asset.id)} soldRecord={soldRecords.get(asset.id)} alertPrice={priceAlerts.get(asset.id)} onSell={handleSell} onOpen={setDrawerAsset} onSetAlert={onSetAlert} />)}
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><BarChart2 className="w-4 h-4 text-blue-500" />Heatmap</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-50 text-gray-500">By urgency</span></div>
             <div className="space-y-2">{isLoading ? [1,2,3].map(i => <div key={i} className="h-9 rounded-lg bg-gray-100 animate-pulse" />) : portfolio.slice(0, 4).map((a) => { const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100); const heat = { CLIFF: "#EF4444", URGENT: "#F97316", WINDOW: "#10B981", PLANNED: "#2563EB" }; const pct = Math.max(8, Math.min(100, (1 - (a.depreciationCliff.daysAway / 180)) * 100)); return <div key={a.id} className="flex items-center gap-2 cursor-pointer group" onClick={() => setDrawerAsset(a as PortfolioAsset)}><span className="text-[10px] text-gray-500 w-20 truncate shrink-0 group-hover:text-blue-600 transition-colors">{a.model.split(" ").slice(0,2).join(" ")}</span><div className="flex-1 h-5 bg-gray-100 rounded-md overflow-hidden"><div className="h-full rounded-md transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: heat[sw.urgency], opacity: 0.85 }} /></div><span className="text-[10px] font-bold shrink-0" style={{ color: heat[sw.urgency] }}>{a.depreciationCliff.daysAway}d</span></div>; })}</div>
