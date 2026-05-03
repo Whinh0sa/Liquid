@@ -233,7 +233,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-[60]"
+              className="fixed inset-0 bg-black/40 z-[60] pointer-events-auto"
               onClick={() => setShowBatchModal(false)}
             />
             <motion.div
@@ -242,7 +242,7 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed inset-x-4 sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 top-1/2 -translate-y-1/2 z-[61] bg-white rounded-2xl shadow-2xl w-full sm:w-[480px] overflow-hidden"
+              className="fixed inset-x-4 sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 top-1/2 -translate-y-1/2 z-[61] bg-white rounded-2xl shadow-2xl w-full sm:w-[480px] overflow-hidden pointer-events-auto"
             >
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
@@ -254,7 +254,7 @@ export default function Home() {
                       Sell all assets in sell-window or urgent zone
                     </p>
                   </div>
-                  <button onClick={() => setShowBatchModal(false)} className="p-2 rounded-full hover:bg-gray-100 text-gray-400">
+                <button type="button" onClick={() => setShowBatchModal(false)} className="p-2 rounded-full hover:bg-gray-100 text-gray-400">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -293,6 +293,7 @@ export default function Home() {
                   Protects {fmt(batchTargets.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0))} from depreciation
                 </p>
                 <button
+                  type="button"
                   onClick={handleBatchSell}
                   className="w-full h-12 rounded-xl font-bold text-white text-sm tracking-wide flex items-center justify-center gap-2"
                   style={{ backgroundColor: "#10B981", boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}
@@ -301,6 +302,7 @@ export default function Home() {
                   SELL ALL {batchTargets.length} ITEMS NOW
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowBatchModal(false)}
                   className="w-full mt-2 h-10 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
                 >
@@ -330,7 +332,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+            <button type="button" className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
               <Bell className="w-4 h-4" />
             </button>
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
