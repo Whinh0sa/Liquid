@@ -183,6 +183,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </h2>
               </div>
               <button
+                aria-label="Close asset details"
                 onClick={onClose}
                 data-testid="btn-close-drawer"
                 className="mt-1 p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"

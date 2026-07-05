@@ -1,0 +1,3 @@
+## 2025-02-18 - Missing ARIA Labels on Icon-only Buttons
+**Learning:** Found several icon-only buttons (`<X />` for close modal/drawer/input, `<Bell />` for notifications) across `home.tsx` and `AssetDrawer.tsx` that were missing `aria-label` attributes. This is a crucial accessibility issue for screen readers, as they require context for interactive elements that don't have text content.
+**Action:** Always add `aria-label` to icon-only buttons, especially common ones like close buttons in modals/drawers or generic notification buttons. When creating new components, ensure proper labeling for all interactive elements without visible text.
