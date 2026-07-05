@@ -33,6 +33,9 @@ const LEAD_TIME = 2;           // platform processing days
 const IDEAL_BUFFER = 1;        // extra cushion days
 const WINDOW_DURATION = 5;     // ideal listing window width in days
 
+// ⚡ Bolt: Cache Intl.DateTimeFormat to avoid expensive repeated instantiations
+const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+
 export function computeSellWindow(
   daysAway: number,
   projectedDropDollars: number,
@@ -64,7 +67,7 @@ export function computeSellWindow(
 
   const sellByLabel = isPastWindow || isAtCliff
     ? "Window closed"
-    : `Sell by ${recommendedSellDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    : `Sell by ${dateFormatter.format(recommendedSellDate)}`;
 
   return {
     windowStartDay: windowStart,
