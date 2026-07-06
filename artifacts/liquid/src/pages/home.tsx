@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -144,16 +144,16 @@ export default function Home() {
     },
   });
 
-  const onSetAlert = (id: string, price: number | null) => {
+  const onSetAlert = useCallback((id: string, price: number | null) => {
     setPriceAlerts((prev) => {
       const next = new Map(prev);
       if (price === null) next.delete(id);
       else next.set(id, price);
       return next;
     });
-  };
+  }, []);
 
-  const handleSell = (id: string) => {
+  const handleSell = useCallback((id: string) => {
     const asset = portfolio.find((a) => a.id === id);
     if (asset) {
       setSoldRecords((prev) => {
@@ -163,22 +163,22 @@ export default function Home() {
       });
     }
     updateStatus.mutate({ id, data: { status: "LIQUIDATE" } });
-  };
+  }, [portfolio, updateStatus]);
 
-  const urgentAssets = portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT");
-  const firedAlerts = portfolio.filter((a) => {
+  const urgentAssets = useMemo(() => portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT"), [portfolio]);
+  const firedAlerts = useMemo(() => portfolio.filter((a) => {
     const floor = priceAlerts.get(a.id);
     return floor !== undefined && a.currentValue / 100 <= floor && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT" && !sellingIds.has(a.id);
-  });
+  }), [portfolio, priceAlerts, sellingIds]);
 
-  const windowOpenCount = portfolio.filter((a) => computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100).urgency === "WINDOW").length;
+  const windowOpenCount = useMemo(() => portfolio.filter((a) => computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100).urgency === "WINDOW").length, [portfolio]);
   const totalSaved = useMemo(() => Array.from(soldRecords.values()).reduce((sum, r) => sum + r.dropAvoided, 0), [soldRecords]);
-  const atRiskTotal = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);
-  const dailyDecay = portfolio.reduce((sum, a) => {
+  const atRiskTotal = useMemo(() => portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0), [portfolio]);
+  const dailyDecay = useMemo(() => portfolio.reduce((sum, a) => {
     const days = a.depreciationCliff.daysAway;
     const drop = a.depreciationCliff.projectedDrop / 100;
     return days > 0 ? sum + drop / days : sum;
-  }, 0);
+  }, 0), [portfolio]);
   const healthScore = useMemo(() => {
     if (portfolio.length === 0) return { grade: "A", score: 100, color: "#10B981", label: "Excellent" };
     let score = 100;
@@ -510,7 +510,7 @@ function SessionPerformanceCard({ soldRecords, portfolio, totalSaved }: { soldRe
   return <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Award className="w-4 h-4 text-amber-500" />Session Performance</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">This session</span></div><div className="grid grid-cols-4 gap-3 mb-5">{[{ label: "Sold", value: `${itemsSold}`, sub: "items", color: "#2563EB" }, { label: "Proceeds", value: f(totalProceeds), sub: "collected", color: "#10B981" }, { label: "Protected", value: f(totalSaved), sub: "from drops", color: "#10B981" }, { label: "Efficiency", value: `${efficiency}%`, sub: "of at-risk", color: efficiency >= 75 ? "#10B981" : efficiency >= 40 ? "#F59E0B" : "#EF4444" }].map((s) => <div key={s.label} className="rounded-xl p-3 bg-gray-50 border border-gray-100 text-center"><p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">{s.label}</p><p className="font-poppins font-bold text-base leading-tight" style={{ color: s.color }}>{s.value}</p><p className="text-[10px] text-gray-400 mt-0.5">{s.sub}</p></div>)}</div><div><p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-orange-400" />Achievement Wall</p><div className="grid grid-cols-3 sm:grid-cols-6 gap-2">{trophies.map((t) => <div key={t.label} className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border text-center transition-all" style={{ backgroundColor: t.unlocked ? "#FFFBEB" : "#F9FAFB", borderColor: t.unlocked ? "#FDE68A" : "#E5E7EB", opacity: t.unlocked ? 1 : 0.5 }}><span className="text-xl leading-none" style={{ filter: t.unlocked ? "none" : "grayscale(1)" }}>{t.icon}</span><p className="text-[9px] font-semibold text-gray-600 leading-tight">{t.label}</p></div>)}</div></div></motion.section>;
 }
 
-function AssetCard({ asset, isSelling, soldRecord, alertPrice, onSell, onOpen, onSetAlert, viewType = "tiles" }: { asset: PortfolioAsset; isSelling: boolean; soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number }; alertPrice?: number; onSell: (id: string) => void; onOpen: (asset: PortfolioAsset) => void; onSetAlert: (id: string, price: number | null) => void; viewType?: "tiles" | "list"; }) {
+const AssetCard = React.memo(function AssetCard({ asset, isSelling, soldRecord, alertPrice, onSell, onOpen, onSetAlert, viewType = "tiles" }: { asset: PortfolioAsset; isSelling: boolean; soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number }; alertPrice?: number; onSell: (id: string) => void; onOpen: (asset: PortfolioAsset) => void; onSetAlert: (id: string, price: number | null) => void; viewType?: "tiles" | "list"; }) {
   const [showAlertInput, setShowAlertInput] = useState(false);
   const [alertInput, setAlertInput] = useState("");
   const current = asset.currentValue / 100;
@@ -531,7 +531,7 @@ function AssetCard({ asset, isSelling, soldRecord, alertPrice, onSell, onOpen, o
     }
   };
   return viewType === "list" ? <div className="bg-white rounded-2xl p-4 sm:p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300" onClick={() => onOpen(asset)} style={{ border: isAlertFired ? "1.5px solid #F59E0B" : alertPrice !== undefined ? "1.5px solid #FCD34D" : "1px solid #E5E7EB", boxShadow: isAlertFired ? "0 0 0 3px rgba(245,158,11,0.12)" : undefined }}><div className="flex items-start justify-between gap-2"><div className="flex-1 min-w-0"><p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p><h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-blue-600 transition-colors truncate">{asset.model}</h3></div><span className="text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}>{urgencyPill.label}</span></div>{isAlertFired && <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200"><BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0" /><p className="text-xs font-semibold text-amber-800 flex-1">Floor hit — value at or below {fmt(alertPrice ?? 0)}</p></div>}<div className="flex items-center justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg w-fit" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}><Clock className="w-3 h-3" />{sellWindow.sellByLabel}</div><p className="text-xs text-gray-400 mt-2">−{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d</p></div><div className="text-right"><span className="font-poppins font-bold text-xl sm:text-2xl text-gray-900 block">{fmt(current)}</span><span className={`text-xs sm:text-sm font-semibold inline-flex items-center gap-0.5 ${pnl < 0 ? "text-red-500" : "text-emerald-500"}`}>{pnl < 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}{pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}%</span></div></div><div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}><button onClick={(e) => { e.stopPropagation(); onSell(asset.id); }} className="flex-1 min-w-[120px] h-9 rounded-xl text-xs font-bold text-white transition-all" style={{ backgroundColor: "#10B981" }}>Sell Now</button><button className="h-9 px-4 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); onOpen(asset); }}>Analyse</button></div><div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>{!alertPrice ? (showAlertInput ? <div className="flex items-center gap-1.5"><span className="text-xs text-gray-400 shrink-0">Floor $</span><input type="number" value={alertInput} onChange={(e) => setAlertInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") confirmAlert(); if (e.key === "Escape") { setShowAlertInput(false); setAlertInput(""); } }} placeholder={current.toFixed(0)} autoFocus className="flex-1 h-7 px-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-amber-400 min-w-0" onClick={(e) => e.stopPropagation()} /><button onClick={(e) => { e.stopPropagation(); confirmAlert(); }} className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0">Set</button><button onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button></div> : <button onClick={(e) => { e.stopPropagation(); setShowAlertInput(true); setAlertInput(current.toFixed(0)); }} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-amber-500 transition-colors"><Bell className="w-3 h-3" />Set price floor alert</button>) : <div className="flex items-center justify-between"><span className="flex items-center gap-1.5 text-xs font-semibold text-amber-500"><Bell className="w-3 h-3" />Alert set at {fmt(alertPrice)}</span><button onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }} className="text-gray-300 hover:text-gray-500 transition-colors"><X className="w-3.5 h-3.5" /></button></div>}</div></div> : <div className="bg-white rounded-2xl p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300" onClick={() => onOpen(asset)} style={{ border: isAlertFired ? "1.5px solid #F59E0B" : alertPrice !== undefined ? "1.5px solid #FCD34D" : "1px solid #E5E7EB", boxShadow: isAlertFired ? "0 0 0 3px rgba(245,158,11,0.12)" : undefined }}><div className="flex items-start justify-between gap-2"><div><p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p><h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-blue-600 transition-colors">{asset.model}</h3></div><span className="text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}>{urgencyPill.label}</span></div>{isAlertFired && <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200"><BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0" /><p className="text-xs font-semibold text-amber-800 flex-1">Floor hit — value at or below {fmt(alertPrice ?? 0)}</p></div>}<div className="flex items-baseline justify-between"><span className="font-poppins font-bold text-2xl text-gray-900">{fmt(current)}</span><span className={`text-sm font-semibold flex items-center gap-0.5 ${pnl < 0 ? "text-red-500" : "text-emerald-500"}`}>{pnl < 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}{pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}%</span></div><div className="flex items-center justify-between"><div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}><Clock className="w-3 h-3" />{sellWindow.sellByLabel}</div><span className="text-xs text-gray-400">−{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d</span></div><div className="flex gap-2" onClick={(e) => e.stopPropagation()}><button onClick={(e) => { e.stopPropagation(); onSell(asset.id); }} className="flex-1 h-9 rounded-xl text-xs font-bold text-white transition-all" style={{ backgroundColor: "#10B981" }}>Sell Now</button><button className="h-9 px-4 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); onOpen(asset); }}>Analyse</button></div><div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>{!alertPrice ? (showAlertInput ? <div className="flex items-center gap-1.5"><span className="text-xs text-gray-400 shrink-0">Floor $</span><input type="number" value={alertInput} onChange={(e) => setAlertInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") confirmAlert(); if (e.key === "Escape") { setShowAlertInput(false); setAlertInput(""); } }} placeholder={current.toFixed(0)} autoFocus className="flex-1 h-7 px-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-amber-400 min-w-0" onClick={(e) => e.stopPropagation()} /><button onClick={(e) => { e.stopPropagation(); confirmAlert(); }} className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0">Set</button><button onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button></div> : <button onClick={(e) => { e.stopPropagation(); setShowAlertInput(true); setAlertInput(current.toFixed(0)); }} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-amber-500 transition-colors"><Bell className="w-3 h-3" />Set price floor alert</button>) : <div className="flex items-center justify-between"><span className="flex items-center gap-1.5 text-xs font-semibold text-amber-500"><Bell className="w-3 h-3" />Alert set at {fmt(alertPrice)}</span><button onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }} className="text-gray-300 hover:text-gray-500 transition-colors"><X className="w-3.5 h-3.5" /></button></div>}</div></div>;
-}
+});
 
 function RecoveryCard({ asset, soldRecord }: { asset: PortfolioAsset; soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number } }) {
   const saleValue = soldRecord?.saleValue ?? asset.currentValue / 100;
