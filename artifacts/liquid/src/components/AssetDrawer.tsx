@@ -447,7 +447,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               {/* ── Stats grid ────────────────────────────────────────────── */}
               <div className="grid grid-cols-2 gap-3">
                 <StatTile
-                  icon={<Calendar className="w-4 h-4 text-blue-500" />}
+                  icon={<Calendar className="w-4 h-4 text-amber-500" />}
                   label="Recommended Sell By"
                   value={sellWindow ? sellWindow.sellByLabel : "—"}
                   sub={sellWindow?.urgency === "WINDOW" ? "Window open now" : `Cliff: +${daysAway}d`}
@@ -538,15 +538,15 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                     style={{
                       backgroundColor:
                         sellStage === "processing" ? "#9CA3AF"
-                        : sellStage === "success"  ? "#10B981"
-                        : "#10B981",
+                        : sellStage === "success"  ? "#059669"
+                        : "#9126EF",
                       color: "#FFFFFF",
                       boxShadow:
                         sellStage === "success"
-                          ? "0 4px 20px rgba(16,185,129,0.45)"
+                          ? "0 4px 20px rgba(5,150,105,0.45)"
                           : sellStage === "processing"
                           ? "none"
-                          : "0 2px 8px rgba(16,185,129,0.25)",
+                          : "0 4px 14px rgba(145,38,239,0.25)",
                       cursor: sellStage !== "idle" ? "not-allowed" : "pointer",
                     }}
                   >
@@ -630,12 +630,12 @@ function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof comp
         />
         {/* Today marker */}
         <div
-          className="absolute top-0 h-full w-0.5 bg-blue-500"
-          style={{ left: `${todayPct}%` }}
+          className="absolute top-0 h-full w-0.5"
+          style={{ left: `${todayPct}%`, backgroundColor: "#F59E0B" }}
         />
       </div>
       <div className="flex justify-between text-[9px] text-gray-400 font-medium mt-1 px-0.5">
-        <span className="text-blue-500">Today</span>
+        <span style={{ color: "#F59E0B" }}>Today</span>
         {sellWindow.windowStartDay > 0 && (
           <span className="text-emerald-600">Window +{sellWindow.windowStartDay}d</span>
         )}
@@ -691,12 +691,12 @@ function ScenarioComparison({
          : urgency === "WINDOW"  ? "You're here now"
          : "Window closed",
       value: currentValue,
-      color: urgency === "PLANNED" ? "#2563EB" : urgency === "WINDOW" ? "#059669" : "#9CA3AF",
+      color: urgency === "PLANNED" ? "#9126EF" : urgency === "WINDOW" ? "#059669" : "#9CA3AF",
       highlight: urgency === "PLANNED",
       dimmed: urgency === "URGENT" || urgency === "CLIFF",
       pct: 0,
       badge: urgency === "PLANNED"
-        ? { text: "Recommended", bg: "#DBEAFE", color: "#1D4ED8" }
+        ? { text: "Recommended", bg: "rgba(145,38,239,0.1)", color: "#9126EF" }
         : null,
     },
     {
@@ -714,7 +714,7 @@ function ScenarioComparison({
   return (
     <div>
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <Activity className="w-4 h-4 text-blue-500" />
+        <Activity className="w-4 h-4 text-amber-500" />
         Sell Scenario Comparison
       </h3>
       <div className="grid grid-cols-3 gap-2">
@@ -785,10 +785,10 @@ function WhatIfSimulator({
     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+          <SlidersHorizontal className="w-4 h-4 text-amber-500" />
           What-if Simulator
         </h3>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">Drag to explore</span>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">Drag to explore</span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
@@ -808,7 +808,7 @@ function WhatIfSimulator({
         max={Math.max(0, Math.min(daysAway, 21))}
         value={sellOffsetDays}
         onChange={(e) => setSellOffsetDays(parseInt(e.target.value, 10))}
-        className="w-full accent-blue-600"
+        className="w-full accent-amber-500"
       />
       <div className="flex justify-between text-[10px] text-gray-400 font-medium mt-1">
         <span>Sell now</span>
@@ -819,9 +819,9 @@ function WhatIfSimulator({
           <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-1">Value lost</p>
           <p className="text-sm font-bold text-red-500">{f(simulatedLoss)}</p>
         </div>
-        <div className="rounded-xl p-3 bg-blue-50 border border-blue-100">
-          <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1">PnL</p>
-          <p className="text-sm font-bold text-blue-600">{pctFromPurchase >= 0 ? "+" : ""}{pctFromPurchase.toFixed(1)}%</p>
+        <div className="rounded-xl p-3 bg-purple-50 border border-purple-100">
+          <p className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider mb-1">PnL</p>
+          <p className="text-sm font-bold text-purple-600">{pctFromPurchase >= 0 ? "+" : ""}{pctFromPurchase.toFixed(1)}%</p>
         </div>
         <div className="rounded-xl p-3 bg-emerald-50 border border-emerald-100">
           <p className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider mb-1">Sell state</p>
@@ -854,7 +854,7 @@ function ConditionGrader({
     <div className="rounded-2xl border border-gray-200 p-5 shadow-sm" style={{ backgroundColor: "#FAFAFA" }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-blue-500" />
+          <Activity className="w-4 h-4 text-amber-500" />
           Condition Grader
         </h3>
         <span
@@ -915,7 +915,7 @@ function ConditionGrader({
 // ── Condition Config ──────────────────────────────────────────────────────────
 const CONDITIONS = {
   mint: { label: "Mint",  sub: "Like new — original box, no marks",   multiplier: 1.00, color: "#10B981", bg: "#F0FDF4", border: "#6EE7B7" },
-  good: { label: "Good",  sub: "Minor wear — fully functional",        multiplier: 0.92, color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  good: { label: "Good",  sub: "Minor wear — fully functional",        multiplier: 0.92, color: "#9126EF", bg: "rgba(145,38,239,0.06)", border: "rgba(145,38,239,0.2)" },
   fair: { label: "Fair",  sub: "Visible scratches — works perfectly",  multiplier: 0.78, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
   poor: { label: "Poor",  sub: "Heavy wear or cosmetic damage",        multiplier: 0.60, color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
 } as const;
@@ -940,7 +940,7 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
   return (
     <div>
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <ShoppingCart className="w-4 h-4 text-blue-500" />
+        <ShoppingCart className="w-4 h-4 text-amber-500" />
         Where to Sell
       </h3>
       <div className="space-y-2">
@@ -969,7 +969,7 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Best $</span>
                   )}
                   {isFast && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">Fastest</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">Fastest</span>
                   )}
                 </div>
                 <p className="text-[10px] text-gray-400">{p.tag} · {p.speed}</p>
@@ -1005,7 +1005,7 @@ function MarketDemand({ category, daysAway }: { category: string; daysAway: numb
     <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-500" />
+          <Users className="w-4 h-4 text-amber-500" />
           Market Demand
         </h3>
         <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color, backgroundColor: bgPill }}>

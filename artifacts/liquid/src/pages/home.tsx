@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Bell,
   BellRing,
-  Clock,
   TrendingDown,
   TrendingUp,
   CheckCircle,
@@ -23,14 +22,16 @@ import {
   CalendarDays,
   Flame,
   Activity,
+  Clock,
   BarChart2,
   Shield,
-  Menu,
-  LayoutGrid,
-  List,
 } from "lucide-react";
 import { Link } from "wouter";
 import AssetDrawer from "@/components/AssetDrawer";
+import AppLayout from "@/components/AppLayout";
+import PortfolioKPIs from "@/components/PortfolioKPIs";
+import AssetLedgerGrid from "@/components/AssetLedgerGrid";
+import LiquidationRadar from "@/components/LiquidationRadar";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
 function fmt(n: number): string {
@@ -111,7 +112,6 @@ export default function Home() {
   const [priceAlerts, setPriceAlerts] = useState<Map<string, number>>(new Map());
   const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [itemsView, setItemsView] = useState<"tiles" | "list">("tiles");
 
   const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
@@ -206,10 +206,28 @@ export default function Home() {
     return (sw.urgency === "WINDOW" || sw.urgency === "URGENT") && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT" && !sellingIds.has(a.id) && !soldRecords.has(a.id);
   }), [portfolio, sellingIds, soldRecords]);
 
-  return (
-    <div className="min-h-[100dvh] w-full flex flex-col bg-[#F9FAFB]">
-      <AssetDrawer asset={drawerAsset} onClose={() => setDrawerAsset(null)} onSell={handleSell} isSelling={drawerAsset ? sellingIds.has(drawerAsset.id) : false} />
+  // Ticker tape content (slotted into AppLayout's subNav)
+  const tickerTape = (
+    <div className="w-full overflow-hidden h-8 bg-gray-50 border-t border-gray-100 flex items-center whitespace-nowrap">
+      <div className="inline-block ticker-tape font-inter text-xs font-medium text-gray-500 space-x-6">
+        {[...TICKERS, ...TICKERS].map((t, i) => (
+          <span key={i} className="inline-flex items-center gap-1.5">
+            <span className="font-semibold text-gray-700">{t.label}</span>
+            <span>{t.price}</span>
+            <span style={{ color: t.up ? "#10B981" : "#EF4444" }} className="font-semibold">{t.change} {t.up ? "▲" : "▼"}</span>
+            <span className="mx-3 text-gray-300">|</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 
+  return (
+    <AppLayout subNav={tickerTape}>
+      <>
+        <AssetDrawer asset={drawerAsset} onClose={() => setDrawerAsset(null)} onSell={handleSell} isSelling={drawerAsset ? sellingIds.has(drawerAsset.id) : false} />
+
+      {/* ── Batch sell modal ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {showBatchModal && (
           <>
@@ -256,56 +274,9 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-4 sm:gap-8">
-            <span className="font-poppins font-bold text-xl text-blue-600">Liquid</span>
-            <div className="hidden md:flex items-center gap-1">
-              <Link href="/" className="px-3 py-1.5 rounded-lg text-sm font-medium text-blue-600 bg-blue-50">Portfolio</Link>
-              <Link href="/analysis" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Markets</Link>
-              <Link href="/rings" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Assets</Link>
-              <Link href="/alerts" className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">Alerts</Link>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button type="button" className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"><Bell className="w-4 h-4" /></button>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center"><span className="text-white text-xs font-bold">UH</span></div>
-            <button
-              type="button"
-              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label="Open menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
-            <Link href="/" className="block px-3 py-2 rounded-lg text-sm font-medium text-blue-600 bg-blue-50" onClick={() => setMobileMenuOpen(false)}>Portfolio</Link>
-            <Link href="/analysis" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Markets</Link>
-            <Link href="/rings" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Assets</Link>
-            <Link href="/alerts" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Alerts</Link>
-          </div>
-        )}
-        <div className="w-full overflow-hidden h-8 bg-gray-50 border-t border-gray-100 flex items-center whitespace-nowrap">
-          <div className="inline-block ticker-tape font-inter text-xs font-medium text-gray-500 space-x-6">
-            {[...TICKERS, ...TICKERS].map((t, i) => (
-              <span key={i} className="inline-flex items-center gap-1.5">
-                <span className="font-semibold text-gray-700">{t.label}</span>
-                <span>{t.price}</span>
-                <span style={{ color: t.up ? "#10B981" : "#EF4444" }} className="font-semibold">{t.change} {t.up ? "▲" : "▼"}</span>
-                <span className="mx-3 text-gray-300">|</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </nav>
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
         <section className="grid lg:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-            <p className="text-xs font-bold tracking-[0.25em] uppercase text-blue-600 mb-3">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+            <p className="text-xs font-bold tracking-[0.25em] uppercase text-purple-600 mb-3" style={{ color: "#9126EF" }}>
               Liquid
             </p>
             <h1 className="font-poppins font-black text-4xl sm:text-5xl text-gray-900 tracking-tight max-w-xl">
@@ -317,10 +288,10 @@ export default function Home() {
               what is at risk, and what to do next.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/" className="px-4 py-2.5 rounded-xl font-semibold text-white bg-blue-600 shadow-sm">
+              <Link href="/" className="px-4 py-2.5 rounded-2xl font-bold text-white shadow-sm transition-all hover:opacity-90 hover:-translate-y-0.5" style={{ backgroundColor: "#9126EF", boxShadow: "0 4px 14px rgba(145,38,239,0.2)" }}>
                 View portfolio
               </Link>
-              <Link href="/analysis" className="px-4 py-2.5 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">
+              <Link href="/analysis" className="px-4 py-2.5 rounded-2xl font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
                 See analysis
               </Link>
             </div>
@@ -328,7 +299,7 @@ export default function Home() {
 
           <div className="grid gap-3">
             {PRODUCT_BENEFITS.map((item) => (
-              <div key={item.title} className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm flex gap-4">
+              <div key={item.title} className="bg-white rounded-3xl border border-gray-100 p-4 sm:p-5 shadow-sm flex gap-4">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.bg }}>
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
                 </div>
@@ -357,89 +328,51 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Portfolio Value</p>
-              {isLoading ? <div className="h-10 w-52 bg-gray-100 rounded-lg animate-pulse" /> : <h1 className="font-poppins font-bold text-4xl sm:text-5xl text-gray-900 tracking-tight">{fmt(displayedNetWorth)}</h1>}
-              {metrics && <p className="text-sm text-gray-500 mt-2 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />{portfolio.length} items tracked · {windowOpenCount} sell windows open</p>}
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/analysis" className="px-4 py-2.5 rounded-xl font-semibold text-white bg-blue-600 shadow-sm">Rebalance</Link>
-              <Link href="/alerts" className="px-4 py-2.5 rounded-xl font-semibold text-gray-700 bg-white border border-gray-200">Full Report</Link>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
-            <SummaryTile label="Items Tracked" value={`${portfolio.length}`} icon={<Activity className="w-3.5 h-3.5" />} valueColor="#2563EB" />
-            <SummaryTile label="Sell Windows Open" value={`${windowOpenCount}`} icon={<Clock className="w-3.5 h-3.5" />} valueColor="#10B981" />
-            <SummaryTile label="Urgent Alerts" value={`${urgentAssets.length + firedAlerts.length}`} icon={<AlertTriangle className="w-3.5 h-3.5" />} valueColor="#EF4444" />
-          </div>
-        </section>
+        <PortfolioKPIs
+          isLoading={isLoading}
+          displayedNetWorth={displayedNetWorth}
+          itemCount={portfolio.length}
+          windowOpenCount={windowOpenCount}
+          urgentCount={urgentAssets.length + firedAlerts.length}
+          hasMetrics={!!metrics}
+        />
 
-        <section>
-          <div className="flex items-end justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-base font-semibold text-gray-900">Your Items</h2>
-              <span className="text-sm text-gray-400">{portfolio.length} items tracked</span>
-            </div>
-            <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white p-1 self-start">
-              <button
-                type="button"
-                onClick={() => setItemsView("tiles")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${itemsView === "tiles" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Tiles
-              </button>
-              <button
-                type="button"
-                onClick={() => setItemsView("list")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${itemsView === "list" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-            </div>
-          </div>
-          <div className={itemsView === "tiles" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "grid grid-cols-1 gap-3"}>
-            {isLoading
-              ? [1,2,3,4].map((i) => <div key={i} className={`bg-white rounded-2xl border border-gray-200 p-5 animate-pulse ${itemsView === "list" ? "flex items-center gap-4" : ""}`}><div className={itemsView === "list" ? "h-16 w-16 bg-gray-100 rounded-2xl shrink-0" : ""} /><div className={itemsView === "list" ? "flex-1" : ""}><div className="h-3 bg-gray-100 rounded w-1/3 mb-3" /><div className="h-6 bg-gray-100 rounded w-2/3 mb-4" /><div className="h-8 bg-gray-100 rounded w-full" /></div></div>)
-              : portfolio.map((asset) => <AssetCard key={asset.id} asset={asset as PortfolioAsset} isSelling={sellingIds.has(asset.id)} soldRecord={soldRecords.get(asset.id)} alertPrice={priceAlerts.get(asset.id)} onSell={handleSell} onOpen={setDrawerAsset} onSetAlert={onSetAlert} viewType={itemsView} />)}
-          </div>
-        </section>
+        <AssetLedgerGrid
+          isLoading={isLoading}
+          portfolio={portfolio as any}
+          viewType={itemsView}
+          onViewChange={setItemsView}
+          sellingIds={sellingIds}
+          soldRecords={soldRecords}
+          priceAlerts={priceAlerts}
+          onSell={handleSell}
+          onOpen={(a) => setDrawerAsset(a as PortfolioAsset)}
+          onSetAlert={onSetAlert}
+        />
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><BarChart2 className="w-4 h-4 text-blue-500" />Heatmap</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-50 text-gray-500">By urgency</span></div>
-            <div className="space-y-2">{isLoading ? [1,2,3].map(i => <div key={i} className="h-9 rounded-lg bg-gray-100 animate-pulse" />) : portfolio.slice(0, 4).map((a) => { const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100); const heat = { CLIFF: "#EF4444", URGENT: "#F97316", WINDOW: "#10B981", PLANNED: "#2563EB" }; const pct = Math.max(8, Math.min(100, (1 - (a.depreciationCliff.daysAway / 180)) * 100)); return <div key={a.id} className="flex items-center gap-2 cursor-pointer group" onClick={() => setDrawerAsset(a as PortfolioAsset)}><span className="text-[10px] text-gray-500 w-20 truncate shrink-0 group-hover:text-blue-600 transition-colors">{a.model.split(" ").slice(0,2).join(" ")}</span><div className="flex-1 h-5 bg-gray-100 rounded-md overflow-hidden"><div className="h-full rounded-md transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: heat[sw.urgency], opacity: 0.85 }} /></div><span className="text-[10px] font-bold shrink-0" style={{ color: heat[sw.urgency] }}>{a.depreciationCliff.daysAway}d</span></div>; })}</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-blue-500" />Opportunity Radar</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">{windowOpenCount} open</span></div>
-            <div className="space-y-2">{isLoading ? [1,2,3].map(i => <div key={i} className="h-9 rounded-lg bg-gray-100 animate-pulse" />) : portfolio.filter((a) => { const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100); return sw.urgency === "WINDOW" || sw.urgency === "URGENT"; }).slice(0, 3).map((a) => { const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100); const pill = URGENCY_PILL[sw.urgency]; return <div key={a.id} className="flex items-center justify-between p-2 rounded-xl border border-gray-100 cursor-pointer hover:border-gray-200 transition-colors" onClick={() => setDrawerAsset(a as PortfolioAsset)}><div><p className="text-xs font-semibold text-gray-900 truncate max-w-[120px]">{a.model}</p><p className="text-[10px] text-gray-400">{fmt(a.currentValue / 100)}</p></div><span className="text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: pill.bg, color: pill.text, border: `1px solid ${pill.border}` }}>{pill.label}</span></div>; })}{!isLoading && windowOpenCount === 0 && <p className="text-sm text-gray-400 text-center py-4">No urgent windows right now</p>}</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Clock className="w-4 h-4 text-blue-500" />Sell Timeline</h3></div>
-            <ol className="space-y-3">{TIMELINE_STEPS.map((step, i) => <li key={i} className="flex gap-3"><div className="flex flex-col items-center"><div className="w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</div>{i < TIMELINE_STEPS.length - 1 && <div className="w-px flex-1 bg-gray-200 mt-1" />}</div><div className="pb-3"><p className="text-xs font-semibold text-gray-900">{step.title}</p><p className="text-[11px] text-gray-400 mt-0.5">{step.description}</p></div></li>)}</ol>
-          </div>
-        </section>
+        <LiquidationRadar
+          isLoading={isLoading}
+          portfolio={portfolio as any}
+          windowOpenCount={windowOpenCount}
+          onOpenAsset={(a) => setDrawerAsset(a as PortfolioAsset)}
+        />
 
-        {!isLoading && (smartMoves.length > 0 || dailyDecay > 0) && <div className="grid md:grid-cols-2 gap-4"><section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-blue-500" />Smart Moves</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600">AI suggested</span></div><div className="space-y-3">{smartMoves.slice(0,3).map((asset) => { const sw = computeSellWindow(asset.depreciationCliff.daysAway, asset.depreciationCliff.projectedDrop / 100); const pill = URGENCY_PILL[sw.urgency]; return <div key={asset.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors" onClick={() => setDrawerAsset(asset as PortfolioAsset)}><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-gray-900 truncate">{asset.model}</p><p className="text-[10px] text-gray-400 mt-0.5">Move into the next purchase window</p></div><span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: pill.bg, color: pill.text }}>{pill.label}</span></div>; })}</div></section><section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-red-500" />Cost of Holding</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-500">Daily burn</span></div><div className="space-y-3">{[{ label: "Daily", value: dailyDecay, color: "#EF4444" }, { label: "Weekly", value: dailyDecay * 7, color: "#F97316" }, { label: "Monthly", value: dailyDecay * 30, color: "#F59E0B" }].map((row) => <div key={row.label} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50"><span className="text-sm font-medium text-gray-600">{row.label} loss rate</span><span className="text-sm font-bold" style={{ color: row.color }}>{fmt(row.value)}</span></div>)}<p className="text-[11px] text-gray-400 mt-1 leading-relaxed">This is the amortised depreciation rate across all assets. Selling earlier saves this amount per day.</p></div></section></div>}
+        {!isLoading && (smartMoves.length > 0 || dailyDecay > 0) && <div className="grid md:grid-cols-2 gap-4"><section className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-amber-500" />Smart Moves</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">AI suggested</span></div><div className="space-y-3">{smartMoves.slice(0,3).map((asset) => { const sw = computeSellWindow(asset.depreciationCliff.daysAway, asset.depreciationCliff.projectedDrop / 100); const pill = URGENCY_PILL[sw.urgency]; return <div key={asset.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors" onClick={() => setDrawerAsset(asset as PortfolioAsset)}><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-gray-900 truncate">{asset.model}</p><p className="text-[10px] text-gray-400 mt-0.5">Move into the next purchase window</p></div><span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: pill.bg, color: pill.text }}>{pill.label}</span></div>; })}</div></section><section className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-red-500" />Cost of Holding</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-500">Daily burn</span></div><div className="space-y-3">{[{ label: "Daily", value: dailyDecay, color: "#EF4444" }, { label: "Weekly", value: dailyDecay * 7, color: "#F97316" }, { label: "Monthly", value: dailyDecay * 30, color: "#F59E0B" }].map((row) => <div key={row.label} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50"><span className="text-sm font-medium text-gray-600">{row.label} loss rate</span><span className="text-sm font-bold" style={{ color: row.color }}>{fmt(row.value)}</span></div>)}<p className="text-[11px] text-gray-400 mt-1 leading-relaxed">This is the amortised depreciation rate across all assets. Selling earlier saves this amount per day.</p></div></section></div>}
 
-        {!isLoading && <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />Portfolio Rings</h3><Link href="/rings" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">Detail view <ArrowRight className="w-3 h-3" /></Link></div><div className="flex flex-col sm:flex-row items-center gap-8"><div className="shrink-0"><RingsGraphic grade={healthScore.grade} label={healthScore.label} score={healthScore.score} totalSaved={totalSaved} portfolio={portfolio} /></div><div className="flex-1 space-y-4 w-full"><RingRows healthScore={healthScore} totalSaved={totalSaved} portfolio={portfolio} soldRecordsSize={soldRecords.size} /></div></div></section>}
+        {!isLoading && <section className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-500" />Portfolio Rings</h3><Link href="/rings" className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1" style={{ color: "#9126EF" }}>Detail view <ArrowRight className="w-3 h-3" /></Link></div><div className="flex flex-col sm:flex-row items-center gap-8"><div className="shrink-0"><RingsGraphic grade={healthScore.grade} label={healthScore.label} score={healthScore.score} totalSaved={totalSaved} portfolio={portfolio} /></div><div className="flex-1 space-y-4 w-full"><RingRows healthScore={healthScore} totalSaved={totalSaved} portfolio={portfolio} soldRecordsSize={soldRecords.size} /></div></div></section>}
 
-        {!isLoading && <section className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" />Upcoming Release Events</h3><Link href="/alerts" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">All alerts <ArrowRight className="w-3 h-3" /></Link></div><div className="space-y-3">{RELEASE_EVENTS.slice(0, 3).map((event) => { const sevConfig = { critical: { bg: "#FEE2E2", color: "#991B1B", countBg: "#FEF2F2", countColor: "#DC2626" }, high: { bg: "#FFEDD5", color: "#9A3412", countBg: "#FFF7ED", countColor: "#B45309" }, medium: { bg: "#FEF3C7", color: "#92400E", countBg: "#FFFBEB", countColor: "#B45309" }, low: { bg: "#DBEAFE", color: "#1D4ED8", countBg: "#EFF6FF", countColor: "#2563EB" } }[event.severity]; return <div key={event.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors bg-gray-50"><div className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: sevConfig.countBg }}><span className="font-poppins font-bold text-lg leading-none" style={{ color: sevConfig.countColor }}>{event.daysAway}</span><span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">days</span></div><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{event.title}</p><p className="text-xs text-gray-400 truncate mt-0.5">Affects: <span className="font-medium text-gray-600">{event.affects}</span></p></div><div className="text-right shrink-0"><p className="text-lg font-bold text-red-500">{event.impact}%</p><span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: sevConfig.bg, color: sevConfig.color }}>{event.severity}</span></div></div>; })}</div></section>}
+        {!isLoading && <section className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-amber-500" />Upcoming Release Events</h3><Link href="/alerts" className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1" style={{ color: "#9126EF" }}>All alerts <ArrowRight className="w-3 h-3" /></Link></div><div className="space-y-3">{RELEASE_EVENTS.slice(0, 3).map((event) => { const sevConfig = { critical: { bg: "#FEE2E2", color: "#991B1B", countBg: "#FEF2F2", countColor: "#DC2626" }, high: { bg: "#FFEDD5", color: "#9A3412", countBg: "#FFF7ED", countColor: "#B45309" }, medium: { bg: "#FEF3C7", color: "#92400E", countBg: "#FFFBEB", countColor: "#B45309" }, low: { bg: "#DBEAFE", color: "#1D4ED8", countBg: "#EFF6FF", countColor: "#2563EB" } }[event.severity]; return <div key={event.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors bg-gray-50"><div className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: sevConfig.countBg }}><span className="font-poppins font-bold text-lg leading-none" style={{ color: sevConfig.countColor }}>{event.daysAway}</span><span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">days</span></div><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{event.title}</p><p className="text-xs text-gray-400 truncate mt-0.5">Affects: <span className="font-medium text-gray-600">{event.affects}</span></p></div><div className="text-right shrink-0"><p className="text-lg font-bold text-red-500">{event.impact}%</p><span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: sevConfig.bg, color: sevConfig.color }}>{event.severity}</span></div></div>; })}</div></section>}
 
         {soldRecords.size > 0 && <SessionPerformanceCard soldRecords={soldRecords} portfolio={portfolio} totalSaved={totalSaved} />}
 
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex gap-4"><div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0"><Clock className="w-5 h-5 text-white" /></div><div><p className="text-sm font-semibold text-blue-900 mb-1">How sell windows are calculated</p><p className="text-sm text-blue-700 leading-relaxed">Each item&apos;s optimal sell window opens 7 days before the depreciation cliff and closes 3 days before — giving resale platforms time to process. Selling inside the window maximises your price before the market reprices.</p></div></div>
-      </main>
+        <div className="bg-purple-50 border border-purple-100 rounded-3xl p-5 flex gap-4"><div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#9126EF" }}><Clock className="w-5 h-5 text-white" /></div><div><p className="text-sm font-semibold text-purple-900 mb-1">How sell windows are calculated</p><p className="text-sm text-purple-700 leading-relaxed">Each item&apos;s optimal sell window opens 7 days before the depreciation cliff and closes 3 days before — giving resale platforms time to process. Selling inside the window maximises your price before the market reprices.</p></div></div>
 
       <AnimatePresence>
         {batchTargets.length > 0 && !isLoading && (
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ type: "spring", stiffness: 360, damping: 28 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-            <button onClick={() => setShowBatchModal(true)} className="flex items-center gap-2.5 px-5 py-3.5 rounded-full font-bold text-white text-sm shadow-2xl whitespace-nowrap" style={{ backgroundColor: "#10B981", boxShadow: "0 8px 32px rgba(16,185,129,0.55)" }}>
+            <button onClick={() => setShowBatchModal(true)} className="flex items-center gap-2.5 px-5 py-3.5 rounded-full font-bold text-white text-sm shadow-2xl whitespace-nowrap transition-all hover:scale-105" style={{ backgroundColor: "#9126EF", boxShadow: "0 8px 32px rgba(145,38,239,0.55)" }}>
               <Package className="w-4 h-4" /> Sell All Urgent <span className="bg-white/25 text-white text-xs font-black px-2 py-0.5 rounded-full">{batchTargets.length}</span>
-              <span className="ml-1 bg-emerald-700/40 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{fmt(batchTargets.reduce((s, a) => s + a.currentValue / 100, 0))}</span>
+              <span className="ml-1 text-white text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>{fmt(batchTargets.reduce((s, a) => s + a.currentValue / 100, 0))}</span>
             </button>
           </motion.div>
         )}
@@ -447,11 +380,12 @@ export default function Home() {
 
       <footer className="border-t border-gray-200 py-6 bg-white">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <span className="font-poppins font-bold text-blue-600">Liquid</span>
+          <span className="font-poppins font-bold" style={{ color: "#9126EF" }}>Liquid</span>
           <p className="text-xs text-gray-400">© 2026 Liquid. Sell smart, not late.</p>
         </div>
       </footer>
-    </div>
+      </>
+    </AppLayout>
   );
 }
 
@@ -464,7 +398,7 @@ function RingsGraphic({ grade, label, score, totalSaved, portfolio }: { grade: s
   const CY = 95;
   const SW = 13;
   const rings = [
-    { color: "#2563EB", track: "#DBEAFE", radius: 72, value: score },
+    { color: "#9126EF", track: "rgba(145,38,239,0.1)", radius: 72, value: score },
     { color: "#10B981", track: "#D1FAE5", radius: 55, value: capitalPct },
     { color: "#F59E0B", track: "#FEF3C7", radius: 38, value: efficiencyPct },
   ];
@@ -486,7 +420,7 @@ function RingRows({ healthScore, totalSaved, portfolio, soldRecordsSize }: { hea
   const capitalPct = totalAtRisk > 0 ? Math.min(100, Math.round((totalSaved / totalAtRisk) * 100)) : 0;
   const efficiencyPct = portfolio.length > 0 ? Math.round((soldRecordsSize / portfolio.length) * 100) : 0;
   const rings = [
-    { label: "Portfolio Health", value: healthScore.score, color: "#2563EB", track: "#DBEAFE", detail: `${healthScore.grade} — ${healthScore.label}` },
+    { label: "Portfolio Health", value: healthScore.score, color: "#9126EF", track: "rgba(145,38,239,0.1)", detail: `${healthScore.grade} — ${healthScore.label}` },
     { label: "Capital Protected", value: capitalPct, color: "#10B981", track: "#D1FAE5", detail: `${capitalPct}% of at-risk saved` },
     { label: "Sell Efficiency", value: efficiencyPct, color: "#F59E0B", track: "#FEF3C7", detail: `${soldRecordsSize} of ${portfolio.length} sold` },
   ];
@@ -507,7 +441,7 @@ function SessionPerformanceCard({ soldRecords, portfolio, totalSaved }: { soldRe
     { icon: "🏆", label: "Window Master", unlocked: efficiency >= 50 },
     { icon: "🚀", label: "Full Liquidation", unlocked: itemsSold >= 5 },
   ];
-  return <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Award className="w-4 h-4 text-amber-500" />Session Performance</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">This session</span></div><div className="grid grid-cols-4 gap-3 mb-5">{[{ label: "Sold", value: `${itemsSold}`, sub: "items", color: "#2563EB" }, { label: "Proceeds", value: f(totalProceeds), sub: "collected", color: "#10B981" }, { label: "Protected", value: f(totalSaved), sub: "from drops", color: "#10B981" }, { label: "Efficiency", value: `${efficiency}%`, sub: "of at-risk", color: efficiency >= 75 ? "#10B981" : efficiency >= 40 ? "#F59E0B" : "#EF4444" }].map((s) => <div key={s.label} className="rounded-xl p-3 bg-gray-50 border border-gray-100 text-center"><p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">{s.label}</p><p className="font-poppins font-bold text-base leading-tight" style={{ color: s.color }}>{s.value}</p><p className="text-[10px] text-gray-400 mt-0.5">{s.sub}</p></div>)}</div><div><p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-orange-400" />Achievement Wall</p><div className="grid grid-cols-3 sm:grid-cols-6 gap-2">{trophies.map((t) => <div key={t.label} className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border text-center transition-all" style={{ backgroundColor: t.unlocked ? "#FFFBEB" : "#F9FAFB", borderColor: t.unlocked ? "#FDE68A" : "#E5E7EB", opacity: t.unlocked ? 1 : 0.5 }}><span className="text-xl leading-none" style={{ filter: t.unlocked ? "none" : "grayscale(1)" }}>{t.icon}</span><p className="text-[9px] font-semibold text-gray-600 leading-tight">{t.label}</p></div>)}</div></div></motion.section>;
+  return <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div className="flex items-center justify-between mb-5"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Award className="w-4 h-4 text-amber-500" />Session Performance</h3><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">This session</span></div><div className="grid grid-cols-4 gap-3 mb-5">{[{ label: "Sold", value: `${itemsSold}`, sub: "items", color: "#9126EF" }, { label: "Proceeds", value: f(totalProceeds), sub: "collected", color: "#10B981" }, { label: "Protected", value: f(totalSaved), sub: "from drops", color: "#10B981" }, { label: "Efficiency", value: `${efficiency}%`, sub: "of at-risk", color: efficiency >= 75 ? "#10B981" : efficiency >= 40 ? "#F59E0B" : "#EF4444" }].map((s) => <div key={s.label} className="rounded-xl p-3 bg-gray-50 border border-gray-100 text-center"><p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">{s.label}</p><p className="font-poppins font-bold text-base leading-tight" style={{ color: s.color }}>{s.value}</p><p className="text-[10px] text-gray-400 mt-0.5">{s.sub}</p></div>)}</div><div><p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-orange-400" />Achievement Wall</p><div className="grid grid-cols-3 sm:grid-cols-6 gap-2">{trophies.map((t) => <div key={t.label} className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border text-center transition-all" style={{ backgroundColor: t.unlocked ? "#FFFBEB" : "#F9FAFB", borderColor: t.unlocked ? "#FDE68A" : "#E5E7EB", opacity: t.unlocked ? 1 : 0.5 }}><span className="text-xl leading-none" style={{ filter: t.unlocked ? "none" : "grayscale(1)" }}>{t.icon}</span><p className="text-[9px] font-semibold text-gray-600 leading-tight">{t.label}</p></div>)}</div></div></motion.section>;
 }
 
 function AssetCard({ asset, isSelling, soldRecord, alertPrice, onSell, onOpen, onSetAlert, viewType = "tiles" }: { asset: PortfolioAsset; isSelling: boolean; soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number }; alertPrice?: number; onSell: (id: string) => void; onOpen: (asset: PortfolioAsset) => void; onSetAlert: (id: string, price: number | null) => void; viewType?: "tiles" | "list"; }) {
