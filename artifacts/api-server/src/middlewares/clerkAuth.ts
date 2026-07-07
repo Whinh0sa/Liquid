@@ -15,7 +15,7 @@
 //   dbUserId     — the UUID primary key from our `users` table
 
 import type { Request, Response, NextFunction } from "express";
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db.js";
 import { users } from "@workspace/db/schema";
@@ -51,9 +51,12 @@ export async function requireAuth(
   const token = authHeader.slice(7);
 
   try {
-    // Verify the Clerk JWT
-    const payload = await clerk.verifyToken(token);
+    // Verify the Clerk JWT using standalone verifyToken
+    const payload = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
     const clerkUserId = payload.sub;
+
 
     // Look up or auto-provision the DB user row
     let dbUser = await db
