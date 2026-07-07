@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LineChart,
@@ -134,9 +134,9 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const simulatedWindow = asset ? computeSellWindow(simulatedDaysAway, simulatedDrop) : null;
   const urgencyConf = sellWindow ? URGENCY_CONFIG[sellWindow.urgency] : null;
 
-  const { data: chartData, windowStartLabel, windowEndLabel, cliffLabel } = asset
+  const { data: chartData, windowStartLabel, windowEndLabel, cliffLabel } = useMemo(() => asset
     ? buildExtendedChart(asset.currentValue, asset.depreciationCliff.projectedDrop, daysAway)
-    : { data: [], windowStartLabel: null, windowEndLabel: null, cliffLabel: "" };
+    : { data: [], windowStartLabel: null, windowEndLabel: null, cliffLabel: "" }, [asset?.currentValue, asset?.depreciationCliff.projectedDrop, daysAway]);
 
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD" });
