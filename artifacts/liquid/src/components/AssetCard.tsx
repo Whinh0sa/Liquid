@@ -162,7 +162,7 @@ export default function AssetCard({
           onClick={(e) => e.stopPropagation()}
         />
         <button onClick={(e) => { e.stopPropagation(); confirmAlert(); }} className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0">Set</button>
-        <button onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button>
+        <button aria-label="Cancel alert" onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button>
       </div>
     ) : (
       <button
@@ -177,7 +177,7 @@ export default function AssetCard({
       <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-500">
         <Bell className="w-3 h-3" />Alert set at {fmt(alertPrice)}
       </span>
-      <button onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }} className="text-gray-300 hover:text-gray-500 transition-colors">
+      <button aria-label="Remove alert" onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }} className="text-gray-300 hover:text-gray-500 transition-colors">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
