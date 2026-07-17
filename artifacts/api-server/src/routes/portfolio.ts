@@ -233,7 +233,8 @@ router.patch("/portfolio/:id/alerts/:alertId", async (req, res) => {
   const [updated] = await db
     .update(priceAlerts)
     .set(updates)
-    .where(eq(priceAlerts.id, alertId))
+    // Security: Scope to assetId to prevent IDOR
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning();
 
   if (!updated) {
@@ -256,7 +257,8 @@ router.delete("/portfolio/:id/alerts/:alertId", async (req, res) => {
 
   const [deleted] = await db
     .delete(priceAlerts)
-    .where(eq(priceAlerts.id, alertId))
+    // Security: Scope to assetId to prevent IDOR
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning({ id: priceAlerts.id });
 
   if (!deleted) {
