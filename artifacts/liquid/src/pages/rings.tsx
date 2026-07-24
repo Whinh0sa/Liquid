@@ -5,9 +5,11 @@ import { useGetPortfolio, getGetPortfolioQueryKey } from "@workspace/api-client-
 import { ArrowLeft, Activity, TrendingUp, Shield, Zap } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import AppLayout from "@/components/AppLayout";
+import { formatCurrency } from "@/lib/format";
 
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 0);
 }
 
 

@@ -17,6 +17,7 @@ import { computeSellWindow } from "@/constants/sellWindow";
 import { useColors } from "@/hooks/useColors";
 import { StatusBadge } from "./StatusBadge";
 import { UrgencyBadge } from "./UrgencyBadge";
+import { formatCurrency } from "../lib/format";
 
 interface AssetCardProps {
   asset: Asset;
@@ -24,7 +25,8 @@ interface AssetCardProps {
 }
 
 function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(cents / 100, 0);
 }
 
 function pct(purchase: number, current: number) {

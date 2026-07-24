@@ -33,9 +33,11 @@ import PortfolioKPIs from "@/components/PortfolioKPIs";
 import AssetLedgerGrid from "@/components/AssetLedgerGrid";
 import LiquidationRadar from "@/components/LiquidationRadar";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
+import { formatCurrency } from "@/lib/format";
 
 function fmt(n: number): string {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 2);
 }
 
 interface PortfolioAsset {
@@ -428,7 +430,9 @@ function RingRows({ healthScore, totalSaved, portfolio, soldRecordsSize }: { hea
 }
 
 function SessionPerformanceCard({ soldRecords, portfolio, totalSaved }: { soldRecords: Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>; portfolio: { depreciationCliff: { daysAway: number; projectedDrop: number } }[]; totalSaved: number }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) =>
+    // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+    formatCurrency(n, 2);
   const itemsSold = soldRecords.size;
   const totalProceeds = Array.from(soldRecords.values()).reduce((s, r) => s + r.saleValue, 0);
   const totalAtRisk = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);

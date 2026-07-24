@@ -8,9 +8,11 @@ import {
 } from "lucide-react";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 import AppLayout from "@/components/AppLayout";
+import { formatCurrency } from "@/lib/format";
 
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 0);
 }
 
 const URGENCY_COLOR: Record<UrgencyLevel, { bg: string; text: string; border: string; label: string }> = {

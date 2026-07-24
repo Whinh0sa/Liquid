@@ -11,6 +11,8 @@ import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 
+const monthFormatter = new Intl.DateTimeFormat(undefined, { month: "short" });
+
 function Calendar({
   className,
   classNames,
@@ -37,7 +39,8 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          // Use cached Intl.DateTimeFormat to avoid instantiation overhead during renders
+          monthFormatter.format(date),
         ...formatters,
       }}
       classNames={{

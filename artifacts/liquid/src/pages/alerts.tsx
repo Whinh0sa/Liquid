@@ -8,10 +8,12 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { computeSellWindow } from "@/lib/sellWindow";
+import { formatCurrency } from "@/lib/format";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 0);
 }
 
 // ─── Severity config derived from urgency ────────────────────────────────────

@@ -7,6 +7,7 @@
 
 import { Link } from "wouter";
 import { Activity, Clock, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PortfolioKPIsProps {
@@ -21,7 +22,8 @@ interface PortfolioKPIsProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 2);
 }
 
 // ─── Sub-component ────────────────────────────────────────────────────────────

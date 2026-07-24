@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import type { UrgencyLevel } from "@/lib/sellWindow";
+import { formatCurrency } from "@/lib/format";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AssetCardAsset {
@@ -24,7 +25,8 @@ export interface AssetCardAsset {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 2);
 }
 
 const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {

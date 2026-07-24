@@ -8,6 +8,7 @@
 import { BarChart2, Zap, Clock } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import type { UrgencyLevel } from "@/lib/sellWindow";
+import { formatCurrency } from "@/lib/format";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RadarAsset {
@@ -47,7 +48,8 @@ const TIMELINE_STEPS = [
 ];
 
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(n, 2);
 }
 
 // ─── Sub-panels ───────────────────────────────────────────────────────────────

@@ -20,13 +20,15 @@ import { AssetCard } from "@/components/AssetCard";
 import { BrandHeader } from "@/components/BrandHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { useColors } from "@/hooks/useColors";
+import { formatCurrency } from "../../lib/format";
 
 if (process.env.EXPO_PUBLIC_DOMAIN) {
   setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 }
 
 function fmt(dollars: number) {
-  return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(dollars, 0);
 }
 
 export default function PortfolioScreen() {

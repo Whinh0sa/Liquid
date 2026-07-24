@@ -9,9 +9,11 @@ import { BrandHeader } from "@/components/BrandHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { computeSellWindow } from "@/constants/sellWindow";
 import { useColors } from "@/hooks/useColors";
+import { formatCurrency } from "../../lib/format";
 
 function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Use cached Intl.NumberFormat to avoid instantiation overhead during renders
+  return formatCurrency(cents / 100, 0);
 }
 
 export default function MarketsScreen() {
