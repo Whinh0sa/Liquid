@@ -230,10 +230,11 @@ router.patch("/portfolio/:id/alerts/:alertId", async (req, res) => {
     updates.isActive = bodyResult.data.isActive;
   }
 
+  // Security: prevent IDOR by scoping the update to both the alertId and its parent assetId
   const [updated] = await db
     .update(priceAlerts)
     .set(updates)
-    .where(eq(priceAlerts.id, alertId))
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning();
 
   if (!updated) {
@@ -254,9 +255,10 @@ router.delete("/portfolio/:id/alerts/:alertId", async (req, res) => {
     return;
   }
 
+  // Security: prevent IDOR by scoping the delete to both the alertId and its parent assetId
   const [deleted] = await db
     .delete(priceAlerts)
-    .where(eq(priceAlerts.id, alertId))
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning({ id: priceAlerts.id });
 
   if (!deleted) {
