@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../../lib/format";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { getGetPortfolioQueryOptions } from "@workspace/api-client-react";
@@ -11,7 +12,7 @@ import { computeSellWindow } from "@/constants/sellWindow";
 import { useColors } from "@/hooks/useColors";
 
 function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return `$${formatCurrencyNoDecimals(cents / 100)}`;
 }
 
 export default function MarketsScreen() {

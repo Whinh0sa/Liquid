@@ -1,25 +1,63 @@
+import { formatCurrencyNoDecimals } from "../lib/format";
 import { useMemo } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { useGetPortfolio, getGetPortfolioQueryKey } from "@workspace/api-client-react";
 import {
-  AlertTriangle, BellRing, CalendarDays, Clock,
-  Zap, CheckCircle, Shield, TriangleAlert,
+  useGetPortfolio,
+  getGetPortfolioQueryKey,
+} from "@workspace/api-client-react";
+import {
+  AlertTriangle,
+  BellRing,
+  CalendarDays,
+  Clock,
+  Zap,
+  CheckCircle,
+  Shield,
+  TriangleAlert,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { computeSellWindow } from "@/lib/sellWindow";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  return formatCurrencyNoDecimals(n);
 }
 
 // ─── Severity config derived from urgency ────────────────────────────────────
 const SEVERITY = {
-  CLIFF:   { label: "critical", bg: "bg-red-50",    text: "text-red-700",    icon: AlertTriangle, iconColor: "text-red-500",    border: "border-red-100"    },
-  URGENT:  { label: "high",     bg: "bg-orange-50", text: "text-orange-700", icon: AlertTriangle, iconColor: "text-orange-500", border: "border-orange-100" },
-  WINDOW:  { label: "active",   bg: "bg-emerald-50",text: "text-emerald-700",icon: Zap,           iconColor: "text-emerald-500",border: "border-emerald-100"},
-  PLANNED: { label: "monitor",  bg: "bg-purple-50", text: "text-purple-700", icon: CalendarDays,  iconColor: "text-purple-400", border: "border-purple-100" },
+  CLIFF: {
+    label: "critical",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    icon: AlertTriangle,
+    iconColor: "text-red-500",
+    border: "border-red-100",
+  },
+  URGENT: {
+    label: "high",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    icon: AlertTriangle,
+    iconColor: "text-orange-500",
+    border: "border-orange-100",
+  },
+  WINDOW: {
+    label: "active",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    icon: Zap,
+    iconColor: "text-emerald-500",
+    border: "border-emerald-100",
+  },
+  PLANNED: {
+    label: "monitor",
+    bg: "bg-purple-50",
+    text: "text-purple-700",
+    icon: CalendarDays,
+    iconColor: "text-purple-400",
+    border: "border-purple-100",
+  },
 } as const;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -31,15 +69,17 @@ export default function Alerts() {
   const portfolio = data?.portfolio ?? [];
 
   // Enrich each asset with its computed urgency
-  const enriched = useMemo(() =>
-    portfolio.map((a) => ({
-      ...a,
-      sw: computeSellWindow(
-        a.depreciationCliff.daysAway,
-        a.depreciationCliff.projectedDrop / 100,
-      ),
-    })),
-  [portfolio]);
+  const enriched = useMemo(
+    () =>
+      portfolio.map((a) => ({
+        ...a,
+        sw: computeSellWindow(
+          a.depreciationCliff.daysAway,
+          a.depreciationCliff.projectedDrop / 100,
+        ),
+      })),
+    [portfolio],
+  );
 
   // Separate into actionable (CLIFF + URGENT + WINDOW) and monitoring (PLANNED)
   const actionable = useMemo(
@@ -52,9 +92,13 @@ export default function Alerts() {
   );
 
   // Summary stats derived from live data
-  const criticalCount = enriched.filter((a) => a.sw.urgency === "CLIFF" || a.sw.urgency === "URGENT").length;
-  const windowCount   = enriched.filter((a) => a.sw.urgency === "WINDOW").length;
-  const floorCount    = portfolio.filter((a) => a.status === "ACTION_REQUIRED").length;
+  const criticalCount = enriched.filter(
+    (a) => a.sw.urgency === "CLIFF" || a.sw.urgency === "URGENT",
+  ).length;
+  const windowCount = enriched.filter((a) => a.sw.urgency === "WINDOW").length;
+  const floorCount = portfolio.filter(
+    (a) => a.status === "ACTION_REQUIRED",
+  ).length;
 
   const summaryCards = [
     {
@@ -87,10 +131,18 @@ export default function Alerts() {
         >
           ← Back to dashboard
         </Link>
-        <p className="text-xs font-bold tracking-[0.25em] uppercase mb-1" style={{ color: "#9126EF" }}>Alerts</p>
-        <h1 className="text-3xl font-black text-gray-900">Release signals &amp; price floors</h1>
+        <p
+          className="text-xs font-bold tracking-[0.25em] uppercase mb-1"
+          style={{ color: "#9126EF" }}
+        >
+          Alerts
+        </p>
+        <h1 className="text-3xl font-black text-gray-900">
+          Release signals &amp; price floors
+        </h1>
         <p className="text-gray-500 mt-1">
-          Live view of your portfolio's urgency status — updated each time the page loads.
+          Live view of your portfolio's urgency status — updated each time the
+          page loads.
         </p>
       </div>
 
@@ -107,15 +159,21 @@ export default function Alerts() {
             <div
               className={[
                 "w-11 h-11 rounded-xl flex items-center justify-center shrink-0",
-                card.tone === "red"     ? "bg-red-50"     :
-                card.tone === "emerald" ? "bg-emerald-50" : "bg-amber-50",
+                card.tone === "red"
+                  ? "bg-red-50"
+                  : card.tone === "emerald"
+                    ? "bg-emerald-50"
+                    : "bg-amber-50",
               ].join(" ")}
             >
               <card.icon
                 className={[
                   "w-5 h-5",
-                  card.tone === "red"     ? "text-red-500"     :
-                  card.tone === "emerald" ? "text-emerald-500" : "text-amber-500",
+                  card.tone === "red"
+                    ? "text-red-500"
+                    : card.tone === "emerald"
+                      ? "text-emerald-500"
+                      : "text-amber-500",
                 ].join(" ")}
               />
             </div>
@@ -126,8 +184,11 @@ export default function Alerts() {
               <p
                 className={[
                   "text-2xl font-black",
-                  card.tone === "red"     ? "text-red-500"     :
-                  card.tone === "emerald" ? "text-emerald-600" : "text-amber-500",
+                  card.tone === "red"
+                    ? "text-red-500"
+                    : card.tone === "emerald"
+                      ? "text-emerald-600"
+                      : "text-amber-500",
                 ].join(" ")}
               >
                 {card.value}
@@ -152,7 +213,10 @@ export default function Alerts() {
         {isLoading ? (
           <div className="p-5 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+              <div
+                key={i}
+                className="h-20 bg-gray-100 rounded-xl animate-pulse"
+              />
             ))}
           </div>
         ) : actionable.length === 0 ? (
@@ -160,7 +224,8 @@ export default function Alerts() {
             <CheckCircle className="w-10 h-10 text-emerald-400" />
             <p className="text-sm font-semibold text-gray-700">All clear</p>
             <p className="text-xs text-gray-400 max-w-xs">
-              No assets are currently in the urgent or sell-window zone. Check back when cliffs are closer.
+              No assets are currently in the urgent or sell-window zone. Check
+              back when cliffs are closer.
             </p>
           </div>
         ) : (
@@ -178,15 +243,21 @@ export default function Alerts() {
                   className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
                 >
                   {/* Severity icon */}
-                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${sev.bg} ${sev.border}`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${sev.bg} ${sev.border}`}
+                  >
                     <sev.icon className={`w-4 h-4 ${sev.iconColor}`} />
                   </div>
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{a.model}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sev.bg} ${sev.text}`}>
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {a.model}
+                      </p>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sev.bg} ${sev.text}`}
+                      >
                         {sev.label}
                       </span>
                     </div>
@@ -203,8 +274,12 @@ export default function Alerts() {
 
                   {/* Financial impact */}
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-gray-900">{fmt(current)}</p>
-                    <p className="text-xs text-red-500 font-semibold">−{fmt(drop)}</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {fmt(current)}
+                    </p>
+                    <p className="text-xs text-red-500 font-semibold">
+                      −{fmt(drop)}
+                    </p>
                     <p className="text-[10px] text-gray-400">if cliff hit</p>
                   </div>
 
@@ -246,14 +321,19 @@ export default function Alerts() {
                   className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{a.model}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {a.model}
+                    </p>
                     <p className="text-xs text-gray-400">
-                      {a.depreciationCliff.reason} · {a.depreciationCliff.daysAway}d away
+                      {a.depreciationCliff.reason} ·{" "}
+                      {a.depreciationCliff.daysAway}d away
                     </p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-gray-500">At risk</p>
-                    <p className="text-sm font-semibold text-gray-700">{fmt(drop)}</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {fmt(drop)}
+                    </p>
                   </div>
                 </motion.div>
               );
@@ -270,21 +350,36 @@ export default function Alerts() {
             Alert logic
           </h2>
           <div className="space-y-2.5 text-sm text-gray-600">
-            <p>• <strong>Critical / Urgent</strong> — cliff is imminent or the sell window has closed.</p>
-            <p>• <strong>Active</strong> — asset is inside its optimal resale window right now.</p>
-            <p>• <strong>Monitoring</strong> — cliff is more than 8 days away; no action needed yet.</p>
+            <p>
+              • <strong>Critical / Urgent</strong> — cliff is imminent or the
+              sell window has closed.
+            </p>
+            <p>
+              • <strong>Active</strong> — asset is inside its optimal resale
+              window right now.
+            </p>
+            <p>
+              • <strong>Monitoring</strong> — cliff is more than 8 days away; no
+              action needed yet.
+            </p>
           </div>
         </div>
 
         <div className="bg-purple-50 border border-purple-100 rounded-3xl p-5 flex gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#9126EF" }}>
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: "#9126EF" }}
+          >
             <TriangleAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-purple-900 mb-1">Why this page exists</p>
+            <p className="text-sm font-semibold text-purple-900 mb-1">
+              Why this page exists
+            </p>
             <p className="text-sm text-purple-700 leading-relaxed">
-              Alerts stay separate from the dashboard so the home view stays calm while still
-              surfacing urgency. Everything here is computed live from your portfolio.
+              Alerts stay separate from the dashboard so the home view stays
+              calm while still surfacing urgency. Everything here is computed
+              live from your portfolio.
             </p>
           </div>
         </div>

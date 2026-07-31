@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../../lib/format";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -26,7 +27,7 @@ if (process.env.EXPO_PUBLIC_DOMAIN) {
 }
 
 function fmt(dollars: number) {
-  return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return `$${formatCurrencyNoDecimals(dollars)}`;
 }
 
 export default function PortfolioScreen() {

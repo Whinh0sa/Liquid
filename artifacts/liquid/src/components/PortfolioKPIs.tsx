@@ -1,3 +1,4 @@
+import { formatCurrencyTwoDecimals } from "../lib/format";
 // ─── PortfolioKPIs ────────────────────────────────────────────────────────────
 //
 // Displays the top "Total Portfolio Value" hero section and the three
@@ -21,7 +22,7 @@ interface PortfolioKPIsProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return formatCurrencyTwoDecimals(n);
 }
 
 // ─── Sub-component ────────────────────────────────────────────────────────────
@@ -39,7 +40,9 @@ function SummaryTile({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5 text-gray-400">{icon}</div>
-      <span className="text-lg font-bold" style={{ color: valueColor }}>{value}</span>
+      <span className="text-lg font-bold" style={{ color: valueColor }}>
+        {value}
+      </span>
       <span className="text-xs text-gray-400 font-medium">{label}</span>
     </div>
   );
@@ -59,7 +62,9 @@ export default function PortfolioKPIs({
       {/* ── Hero value ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Total Portfolio Value</p>
+          <p className="text-sm font-medium text-gray-500 mb-1">
+            Total Portfolio Value
+          </p>
           {isLoading ? (
             <div className="h-10 w-52 bg-gray-100 rounded-lg animate-pulse" />
           ) : (
@@ -80,7 +85,10 @@ export default function PortfolioKPIs({
           <Link
             href="/analysis"
             className="px-4 py-2.5 rounded-2xl font-bold text-white shadow-sm transition-all hover:opacity-90 hover:-translate-y-0.5"
-            style={{ backgroundColor: "#9126EF", boxShadow: "0 4px 14px rgba(145,38,239,0.2)" }}
+            style={{
+              backgroundColor: "#9126EF",
+              boxShadow: "0 4px 14px rgba(145,38,239,0.2)",
+            }}
           >
             Rebalance
           </Link>
