@@ -238,7 +238,7 @@ export default function Home() {
                   <h2 className="font-poppins font-bold text-lg text-gray-900">Liquidate {batchTargets.length} item{batchTargets.length !== 1 ? "s" : ""}</h2>
                   <p className="text-sm text-gray-500 mt-0.5">Sell all assets in sell-window or urgent zone</p>
                 </div>
-                <button type="button" onClick={() => setShowBatchModal(false)} className="p-2 rounded-full hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
+                <button aria-label="Close batch modal" type="button" onClick={() => setShowBatchModal(false)} className="p-2 rounded-full hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
               </div>
               <div className="p-6 space-y-3 max-h-72 overflow-y-auto">
                 {batchTargets.map((a) => {

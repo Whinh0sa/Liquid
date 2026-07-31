@@ -65,7 +65,7 @@ export default function AssetLedgerGrid({
         </div>
 
         <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white p-1 self-start">
-          <button
+          <button aria-label="Tile view"
             type="button"
             onClick={() => onViewChange("tiles")}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
@@ -75,7 +75,7 @@ export default function AssetLedgerGrid({
             <LayoutGrid className="w-4 h-4" />
             Tiles
           </button>
-          <button
+          <button aria-label="List view"
             type="button"
             onClick={() => onViewChange("list")}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
