@@ -45,11 +45,11 @@ function toApiAsset(row: typeof assets.$inferSelect) {
     make: row.make,
     model: row.model,
     storageCapacity: row.storageCapacity ?? undefined,
-    purchasePrice: row.purchasePrice,         // cents
-    currentValue: row.currentEstimatedValue,  // cents  (matches frontend key)
+    purchasePrice: row.purchasePrice, // cents
+    currentValue: row.currentEstimatedValue, // cents  (matches frontend key)
     depreciationCliff: {
       daysAway,
-      projectedDrop: row.projectedDrop,       // cents
+      projectedDrop: row.projectedDrop, // cents
       reason: row.cliffReason ?? "Market event",
     },
     status: row.status,
@@ -175,7 +175,7 @@ router.get("/portfolio/:id/alerts", async (req, res) => {
 
 // ─── POST /api/portfolio/:id/alerts ──────────────────────────────────────────
 const CreateAlertBody = z.object({
-  targetPrice: z.number().int().positive(),   // floor price in cents
+  targetPrice: z.number().int().positive(), // floor price in cents
 });
 
 router.post("/portfolio/:id/alerts", async (req, res) => {
@@ -197,7 +197,10 @@ router.post("/portfolio/:id/alerts", async (req, res) => {
     .values({ assetId: id, targetPrice: bodyResult.data.targetPrice })
     .returning();
 
-  req.log.info({ assetId: id, targetPrice: bodyResult.data.targetPrice }, "Price alert created");
+  req.log.info(
+    { assetId: id, targetPrice: bodyResult.data.targetPrice },
+    "Price alert created",
+  );
   res.status(201).json(alert);
 });
 
@@ -230,10 +233,11 @@ router.patch("/portfolio/:id/alerts/:alertId", async (req, res) => {
     updates.isActive = bodyResult.data.isActive;
   }
 
+  // Security: Prevent IDOR by ensuring the alert belongs to the scoped asset
   const [updated] = await db
     .update(priceAlerts)
     .set(updates)
-    .where(eq(priceAlerts.id, alertId))
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning();
 
   if (!updated) {
@@ -254,9 +258,10 @@ router.delete("/portfolio/:id/alerts/:alertId", async (req, res) => {
     return;
   }
 
+  // Security: Prevent IDOR by ensuring the alert belongs to the scoped asset
   const [deleted] = await db
     .delete(priceAlerts)
-    .where(eq(priceAlerts.id, alertId))
+    .where(and(eq(priceAlerts.id, alertId), eq(priceAlerts.assetId, id)))
     .returning({ id: priceAlerts.id });
 
   if (!deleted) {
