@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../lib/format";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
@@ -24,7 +25,7 @@ interface AssetCardProps {
 }
 
 function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return `${formatCurrencyNoDecimals.format(cents / 100)}`;
 }
 
 function pct(purchase: number, current: number) {

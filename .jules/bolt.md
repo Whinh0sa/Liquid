@@ -1,8 +1,3 @@
-## 2024-07-05 - Intl.DateTimeFormat caching optimization
-**Learning:** `toLocaleDateString` and initializing `Intl.DateTimeFormat` are slow and expensive operations. In data-heavy React apps (like mapping over a portfolio list), calling these in render loops or nested functions like `computeSellWindow` can cause measurable performance bottlenecks.
-**Action:** When a date formatting function is used inside a loop or frequently called utility function, instantiate `Intl.DateTimeFormat` once outside the function scope and reuse its `.format()` method. This yielded a 38x performance improvement (628ms to 16ms for 4000 calls).
-
-## 2025-02-12 - Recharts Performance Bottleneck
-**Learning:** We discovered that rendering charts with `recharts` inside a component updating often due to slider movements (e.g. `sellOffsetDays`) causes massive jank and re-rendering lag. The data prop passed to the chart (`chartData`) was being rebuilt dynamically on every single render. Since Recharts uses `isEqual` or referential equality on data, creating a new array on every slider change triggers expensive re-rendering within Recharts internals.
-**Action:** When working with Recharts in interactive components (like slider controls where state changes frequently), always memoize the data passed to the chart using `useMemo` with minimal dependencies (only the data that actually dictates chart shapes). E.g. wrap `buildExtendedChart` with `useMemo`. This stops chart jitter and massive lag during slider dragging.
-
+## 2024-05-18 - Caching Intl Instances in React
+**Learning:** In React apps, repeatedly calling `toLocaleString` or instantiating `Intl.NumberFormat` or `Intl.DateTimeFormat` inside render loops (especially inside large lists or charts) causes significant performance bottlenecks because these instances are notoriously slow to create.
+**Action:** Cache `Intl.*` instances outside the render cycle or in shared utilities (e.g., `lib/format.ts`) and reuse their `.format()` methods. Pay attention to configuration options (like currency styling) to avoid duplicated symbols (e.g. `$$`) when refactoring hardcoded template literals.

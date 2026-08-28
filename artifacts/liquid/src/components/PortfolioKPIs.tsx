@@ -1,3 +1,4 @@
+import { formatCurrency } from "../lib/format";
 // ─── PortfolioKPIs ────────────────────────────────────────────────────────────
 //
 // Displays the top "Total Portfolio Value" hero section and the three
@@ -21,7 +22,7 @@ interface PortfolioKPIsProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return formatCurrency.format(n);
 }
 
 // ─── Sub-component ────────────────────────────────────────────────────────────

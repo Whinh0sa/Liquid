@@ -1,3 +1,4 @@
+import { formatCurrency } from "../lib/format";
 // ─── LiquidationRadar ─────────────────────────────────────────────────────────
 //
 // The 3-column intelligence grid:
@@ -47,7 +48,7 @@ const TIMELINE_STEPS = [
 ];
 
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return formatCurrency.format(n);
 }
 
 // ─── Sub-panels ───────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { formatMonthShort } from "../../lib/format";
 "use client"
 
 import * as React from "react"
@@ -37,7 +38,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          formatMonthShort.format(date),
         ...formatters,
       }}
       classNames={{

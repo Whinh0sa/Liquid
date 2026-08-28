@@ -1,3 +1,4 @@
+import { formatCurrency } from "../lib/format";
 import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,7 +36,7 @@ import LiquidationRadar from "@/components/LiquidationRadar";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 
 function fmt(n: number): string {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return formatCurrency.format(n);
 }
 
 interface PortfolioAsset {
@@ -428,7 +429,7 @@ function RingRows({ healthScore, totalSaved, portfolio, soldRecordsSize }: { hea
 }
 
 function SessionPerformanceCard({ soldRecords, portfolio, totalSaved }: { soldRecords: Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>; portfolio: { depreciationCliff: { daysAway: number; projectedDrop: number } }[]; totalSaved: number }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) => formatCurrency.format(n);
   const itemsSold = soldRecords.size;
   const totalProceeds = Array.from(soldRecords.values()).reduce((s, r) => s + r.saleValue, 0);
   const totalAtRisk = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);

@@ -1,3 +1,4 @@
+import { formatCurrency } from "../lib/format";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -65,7 +66,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         {isCliff ? "⚠️ Cliff Event" : isWindow ? "⭐ Ideal sell-by" : label}
       </p>
       <p className="text-sm font-bold text-gray-900">
-        {payload[0].value.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+        {formatCurrency.format(payload[0].value)}
       </p>
       {isCliff && <p className="text-[10px] text-red-500 mt-1">Value drops sharply here</p>}
       {isWindow && <p className="text-[10px] text-emerald-600 mt-1">Best price-to-risk balance</p>}
@@ -139,7 +140,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
     : { data: [], windowStartLabel: null, windowEndLabel: null, cliffLabel: "" }, [asset?.currentValue, asset?.depreciationCliff.projectedDrop, daysAway]);
 
   const fmt = (n: number) =>
-    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+    formatCurrency.format(n);
 
   return (
     <AnimatePresence>
@@ -655,7 +656,7 @@ function ScenarioComparison({
   daysAway: number;
   sellWindow: ReturnType<typeof computeSellWindow> | null;
 }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) => formatCurrency.format(n);
   const urgency   = sellWindow?.urgency ?? "PLANNED";
   const postCliff = Math.max(0, currentValue - dropDollars);
   const lossPct   = currentValue > 0 ? (dropDollars / currentValue) * 100 : 0;
@@ -779,7 +780,7 @@ function WhatIfSimulator({
   simulatedLoss: number;
   simulatedWindow: ReturnType<typeof computeSellWindow> | null;
 }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) => formatCurrency.format(n);
   const pctFromPurchase = purchaseValue > 0 ? ((simulatedValue - purchaseValue) / purchaseValue) * 100 : 0;
 
   return (
@@ -846,7 +847,7 @@ function ConditionGrader({
   condition: ConditionKey;
   setCondition: (c: ConditionKey) => void;
 }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) => formatCurrency.format(n);
   const conf = CONDITIONS[condition];
   const adjusted = currentValue * conf.multiplier;
   const discount = currentValue - adjusted;
@@ -930,7 +931,7 @@ const PLATFORMS_DATA = [
 ];
 
 function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { currentValue: number; conditionMultiplier: number; urgency: UrgencyLevel }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) => formatCurrency.format(n);
   const adjusted = currentValue * conditionMultiplier;
   const ranked = [...PLATFORMS_DATA]
     .map((p) => ({ ...p, net: adjusted * (1 - p.fee) }))

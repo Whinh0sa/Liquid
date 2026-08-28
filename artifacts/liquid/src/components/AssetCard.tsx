@@ -1,3 +1,4 @@
+import { formatCurrency } from "../lib/format";
 // ─── AssetCard ────────────────────────────────────────────────────────────────
 //
 // Renders a single portfolio asset in either "tiles" or "list" view.
@@ -24,7 +25,7 @@ export interface AssetCardAsset {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return formatCurrency.format(n);
 }
 
 const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {

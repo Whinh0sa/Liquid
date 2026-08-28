@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../lib/format";
 import { useMemo } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -10,7 +11,7 @@ import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 import AppLayout from "@/components/AppLayout";
 
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  return formatCurrencyNoDecimals.format(n);
 }
 
 const URGENCY_COLOR: Record<UrgencyLevel, { bg: string; text: string; border: string; label: string }> = {

@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../../lib/format";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { getGetPortfolioQueryOptions } from "@workspace/api-client-react";
@@ -12,7 +13,7 @@ import { useColors } from "@/hooks/useColors";
 
 interface AlertItem { id: string; model: string; category: string; urgency: UrgencyLevel; daysAway: number; projectedDrop: number; reason: string; currentValue: number; sellByLabel: string; }
 
-function fmt(cents: number) { return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`; }
+function fmt(cents: number) { return `${formatCurrencyNoDecimals.format(cents / 100)}`; }
 
 function AlertRow({ alert, colors }: { alert: AlertItem; colors: ReturnType<typeof import("@/hooks/useColors").useColors> }) {
   const urgencyConfig = { CLIFF: { color: colors.destructive, bg: "#FEF2F2", icon: "x-circle" as const, label: "Cliff Reached" }, URGENT: { color: colors.warning, bg: "#FEF3C7", icon: "alert-triangle" as const, label: "Urgent" }, WINDOW: { color: colors.success, bg: "#DCFCE7", icon: "check-circle" as const, label: "Sell Window Open" }, PLANNED: { color: colors.mutedForeground, bg: colors.card, icon: "clock" as const, label: "Planned" } }[alert.urgency];

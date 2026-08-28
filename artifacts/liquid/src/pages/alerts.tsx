@@ -1,3 +1,4 @@
+import { formatCurrencyNoDecimals } from "../lib/format";
 import { useMemo } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -11,7 +12,7 @@ import { computeSellWindow } from "@/lib/sellWindow";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
+  return formatCurrencyNoDecimals.format(n);
 }
 
 // ─── Severity config derived from urgency ────────────────────────────────────
