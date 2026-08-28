@@ -8,3 +8,7 @@
 **Learning:** Using a simple middleware to set essential HTTP security headers offers an immediate defense-in-depth benefit without external dependencies.
 **Prevention:** Introduce basic security headers directly or via a library like helmet at the project's inception.
 
+## 2023-08-28 - [Nested Resource IDOR]
+**Vulnerability:** IDOR vulnerability in nested resource endpoints (`/portfolio/:id/alerts/:alertId`). Although the endpoints verified user ownership of the parent resource (`asset`), the database queries to update/delete the nested resource (`alert`) did not scope the query to ensure the nested resource actually belonged to the specified parent resource. An attacker could modify or delete alerts belonging to other users by providing their own `assetId` and another user's `alertId`.
+**Learning:** Checking parent ownership is insufficient if the database query acting on the child resource does not enforce the parent-child relationship.
+**Prevention:** When updating or deleting nested resources, always scope the database query to include both the child resource's ID and the parent resource's ID (e.g., `where(and(eq(child.id, id), eq(child.parentId, parentId)))`).
