@@ -14,7 +14,6 @@ import {
 import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal } from "lucide-react";
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface Asset {
   id: string;
   model: string;
@@ -32,7 +31,6 @@ interface AssetDrawerProps {
   isSelling: boolean;
 }
 
-// ── Urgency config ────────────────────────────────────────────────────────────
 const URGENCY_CONFIG: Record<UrgencyLevel, {
   bg: string; border: string; text: string; badge: string; badgeBg: string; label: string;
 }> = {
@@ -54,7 +52,6 @@ const URGENCY_CONFIG: Record<UrgencyLevel, {
   },
 };
 
-// ── Custom Tooltip ─────────────────────────────────────────────────────────────
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   const isCliff = typeof label === "string" && label.includes("cliff");
@@ -73,7 +70,6 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
-// ── Main Drawer ───────────────────────────────────────────────────────────────
 export default function AssetDrawer({ asset, onClose, onSell, isSelling }: AssetDrawerProps) {
   type SellStage = "idle" | "processing" | "success";
   const [sellStage, setSellStage] = useState<SellStage>("idle");
@@ -172,7 +168,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
             }}
             data-testid="asset-drawer"
           >
-            {/* ── Header ──────────────────────────────────────────────────── */}
             <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-gray-100">
               <div>
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
@@ -192,7 +187,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               </button>
             </div>
 
-            {/* ── Scrollable body ──────────────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
               {/* Current value row */}
@@ -210,7 +204,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </div>
               </div>
 
-              {/* ── Best Time to Sell recommendation ─────────────────────── */}
               {sellWindow && urgencyConf && (
                 <div
                   className="rounded-xl p-4"
@@ -270,7 +263,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </div>
               )}
 
-              {/* ── Depreciation warning ──────────────────────────────────── */}
               <div
                 className="rounded-xl p-4 flex gap-3"
                 style={{
@@ -292,7 +284,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </div>
               </div>
 
-              {/* ── Extended chart with sell window ──────────────────────── */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-700">Price Trajectory</h3>
@@ -445,7 +436,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </div>
               </div>
 
-              {/* ── Stats grid ────────────────────────────────────────────── */}
               <div className="grid grid-cols-2 gap-3">
                 <StatTile
                   icon={<Calendar className="w-4 h-4 text-amber-500" />}
@@ -482,7 +472,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 />
               </div>
 
-              {/* ── Scenario comparison ──────────────────────────────────── */}
               <ScenarioComparison
                 currentValue={currentValue}
                 dropDollars={dropDollars}
@@ -490,7 +479,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 sellWindow={sellWindow}
               />
 
-              {/* ── What-if simulator ────────────────────────────────────── */}
               <WhatIfSimulator
                 currentValue={currentValue}
                 purchaseValue={purchaseValue}
@@ -504,26 +492,22 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 simulatedWindow={simulatedWindow}
               />
 
-              {/* ── Condition Grader ─────────────────────────────────────── */}
               <ConditionGrader
                 currentValue={currentValue}
                 condition={condition}
                 setCondition={setCondition}
               />
 
-              {/* ── Platform estimates ───────────────────────────────────── */}
               <PlatformEstimates
                 currentValue={currentValue}
                 conditionMultiplier={conditionMultiplier}
                 urgency={sellWindow?.urgency ?? "PLANNED"}
               />
 
-              {/* ── Market demand ─────────────────────────────────────────── */}
               <MarketDemand category={asset.category} daysAway={daysAway} />
 
             </div>
 
-            {/* ── Sell button ──────────────────────────────────────────────── */}
             <div className="px-6 pb-6 pt-4 border-t border-gray-100">
               {isAlreadySold ? (
                 <div className="w-full h-14 flex items-center justify-center rounded-xl text-sm font-semibold text-red-500 bg-red-50 border border-red-100">
@@ -597,7 +581,6 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   );
 }
 
-// ── Sell Window Timeline Bar ──────────────────────────────────────────────────
 function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof computeSellWindow> }) {
   const cliff = sellWindow.cliffDay;
   if (cliff <= 0) return null;
@@ -646,7 +629,6 @@ function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof comp
   );
 }
 
-// ── Scenario Comparison ───────────────────────────────────────────────────────
 function ScenarioComparison({
   currentValue, dropDollars, daysAway, sellWindow,
 }: {
@@ -755,7 +737,6 @@ function ScenarioComparison({
   );
 }
 
-// ── What If Simulator ────────────────────────────────────────────────────────
 function WhatIfSimulator({
   currentValue,
   purchaseValue,
@@ -836,7 +817,6 @@ function WhatIfSimulator({
   );
 }
 
-// ── Condition Grader ──────────────────────────────────────────────────────────
 function ConditionGrader({
   currentValue,
   condition,
@@ -912,8 +892,6 @@ function ConditionGrader({
   );
 }
 
-// ── Platform Estimates ────────────────────────────────────────────────────────
-// ── Condition Config ──────────────────────────────────────────────────────────
 const CONDITIONS = {
   mint: { label: "Mint",  sub: "Like new — original box, no marks",   multiplier: 1.00, color: "#10B981", bg: "#F0FDF4", border: "#6EE7B7" },
   good: { label: "Good",  sub: "Minor wear — fully functional",        multiplier: 0.92, color: "#9126EF", bg: "rgba(145,38,239,0.06)", border: "rgba(145,38,239,0.2)" },
@@ -987,7 +965,6 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
   );
 }
 
-// ── Market Demand ─────────────────────────────────────────────────────────────
 function MarketDemand({ category, daysAway }: { category: string; daysAway: number }) {
   const BASE: Record<string, number> = { Hardware: 7, Optics: 6, Audio: 5 };
   let score = BASE[category] ?? 6;
@@ -1025,7 +1002,6 @@ function MarketDemand({ category, daysAway }: { category: string; daysAway: numb
   );
 }
 
-// ── Stat Tile ─────────────────────────────────────────────────────────────────
 function StatTile({
   icon, label, value, sub, valueColor = "#1F2937",
 }: { icon: React.ReactNode; label: string; value: string; sub: string; valueColor?: string }) {
