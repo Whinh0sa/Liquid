@@ -8,3 +8,4 @@
 **Learning:** Using a simple middleware to set essential HTTP security headers offers an immediate defense-in-depth benefit without external dependencies.
 **Prevention:** Introduce basic security headers directly or via a library like helmet at the project's inception.
 
+\n- Overly permissive CORS configurations (e.g., `app.use(cors())`) allow all origins by default. Always configure CORS explicitly using environment variables like `CORS_ORIGIN`, and fallback securely based on the environment (e.g., restrict to `false` in production if the variable is missing).
