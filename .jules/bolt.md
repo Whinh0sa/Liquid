@@ -6,3 +6,6 @@
 **Learning:** We discovered that rendering charts with `recharts` inside a component updating often due to slider movements (e.g. `sellOffsetDays`) causes massive jank and re-rendering lag. The data prop passed to the chart (`chartData`) was being rebuilt dynamically on every single render. Since Recharts uses `isEqual` or referential equality on data, creating a new array on every slider change triggers expensive re-rendering within Recharts internals.
 **Action:** When working with Recharts in interactive components (like slider controls where state changes frequently), always memoize the data passed to the chart using `useMemo` with minimal dependencies (only the data that actually dictates chart shapes). E.g. wrap `buildExtendedChart` with `useMemo`. This stops chart jitter and massive lag during slider dragging.
 
+
+## React O(N) Rendering Optimizations
+When performing data transformations or lookups inside render loops or frequently called event handlers (like batch operations), avoid repeating `O(N)` scans such as `array.find()`. Instead, compute an `O(1)` lookup `Map` using `useMemo` immediately after the source data array is defined. Be sure to appropriately update dependency arrays in hooks that rely on the new Map. This dramatically reduces CPU cycles during renders or intense loops.
