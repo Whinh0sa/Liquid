@@ -45,10 +45,11 @@ function getAppName() {
   }
 }
 
-function serveManifest(platform, res) {
-  const manifestPath = path.join(STATIC_ROOT, platform, "manifest.json");
+const manifestCache = new Map();
+const ALLOWED_PLATFORMS = new Set(["ios", "android"]);
 
-  if (!fs.existsSync(manifestPath)) {
+function serveManifest(platform, res) {
+  if (!ALLOWED_PLATFORMS.has(platform)) {
     res.writeHead(404, { "content-type": "application/json" });
     res.end(
       JSON.stringify({ error: `Manifest not found for platform: ${platform}` }),
@@ -56,13 +57,36 @@ function serveManifest(platform, res) {
     return;
   }
 
-  const manifest = fs.readFileSync(manifestPath, "utf-8");
-  res.writeHead(200, {
-    "content-type": "application/json",
-    "expo-protocol-version": "1",
-    "expo-sfv-version": "0",
+  if (manifestCache.has(platform)) {
+    const manifest = manifestCache.get(platform);
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "expo-protocol-version": "1",
+      "expo-sfv-version": "0",
+    });
+    res.end(manifest);
+    return;
+  }
+
+  const manifestPath = path.join(STATIC_ROOT, platform, "manifest.json");
+
+  fs.readFile(manifestPath, "utf-8", (err, data) => {
+    if (err) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({ error: `Manifest not found for platform: ${platform}` }),
+      );
+      return;
+    }
+
+    manifestCache.set(platform, data);
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "expo-protocol-version": "1",
+      "expo-sfv-version": "0",
+    });
+    res.end(data);
   });
-  res.end(manifest);
 }
 
 function serveLandingPage(req, res, landingPageTemplate, appName) {
@@ -91,17 +115,30 @@ function serveStaticFile(urlPath, res) {
     return;
   }
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end("Not Found");
-    return;
-  }
+  fs.stat(filePath, (err, stats) => {
+    if (err || stats.isDirectory()) {
+      res.writeHead(404);
+      res.end("Not Found");
+      return;
+    }
 
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || "application/octet-stream";
-  const content = fs.readFileSync(filePath);
-  res.writeHead(200, { "content-type": contentType });
-  res.end(content);
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || "application/octet-stream";
+
+    res.writeHead(200, {
+      "content-type": contentType,
+      "content-length": stats.size
+    });
+
+    const stream = fs.createReadStream(filePath);
+    stream.on("error", () => {
+      if (!res.headersSent) {
+        res.writeHead(500);
+        res.end("Internal Server Error");
+      }
+    });
+    stream.pipe(res);
+  });
 }
 
 const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, "utf-8");
