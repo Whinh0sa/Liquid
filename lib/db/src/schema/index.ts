@@ -151,7 +151,6 @@ export const assets = pgTable(
     // ── Lifecycle Status ──────────────────────────────────────────────────
     status: assetStatusEnum("status").notNull().default("HOLD"),
 
-    // ── Audit ─────────────────────────────────────────────────────────────
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -206,7 +205,6 @@ export const priceAlerts = pgTable(
      */
     triggeredAt: timestamp("triggered_at", { withTimezone: true }),
 
-    // ── Audit ─────────────────────────────────────────────────────────────
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
