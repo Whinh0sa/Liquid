@@ -50,6 +50,9 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      ...(!process.env.VITE_CLERK_PUBLISHABLE_KEY && {
+        "@clerk/clerk-react": path.resolve(import.meta.dirname, "src/mock-clerk.tsx")
+      })
     },
     dedupe: ["react", "react-dom"],
   },
