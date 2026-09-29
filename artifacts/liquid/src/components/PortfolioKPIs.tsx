@@ -8,7 +8,6 @@
 import { Link } from "wouter";
 import { Activity, Clock, AlertTriangle } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface PortfolioKPIsProps {
   isLoading: boolean;
   displayedNetWorth: number;
@@ -19,12 +18,17 @@ interface PortfolioKPIsProps {
   hasMetrics: boolean;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Optimization: Cache Intl.NumberFormat instance outside of render to prevent performance bottlenecks
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+});
+
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return currencyFormatter.format(n);
 }
 
-// ─── Sub-component ────────────────────────────────────────────────────────────
 function SummaryTile({
   label,
   value,
@@ -45,7 +49,6 @@ function SummaryTile({
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function PortfolioKPIs({
   isLoading,
   displayedNetWorth,
@@ -56,7 +59,6 @@ export default function PortfolioKPIs({
 }: PortfolioKPIsProps) {
   return (
     <section className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-      {/* ── Hero value ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
           <p className="text-sm font-medium text-gray-500 mb-1">Total Portfolio Value</p>
@@ -75,7 +77,6 @@ export default function PortfolioKPIs({
           )}
         </div>
 
-        {/* ── CTAs ─────────────────────────────────────────────────── */}
         <div className="flex items-center gap-3">
           <Link
             href="/analysis"
@@ -93,7 +94,6 @@ export default function PortfolioKPIs({
         </div>
       </div>
 
-      {/* ── Three stat tiles ───────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
         <SummaryTile
           label="Items Tracked"
