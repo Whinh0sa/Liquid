@@ -92,7 +92,8 @@ ${colorConfig
 }
 `
           )
-          .join("\n"),
+          .join("\n")
+          .replaceAll(/</g, ""),
       }}
     />
   )
