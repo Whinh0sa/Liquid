@@ -178,12 +178,15 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
   }
 
   for (let i = 0; i < 60; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    const loopStart = Date.now();
     const healthy = await checkMetroHealth();
     if (healthy) {
       console.log("Metro ready");
       return;
+    }
+    const elapsed = Date.now() - loopStart;
+    if (elapsed < 1000) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 - elapsed));
     }
   }
 
