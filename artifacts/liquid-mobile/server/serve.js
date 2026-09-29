@@ -91,17 +91,31 @@ function serveStaticFile(urlPath, res) {
     return;
   }
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end("Not Found");
-    return;
-  }
+  fs.stat(filePath, (err, stats) => {
+    if (err || stats.isDirectory()) {
+      res.writeHead(404);
+      res.end("Not Found");
+      return;
+    }
 
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || "application/octet-stream";
-  const content = fs.readFileSync(filePath);
-  res.writeHead(200, { "content-type": contentType });
-  res.end(content);
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || "application/octet-stream";
+
+    res.writeHead(200, { "content-type": contentType });
+
+    const stream = fs.createReadStream(filePath);
+    stream.on("error", (streamErr) => {
+      console.error(`Error reading file ${filePath}:`, streamErr);
+      if (!res.headersSent) {
+        res.writeHead(500);
+        res.end("Internal Server Error");
+      } else {
+        res.end();
+      }
+    });
+
+    stream.pipe(res);
+  });
 }
 
 const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, "utf-8");
