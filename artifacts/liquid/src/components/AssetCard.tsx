@@ -23,8 +23,11 @@ export interface AssetCardAsset {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// Cache the Intl.NumberFormat instance to improve rendering performance
+const currencyFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+  return currencyFormatter.format(n);
 }
 
 const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
@@ -93,142 +96,147 @@ function RecoveryCard({
   );
 }
 
-// ─── AssetCard ────────────────────────────────────────────────────────────────
-export default function AssetCard({
-  asset,
-  isSelling,
-  soldRecord,
+// ─── AlertRow Component ────────────────────────────────────────────────────────
+function AlertRow({
+  assetId,
+  currentValue,
   alertPrice,
-  onSell,
-  onOpen,
   onSetAlert,
-  viewType = "tiles",
 }: {
-  asset: AssetCardAsset;
-  isSelling: boolean;
-  soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number };
+  assetId: string;
+  currentValue: number;
   alertPrice?: number;
-  onSell: (id: string) => void;
-  onOpen: (asset: AssetCardAsset) => void;
   onSetAlert: (id: string, price: number | null) => void;
-  viewType?: "tiles" | "list";
 }) {
   const [showAlertInput, setShowAlertInput] = useState(false);
   const [alertInput, setAlertInput]         = useState("");
 
-  const current  = asset.currentValue / 100;
-  const purchase = asset.purchasePrice / 100;
-  const pnl      = ((current - purchase) / purchase) * 100;
-  const cliff    = asset.depreciationCliff;
-  const isSold   = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
-
-  if (isSelling || isSold) return <RecoveryCard asset={asset} soldRecord={soldRecord} />;
-
-  const sellWindow  = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
-  const urgencyPill = URGENCY_PILL[sellWindow.urgency];
-  const isAlertFired = alertPrice !== undefined && current <= alertPrice;
-
   const confirmAlert = () => {
     const v = parseFloat(alertInput);
     if (!isNaN(v) && v > 0) {
-      onSetAlert(asset.id, v);
+      onSetAlert(assetId, v);
       setShowAlertInput(false);
       setAlertInput("");
     }
   };
 
-  const borderStyle = isAlertFired
-    ? { border: "1.5px solid #F59E0B", boxShadow: "0 0 0 3px rgba(245,158,11,0.12)" }
-    : alertPrice !== undefined
-    ? { border: "1.5px solid #FCD34D" }
-    : { border: "1px solid #E5E7EB" };
+  if (!alertPrice) {
+    if (showAlertInput) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-400 shrink-0">Floor $</span>
+          <input
+            type="number"
+            value={alertInput}
+            onChange={(e) => setAlertInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") confirmAlert();
+              if (e.key === "Escape") { setShowAlertInput(false); setAlertInput(""); }
+            }}
+            placeholder={currentValue.toFixed(0)}
+            autoFocus
+            className="flex-1 h-7 px-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-amber-400 min-w-0"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button onClick={(e) => { e.stopPropagation(); confirmAlert(); }} className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0">Set</button>
+          <button onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      );
+    }
 
-  // ── Alert input row ────────────────────────────────────────────────────────
-  const alertRow = !alertPrice ? (
-    showAlertInput ? (
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400 shrink-0">Floor $</span>
-        <input
-          type="number"
-          value={alertInput}
-          onChange={(e) => setAlertInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter")  confirmAlert();
-            if (e.key === "Escape") { setShowAlertInput(false); setAlertInput(""); }
-          }}
-          placeholder={current.toFixed(0)}
-          autoFocus
-          className="flex-1 h-7 px-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-amber-400 min-w-0"
-          onClick={(e) => e.stopPropagation()}
-        />
-        <button onClick={(e) => { e.stopPropagation(); confirmAlert(); }} className="h-7 px-2.5 text-xs font-bold text-white bg-amber-500 rounded-lg hover:bg-amber-600 shrink-0">Set</button>
-        <button onClick={(e) => { e.stopPropagation(); setShowAlertInput(false); setAlertInput(""); }} className="h-7 w-7 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button>
-      </div>
-    ) : (
+    return (
       <button
-        onClick={(e) => { e.stopPropagation(); setShowAlertInput(true); setAlertInput(current.toFixed(0)); }}
+        onClick={(e) => { e.stopPropagation(); setShowAlertInput(true); setAlertInput(currentValue.toFixed(0)); }}
         className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-amber-500 transition-colors"
       >
         <Bell className="w-3 h-3" />Set price floor alert
       </button>
-    )
-  ) : (
+    );
+  }
+
+  return (
     <div className="flex items-center justify-between">
       <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-500">
         <Bell className="w-3 h-3" />Alert set at {fmt(alertPrice)}
       </span>
-      <button onClick={(e) => { e.stopPropagation(); onSetAlert(asset.id, null); }} className="text-gray-300 hover:text-gray-500 transition-colors">
+      <button onClick={(e) => { e.stopPropagation(); onSetAlert(assetId, null); }} className="text-gray-300 hover:text-gray-500 transition-colors">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
+}
 
-  // ── List view ──────────────────────────────────────────────────────────────
-  if (viewType === "list") {
-    return (
-      <div
-        className="bg-white rounded-3xl p-4 sm:p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300 hover:shadow-md"
-        onClick={() => onOpen(asset)}
-        style={{ ...borderStyle, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p>
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-amber-500 transition-colors truncate">{asset.model}</h3>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}>{urgencyPill.label}</span>
+// ─── Shared View Interface ────────────────────────────────────────────────────
+interface AssetCardViewProps {
+  asset: AssetCardAsset;
+  current: number;
+  pnl: number;
+  cliff: { daysAway: number; projectedDrop: number; reason: string };
+  urgencyPill: { label: string; bg: string; text: string; border: string };
+  sellWindow: { sellByLabel: string };
+  isAlertFired: boolean;
+  alertPrice?: number;
+  borderStyle: React.CSSProperties;
+  onOpen: (asset: AssetCardAsset) => void;
+  onSell: (id: string) => void;
+  onSetAlert: (id: string, price: number | null) => void;
+}
+
+// ─── AssetCardList Component ──────────────────────────────────────────────────
+function AssetCardList({
+  asset, current, pnl, cliff, urgencyPill, sellWindow,
+  isAlertFired, alertPrice, borderStyle, onOpen, onSell, onSetAlert
+}: AssetCardViewProps) {
+  return (
+    <div
+      className="bg-white rounded-3xl p-4 sm:p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300 hover:shadow-md"
+      onClick={() => onOpen(asset)}
+      style={{ ...borderStyle, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{asset.category}</p>
+          <h3 className="font-semibold text-gray-900 text-sm leading-tight group-hover:text-amber-500 transition-colors truncate">{asset.model}</h3>
         </div>
-        {isAlertFired && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
-            <BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <p className="text-xs font-semibold text-amber-800 flex-1">Floor hit — value at or below {fmt(alertPrice ?? 0)}</p>
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg w-fit" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}>
-              <Clock className="w-3 h-3" />{sellWindow.sellByLabel}
-            </div>
-            <p className="text-xs text-gray-400 mt-2">−{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d</p>
-          </div>
-          <div className="text-right">
-            <span className="font-poppins font-bold text-xl sm:text-2xl text-gray-900 block">{fmt(current)}</span>
-            <span className={`text-xs sm:text-sm font-semibold inline-flex items-center gap-0.5 ${pnl < 0 ? "text-red-500" : "text-emerald-500"}`}>
-              {pnl < 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
-              {pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-          <button onClick={(e) => { e.stopPropagation(); onSell(asset.id); }} className="flex-1 min-w-[120px] h-9 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90" style={{ backgroundColor: "#9126EF" }}>Sell Now</button>
-          <button className="h-9 px-4 rounded-xl text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors" onClick={(e) => { e.stopPropagation(); onOpen(asset); }}>Analyse</button>
-        </div>
-        <div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>{alertRow}</div>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg, borderColor: urgencyPill.border }}>{urgencyPill.label}</span>
       </div>
-    );
-  }
+      {isAlertFired && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
+          <BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <p className="text-xs font-semibold text-amber-800 flex-1">Floor hit — value at or below {fmt(alertPrice ?? 0)}</p>
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg w-fit" style={{ color: urgencyPill.text, backgroundColor: urgencyPill.bg }}>
+            <Clock className="w-3 h-3" />{sellWindow.sellByLabel}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">−{fmt(cliff.projectedDrop / 100)} in {cliff.daysAway}d</p>
+        </div>
+        <div className="text-right">
+          <span className="font-poppins font-bold text-xl sm:text-2xl text-gray-900 block">{fmt(current)}</span>
+          <span className={`text-xs sm:text-sm font-semibold inline-flex items-center gap-0.5 ${pnl < 0 ? "text-red-500" : "text-emerald-500"}`}>
+            {pnl < 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+            {pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}%
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+        <button onClick={(e) => { e.stopPropagation(); onSell(asset.id); }} className="flex-1 min-w-[120px] h-9 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90" style={{ backgroundColor: "#9126EF" }}>Sell Now</button>
+        <button className="h-9 px-4 rounded-xl text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors" onClick={(e) => { e.stopPropagation(); onOpen(asset); }}>Analyse</button>
+      </div>
+      <div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
+        <AlertRow assetId={asset.id} currentValue={current} alertPrice={alertPrice} onSetAlert={onSetAlert} />
+      </div>
+    </div>
+  );
+}
 
-  // ── Tile view ──────────────────────────────────────────────────────────────
+// ─── AssetCardTile Component ──────────────────────────────────────────────────
+function AssetCardTile({
+  asset, current, pnl, cliff, urgencyPill, sellWindow,
+  isAlertFired, alertPrice, borderStyle, onOpen, onSell, onSetAlert
+}: AssetCardViewProps) {
   return (
     <div
       className="bg-white rounded-3xl p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-300 hover:shadow-md"
@@ -265,7 +273,59 @@ export default function AssetCard({
         <button onClick={(e) => { e.stopPropagation(); onSell(asset.id); }} className="flex-1 h-9 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90" style={{ backgroundColor: "#9126EF" }}>Sell Now</button>
         <button className="h-9 px-4 rounded-xl text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors" onClick={(e) => { e.stopPropagation(); onOpen(asset); }}>Analyse</button>
       </div>
-      <div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>{alertRow}</div>
+      <div className="border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
+        <AlertRow assetId={asset.id} currentValue={current} alertPrice={alertPrice} onSetAlert={onSetAlert} />
+      </div>
     </div>
   );
+}
+
+// ─── AssetCard ────────────────────────────────────────────────────────────────
+export default function AssetCard({
+  asset,
+  isSelling,
+  soldRecord,
+  alertPrice,
+  onSell,
+  onOpen,
+  onSetAlert,
+  viewType = "tiles",
+}: {
+  asset: AssetCardAsset;
+  isSelling: boolean;
+  soldRecord?: { saleValue: number; dropAvoided: number; soldAt: number };
+  alertPrice?: number;
+  onSell: (id: string) => void;
+  onOpen: (asset: AssetCardAsset) => void;
+  onSetAlert: (id: string, price: number | null) => void;
+  viewType?: "tiles" | "list";
+}) {
+  const current  = asset.currentValue / 100;
+  const purchase = asset.purchasePrice / 100;
+  const pnl      = ((current - purchase) / purchase) * 100;
+  const cliff    = asset.depreciationCliff;
+  const isSold   = asset.status === "LIQUIDATE" || asset.status === "IN_TRANSIT";
+
+  if (isSelling || isSold) return <RecoveryCard asset={asset} soldRecord={soldRecord} />;
+
+  const sellWindow  = computeSellWindow(cliff.daysAway, cliff.projectedDrop / 100);
+  const urgencyPill = URGENCY_PILL[sellWindow.urgency];
+  const isAlertFired = alertPrice !== undefined && current <= alertPrice;
+
+  const borderStyle = isAlertFired
+    ? { border: "1.5px solid #F59E0B", boxShadow: "0 0 0 3px rgba(245,158,11,0.12)" }
+    : alertPrice !== undefined
+    ? { border: "1.5px solid #FCD34D" }
+    : { border: "1px solid #E5E7EB" };
+
+  const viewProps: AssetCardViewProps = {
+    asset, current, pnl, cliff, urgencyPill, sellWindow,
+    isAlertFired, alertPrice, borderStyle, onOpen, onSell, onSetAlert
+  };
+
+  if (viewType === "list") {
+    return <AssetCardList {...viewProps} />;
+  }
+
+  return <AssetCardTile {...viewProps} />;
 }
