@@ -4,13 +4,6 @@
 //   • Sticky, responsive NavBar (with mobile hamburger)
 //   • Consistent max-width + page padding
 //   • Soft Alabaster (#F8F9FA) page background
-//
-// Usage:
-//   <AppLayout activePath="/analysis">
-//     <YourPageContent />
-//   </AppLayout>
-//
-// activePath must match one of the NAV_LINKS href values exactly.
 
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
