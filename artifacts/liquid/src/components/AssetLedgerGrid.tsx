@@ -1,8 +1,3 @@
-// ─── AssetLedgerGrid ──────────────────────────────────────────────────────────
-//
-// The full asset ledger: view-type toggle (tiles / list) + the grid of
-// <AssetCard> items and their loading skeletons.
-
 import { LayoutGrid, List } from "lucide-react";
 import AssetCard from "@/components/AssetCard";
 
