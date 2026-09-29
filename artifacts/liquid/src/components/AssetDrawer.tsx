@@ -11,8 +11,25 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
-import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal } from "lucide-react";
-import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
+import {
+  X,
+  AlertTriangle,
+  TrendingDown,
+  Calendar,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  Activity,
+  Zap,
+  ShoppingCart,
+  Users,
+  SlidersHorizontal,
+} from "lucide-react";
+import {
+  computeSellWindow,
+  buildExtendedChart,
+  type UrgencyLevel,
+} from "@/lib/sellWindow";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Asset {
@@ -21,7 +38,11 @@ interface Asset {
   category: string;
   purchasePrice: number;
   currentValue: number;
-  depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
+  depreciationCliff: {
+    daysAway: number;
+    projectedDrop: number;
+    reason: string;
+  };
   status: string;
 }
 
@@ -33,29 +54,61 @@ interface AssetDrawerProps {
 }
 
 // ── Urgency config ────────────────────────────────────────────────────────────
-const URGENCY_CONFIG: Record<UrgencyLevel, {
-  bg: string; border: string; text: string; badge: string; badgeBg: string; label: string;
-}> = {
+const URGENCY_CONFIG: Record<
+  UrgencyLevel,
+  {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+    badgeBg: string;
+    label: string;
+  }
+> = {
   PLANNED: {
-    bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8",
-    badge: "#2563EB", badgeBg: "#DBEAFE", label: "Plan ahead",
+    bg: "#EFF6FF",
+    border: "#BFDBFE",
+    text: "#1D4ED8",
+    badge: "#2563EB",
+    badgeBg: "#DBEAFE",
+    label: "Plan ahead",
   },
   WINDOW: {
-    bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D",
-    badge: "#10B981", badgeBg: "#D1FAE5", label: "⚡ Sell now — optimal window",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    text: "#15803D",
+    badge: "#10B981",
+    badgeBg: "#D1FAE5",
+    label: "⚡ Sell now — optimal window",
   },
   URGENT: {
-    bg: "#FFF7ED", border: "#FED7AA", text: "#C2410C",
-    badge: "#F97316", badgeBg: "#FFEDD5", label: "Last chance",
+    bg: "#FFF7ED",
+    border: "#FED7AA",
+    text: "#C2410C",
+    badge: "#F97316",
+    badgeBg: "#FFEDD5",
+    label: "Last chance",
   },
   CLIFF: {
-    bg: "#FEF2F2", border: "#FECACA", text: "#DC2626",
-    badge: "#EF4444", badgeBg: "#FEE2E2", label: "Window closed",
+    bg: "#FEF2F2",
+    border: "#FECACA",
+    text: "#DC2626",
+    badge: "#EF4444",
+    badgeBg: "#FEE2E2",
+    label: "Window closed",
   },
 };
 
 // ── Custom Tooltip ─────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey?: string }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number; dataKey?: string }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   const isCliff = typeof label === "string" && label.includes("cliff");
   const isWindow = typeof label === "string" && label.includes("★");
@@ -65,28 +118,52 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         {isCliff ? "⚠️ Cliff Event" : isWindow ? "⭐ Ideal sell-by" : label}
       </p>
       <p className="text-sm font-bold text-gray-900">
-        {payload[0].value.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+        {payload[0].value.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+        })}
       </p>
-      {isCliff && <p className="text-[10px] text-red-500 mt-1">Value drops sharply here</p>}
-      {isWindow && <p className="text-[10px] text-emerald-600 mt-1">Best price-to-risk balance</p>}
+      {isCliff && (
+        <p className="text-[10px] text-red-500 mt-1">
+          Value drops sharply here
+        </p>
+      )}
+      {isWindow && (
+        <p className="text-[10px] text-emerald-600 mt-1">
+          Best price-to-risk balance
+        </p>
+      )}
     </div>
   );
 }
 
 // ── Main Drawer ───────────────────────────────────────────────────────────────
-export default function AssetDrawer({ asset, onClose, onSell, isSelling }: AssetDrawerProps) {
+export default function AssetDrawer({
+  asset,
+  onClose,
+  onSell,
+  isSelling,
+}: AssetDrawerProps) {
   type SellStage = "idle" | "processing" | "success";
   const [sellStage, setSellStage] = useState<SellStage>("idle");
   const [sellOffsetDays, setSellOffsetDays] = useState(0);
   const [condition, setCondition] = useState<ConditionKey>("good");
 
   // Reset stage when a different asset opens
-  useEffect(() => { setSellStage("idle"); }, [asset?.id]);
-  useEffect(() => { setSellOffsetDays(0); }, [asset?.id]);
-  useEffect(() => { setCondition("good"); }, [asset?.id]);
+  useEffect(() => {
+    setSellStage("idle");
+  }, [asset?.id]);
+  useEffect(() => {
+    setSellOffsetDays(0);
+  }, [asset?.id]);
+  useEffect(() => {
+    setCondition("good");
+  }, [asset?.id]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && sellStage === "idle") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && sellStage === "idle") onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, sellStage]);
@@ -113,30 +190,54 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
     return () => clearTimeout(t1);
   }, [asset, sellStage, onSell, onClose]);
 
-  const currentValue  = asset ? asset.currentValue / 100 : 0;
+  const currentValue = asset ? asset.currentValue / 100 : 0;
   const purchaseValue = asset ? asset.purchasePrice / 100 : 0;
-  const dropDollars   = asset ? asset.depreciationCliff.projectedDrop / 100 : 0;
-  const daysAway      = asset?.depreciationCliff.daysAway ?? 0;
-  const totalPnl      = ((currentValue - purchaseValue) / purchaseValue) * 100;
-  const isDown        = totalPnl < 0;
-  const isAlreadySold = asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
-  const conditionMultiplier    = CONDITIONS[condition].multiplier;
+  const dropDollars = asset ? asset.depreciationCliff.projectedDrop / 100 : 0;
+  const daysAway = asset?.depreciationCliff.daysAway ?? 0;
+  const totalPnl = ((currentValue - purchaseValue) / purchaseValue) * 100;
+  const isDown = totalPnl < 0;
+  const isAlreadySold =
+    asset?.status === "LIQUIDATE" || asset?.status === "IN_TRANSIT";
+  const conditionMultiplier = CONDITIONS[condition].multiplier;
   const conditionAdjustedValue = currentValue * conditionMultiplier;
   const cliffValue = Math.max(0, currentValue - dropDollars);
   const dailyDecayRate = daysAway > 0 ? dropDollars / daysAway : 0;
   const simulatedDaysAway = Math.max(0, daysAway - sellOffsetDays);
-  const simulatedDropAtSell = Math.min(dropDollars, dailyDecayRate * sellOffsetDays);
+  const simulatedDropAtSell = Math.min(
+    dropDollars,
+    dailyDecayRate * sellOffsetDays,
+  );
   const simulatedValue = Math.max(0, currentValue - simulatedDropAtSell);
   const simulatedLoss = Math.max(0, currentValue - simulatedValue);
   const simulatedDrop = Math.max(0, dropDollars - simulatedDropAtSell);
 
   const sellWindow = asset ? computeSellWindow(daysAway, dropDollars) : null;
-  const simulatedWindow = asset ? computeSellWindow(simulatedDaysAway, simulatedDrop) : null;
+  const simulatedWindow = asset
+    ? computeSellWindow(simulatedDaysAway, simulatedDrop)
+    : null;
   const urgencyConf = sellWindow ? URGENCY_CONFIG[sellWindow.urgency] : null;
 
-  const { data: chartData, windowStartLabel, windowEndLabel, cliffLabel } = useMemo(() => asset
-    ? buildExtendedChart(asset.currentValue, asset.depreciationCliff.projectedDrop, daysAway)
-    : { data: [], windowStartLabel: null, windowEndLabel: null, cliffLabel: "" }, [asset?.currentValue, asset?.depreciationCliff.projectedDrop, daysAway]);
+  const {
+    data: chartData,
+    windowStartLabel,
+    windowEndLabel,
+    cliffLabel,
+  } = useMemo(
+    () =>
+      asset
+        ? buildExtendedChart(
+            asset.currentValue,
+            asset.depreciationCliff.projectedDrop,
+            daysAway,
+          )
+        : {
+            data: [],
+            windowStartLabel: null,
+            windowEndLabel: null,
+            cliffLabel: "",
+          },
+    [asset?.currentValue, asset?.depreciationCliff.projectedDrop, daysAway],
+  );
 
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -194,19 +295,29 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
             {/* ── Scrollable body ──────────────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
               {/* Current value row */}
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-xs text-gray-400 font-medium mb-1">Current Value</p>
-                  <p className="font-poppins font-bold text-3xl text-gray-900">{fmt(currentValue)}</p>
+                  <p className="text-xs text-gray-400 font-medium mb-1">
+                    Current Value
+                  </p>
+                  <p className="font-poppins font-bold text-3xl text-gray-900">
+                    {fmt(currentValue)}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400 font-medium mb-1">Since Purchase</p>
-                  <p className={`text-lg font-bold ${isDown ? "text-red-500" : "text-emerald-500"}`}>
-                    {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(1)}%
+                  <p className="text-xs text-gray-400 font-medium mb-1">
+                    Since Purchase
                   </p>
-                  <p className="text-xs text-gray-400">{fmt(purchaseValue)} paid</p>
+                  <p
+                    className={`text-lg font-bold ${isDown ? "text-red-500" : "text-emerald-500"}`}
+                  >
+                    {totalPnl >= 0 ? "+" : ""}
+                    {totalPnl.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {fmt(purchaseValue)} paid
+                  </p>
                 </div>
               </div>
 
@@ -214,18 +325,30 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               {sellWindow && urgencyConf && (
                 <div
                   className="rounded-xl p-4"
-                  style={{ backgroundColor: urgencyConf.bg, border: `1px solid ${urgencyConf.border}` }}
+                  style={{
+                    backgroundColor: urgencyConf.bg,
+                    border: `1px solid ${urgencyConf.border}`,
+                  }}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" style={{ color: urgencyConf.badge }} />
-                      <span className="text-sm font-bold" style={{ color: urgencyConf.text }}>
+                      <Clock
+                        className="w-4 h-4"
+                        style={{ color: urgencyConf.badge }}
+                      />
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: urgencyConf.text }}
+                      >
                         Best Time to Sell
                       </span>
                     </div>
                     <span
                       className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
-                      style={{ color: urgencyConf.badge, backgroundColor: urgencyConf.badgeBg }}
+                      style={{
+                        color: urgencyConf.badge,
+                        backgroundColor: urgencyConf.badgeBg,
+                      }}
                     >
                       {urgencyConf.label}
                     </span>
@@ -233,10 +356,17 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
                   {sellWindow.urgency === "PLANNED" && (
                     <div className="space-y-2">
-                      <p className="text-sm" style={{ color: urgencyConf.text }}>
+                      <p
+                        className="text-sm"
+                        style={{ color: urgencyConf.text }}
+                      >
                         Ideal listing window opens in{" "}
                         <strong>{sellWindow.daysUntilWindow} days</strong> —
-                        sell by <strong>{sellWindow.sellByLabel.replace("Sell by ", "")}</strong> to maximise value.
+                        sell by{" "}
+                        <strong>
+                          {sellWindow.sellByLabel.replace("Sell by ", "")}
+                        </strong>{" "}
+                        to maximise value.
                       </p>
                       <SellWindowTimeline sellWindow={sellWindow} />
                     </div>
@@ -244,10 +374,17 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
                   {sellWindow.urgency === "WINDOW" && (
                     <div className="space-y-2">
-                      <p className="text-sm" style={{ color: urgencyConf.text }}>
+                      <p
+                        className="text-sm"
+                        style={{ color: urgencyConf.text }}
+                      >
                         You're in the optimal sell window right now.{" "}
-                        <strong>{sellWindow.daysUntilClose} day{sellWindow.daysUntilClose !== 1 ? "s" : ""} remaining</strong> before it closes.
-                        Listing today protects <strong>{fmt(dropDollars)}</strong> in value.
+                        <strong>
+                          {sellWindow.daysUntilClose} day
+                          {sellWindow.daysUntilClose !== 1 ? "s" : ""} remaining
+                        </strong>{" "}
+                        before it closes. Listing today protects{" "}
+                        <strong>{fmt(dropDollars)}</strong> in value.
                       </p>
                       <SellWindowTimeline sellWindow={sellWindow} />
                     </div>
@@ -256,15 +393,19 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                   {sellWindow.urgency === "URGENT" && (
                     <p className="text-sm" style={{ color: urgencyConf.text }}>
                       Ideal window has closed — cliff hits in{" "}
-                      <strong>{daysAway} day{daysAway !== 1 ? "s" : ""}</strong>.
-                      Selling now may still recover most of the <strong>{fmt(dropDollars)}</strong> projected drop.
+                      <strong>
+                        {daysAway} day{daysAway !== 1 ? "s" : ""}
+                      </strong>
+                      . Selling now may still recover most of the{" "}
+                      <strong>{fmt(dropDollars)}</strong> projected drop.
                     </p>
                   )}
 
                   {sellWindow.urgency === "CLIFF" && (
                     <p className="text-sm" style={{ color: urgencyConf.text }}>
-                      The depreciation event has occurred. Value has dropped approximately{" "}
-                      <strong>{fmt(dropDollars)}</strong>. Consider holding for the next cycle.
+                      The depreciation event has occurred. Value has dropped
+                      approximately <strong>{fmt(dropDollars)}</strong>.
+                      Consider holding for the next cycle.
                     </p>
                   )}
                 </div>
@@ -283,10 +424,16 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                   style={{ color: daysAway <= 14 ? "#EF4444" : "#F59E0B" }}
                 />
                 <div>
-                  <p className="font-semibold text-sm mb-1" style={{ color: daysAway <= 14 ? "#DC2626" : "#B45309" }}>
+                  <p
+                    className="font-semibold text-sm mb-1"
+                    style={{ color: daysAway <= 14 ? "#DC2626" : "#B45309" }}
+                  >
                     Value expected to drop {fmt(dropDollars)} in {daysAway} days
                   </p>
-                  <p className="text-xs leading-relaxed" style={{ color: daysAway <= 14 ? "#EF4444" : "#D97706" }}>
+                  <p
+                    className="text-xs leading-relaxed"
+                    style={{ color: daysAway <= 14 ? "#EF4444" : "#D97706" }}
+                  >
                     Reason: {asset.depreciationCliff.reason}.
                   </p>
                 </div>
@@ -295,26 +442,45 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               {/* ── Extended chart with sell window ──────────────────────── */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700">Price Trajectory</h3>
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Price Trajectory
+                  </h3>
                   <div className="flex items-center gap-3 text-[10px] text-gray-400 font-medium">
                     <span className="flex items-center gap-1">
                       <span className="w-3 h-0.5 bg-red-400 inline-block rounded" />
                       Actual
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-0.5 bg-orange-300 inline-block rounded" style={{ backgroundImage: "repeating-linear-gradient(90deg,#f97316 0,#f97316 3px,transparent 3px,transparent 6px)", height: 1 }} />
+                      <span
+                        className="w-3 h-0.5 bg-orange-300 inline-block rounded"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(90deg,#f97316 0,#f97316 3px,transparent 3px,transparent 6px)",
+                          height: 1,
+                        }}
+                      />
                       Projected
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-2 rounded-sm inline-block" style={{ backgroundColor: "rgba(16,185,129,0.15)" }} />
+                      <span
+                        className="w-3 h-2 rounded-sm inline-block"
+                        style={{ backgroundColor: "rgba(16,185,129,0.15)" }}
+                      />
                       Sell window
                     </span>
                   </div>
                 </div>
                 <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 8, right: 4, bottom: 0, left: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#F3F4F6"
+                        vertical={false}
+                      />
 
                       {/* Sell window highlight — green band */}
                       {windowStartLabel && windowEndLabel && (
@@ -378,20 +544,32 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
                       <XAxis
                         dataKey="label"
-                        tick={{ fill: "#9CA3AF", fontSize: 9, fontFamily: "Inter" }}
+                        tick={{
+                          fill: "#9CA3AF",
+                          fontSize: 9,
+                          fontFamily: "Inter",
+                        }}
                         tickLine={false}
                         axisLine={false}
                         interval={0}
                         angle={-25}
                         textAnchor="end"
                         height={36}
-                        tickFormatter={(v: string) => v.replace(" cliff", "").replace(" ★", "★")}
+                        tickFormatter={(v: string) =>
+                          v.replace(" cliff", "").replace(" ★", "★")
+                        }
                       />
                       <YAxis
-                        tick={{ fill: "#9CA3AF", fontSize: 10, fontFamily: "Inter" }}
+                        tick={{
+                          fill: "#9CA3AF",
+                          fontSize: 10,
+                          fontFamily: "Inter",
+                        }}
                         tickLine={false}
                         axisLine={false}
-                        tickFormatter={(v: number) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`}
+                        tickFormatter={(v: number) =>
+                          `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`
+                        }
                         width={46}
                         domain={["auto", "auto"]}
                       />
@@ -416,12 +594,17 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                         stroke="#F97316"
                         strokeWidth={2}
                         strokeDasharray="6 3"
-                        dot={(props: { cx?: number; cy?: number; index?: number }) => {
+                        dot={(props: {
+                          cx?: number;
+                          cy?: number;
+                          index?: number;
+                        }) => {
                           const p = chartData[props.index ?? 0];
                           if (!p?.projected) return <g key={props.index} />;
                           const isCliffPoint = p.label.includes("cliff");
                           const isWindowPoint = p.label.includes("★");
-                          if (!isCliffPoint && !isWindowPoint) return <g key={props.index} />;
+                          if (!isCliffPoint && !isWindowPoint)
+                            return <g key={props.index} />;
                           return (
                             <circle
                               key={props.index}
@@ -451,7 +634,11 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                   icon={<Calendar className="w-4 h-4 text-amber-500" />}
                   label="Recommended Sell By"
                   value={sellWindow ? sellWindow.sellByLabel : "—"}
-                  sub={sellWindow?.urgency === "WINDOW" ? "Window open now" : `Cliff: +${daysAway}d`}
+                  sub={
+                    sellWindow?.urgency === "WINDOW"
+                      ? "Window open now"
+                      : `Cliff: +${daysAway}d`
+                  }
                   valueColor={urgencyConf?.badge ?? "#1F2937"}
                 />
                 <StatTile
@@ -470,13 +657,17 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 <StatTile
                   icon={<CheckCircle className="w-4 h-4 text-emerald-500" />}
                   label="Window Duration"
-                  value={sellWindow ? `${Math.max(0, sellWindow.windowEndDay - sellWindow.windowStartDay)}d` : "—"}
+                  value={
+                    sellWindow
+                      ? `${Math.max(0, sellWindow.windowEndDay - sellWindow.windowStartDay)}d`
+                      : "—"
+                  }
                   sub={
                     sellWindow?.urgency === "WINDOW"
                       ? `${sellWindow.daysUntilClose}d remaining`
                       : sellWindow?.urgency === "PLANNED"
-                      ? `Opens in ${sellWindow.daysUntilWindow}d`
-                      : "Closed"
+                        ? `Opens in ${sellWindow.daysUntilWindow}d`
+                        : "Closed"
                   }
                   valueColor={urgencyConf?.badge ?? "#1F2937"}
                 />
@@ -520,14 +711,15 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
               {/* ── Market demand ─────────────────────────────────────────── */}
               <MarketDemand category={asset.category} daysAway={daysAway} />
-
             </div>
 
             {/* ── Sell button ──────────────────────────────────────────────── */}
             <div className="px-6 pb-6 pt-4 border-t border-gray-100">
               {isAlreadySold ? (
                 <div className="w-full h-14 flex items-center justify-center rounded-xl text-sm font-semibold text-red-500 bg-red-50 border border-red-100">
-                  {asset.status === "LIQUIDATE" ? "Sale pending…" : "In transit"}
+                  {asset.status === "LIQUIDATE"
+                    ? "Sale pending…"
+                    : "In transit"}
                 </div>
               ) : (
                 <>
@@ -538,24 +730,26 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                     className="w-full h-14 rounded-xl font-bold text-base tracking-wide transition-all duration-300"
                     style={{
                       backgroundColor:
-                        sellStage === "processing" ? "#9CA3AF"
-                        : sellStage === "success"  ? "#059669"
-                        : "#9126EF",
+                        sellStage === "processing"
+                          ? "#9CA3AF"
+                          : sellStage === "success"
+                            ? "#059669"
+                            : "#9126EF",
                       color: "#FFFFFF",
                       boxShadow:
                         sellStage === "success"
                           ? "0 4px 20px rgba(5,150,105,0.45)"
                           : sellStage === "processing"
-                          ? "none"
-                          : "0 4px 14px rgba(145,38,239,0.25)",
+                            ? "none"
+                            : "0 4px 14px rgba(145,38,239,0.25)",
                       cursor: sellStage !== "idle" ? "not-allowed" : "pointer",
                     }}
                   >
                     {sellStage === "processing"
                       ? "PROCESSING..."
                       : sellStage === "success"
-                      ? "FUNDS SECURED!"
-                      : `SELL NOW · ${fmt(conditionAdjustedValue)}`}
+                        ? "FUNDS SECURED!"
+                        : `SELL NOW · ${fmt(conditionAdjustedValue)}`}
                   </button>
                   <AnimatePresence mode="wait">
                     {sellStage === "success" ? (
@@ -565,7 +759,8 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center text-xs text-emerald-600 font-semibold mt-2"
                       >
-                        Sale confirmed — funds will be transferred within 1–2 business days.
+                        Sale confirmed — funds will be transferred within 1–2
+                        business days.
                       </motion.p>
                     ) : sellStage === "processing" ? (
                       <motion.p
@@ -583,7 +778,8 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                         animate={{ opacity: 1 }}
                         className="text-center text-xs text-gray-400 mt-2"
                       >
-                        {sellWindow?.sellByLabel ?? `Avoid the projected ${fmt(dropDollars)} loss`}
+                        {sellWindow?.sellByLabel ??
+                          `Avoid the projected ${fmt(dropDollars)} loss`}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -598,13 +794,18 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 }
 
 // ── Sell Window Timeline Bar ──────────────────────────────────────────────────
-function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof computeSellWindow> }) {
+function SellWindowTimeline({
+  sellWindow,
+}: {
+  sellWindow: ReturnType<typeof computeSellWindow>;
+}) {
   const cliff = sellWindow.cliffDay;
   if (cliff <= 0) return null;
 
   const total = cliff + 3;
   const windowStartPct = (sellWindow.windowStartDay / total) * 100;
-  const windowWidthPct = ((sellWindow.windowEndDay - sellWindow.windowStartDay) / total) * 100;
+  const windowWidthPct =
+    ((sellWindow.windowEndDay - sellWindow.windowStartDay) / total) * 100;
   const cliffPct = (cliff / total) * 100;
   const todayPct = 0;
 
@@ -638,7 +839,9 @@ function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof comp
       <div className="flex justify-between text-[9px] text-gray-400 font-medium mt-1 px-0.5">
         <span style={{ color: "#F59E0B" }}>Today</span>
         {sellWindow.windowStartDay > 0 && (
-          <span className="text-emerald-600">Window +{sellWindow.windowStartDay}d</span>
+          <span className="text-emerald-600">
+            Window +{sellWindow.windowStartDay}d
+          </span>
         )}
         <span className="text-red-400">Cliff +{cliff}d</span>
       </div>
@@ -647,58 +850,84 @@ function SellWindowTimeline({ sellWindow }: { sellWindow: ReturnType<typeof comp
 }
 
 // ── Scenario Comparison ───────────────────────────────────────────────────────
-function ScenarioComparison({
-  currentValue, dropDollars, daysAway, sellWindow,
-}: {
-  currentValue: number;
-  dropDollars: number;
-  daysAway: number;
-  sellWindow: ReturnType<typeof computeSellWindow> | null;
-}) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-  const urgency   = sellWindow?.urgency ?? "PLANNED";
-  const postCliff = Math.max(0, currentValue - dropDollars);
-  const lossPct   = currentValue > 0 ? (dropDollars / currentValue) * 100 : 0;
-  const dailyCost = daysAway > 0 ? dropDollars / daysAway : dropDollars;
+type Col = {
+  title: string;
+  sub: string;
+  value: number;
+  color: string;
+  highlight: boolean;
+  dimmed: boolean;
+  badge: { text: string; bg: string; color: string } | null;
+  pct: number | null;
+};
 
-  type Col = {
-    title: string; sub: string; value: number;
-    color: string; highlight: boolean; dimmed: boolean;
-    badge: { text: string; bg: string; color: string } | null;
-    pct: number | null;
-  };
-
-  const cols: Col[] = [
+function getScenarioColumns(
+  urgency: UrgencyLevel | "PLANNED",
+  currentValue: number,
+  postCliff: number,
+  dropDollars: number,
+  sellWindow: ReturnType<typeof computeSellWindow> | null,
+  daysAway: number,
+  lossPct: number,
+  f: (n: number) => string,
+): Col[] {
+  return [
     {
       title: "Sell Today",
-      sub: urgency === "WINDOW"  ? "Window open ✓"
-         : urgency === "URGENT"  ? "Act fast"
-         : urgency === "CLIFF"   ? "Post-cliff"
-         : "Pre-window",
+      sub:
+        urgency === "WINDOW"
+          ? "Window open ✓"
+          : urgency === "URGENT"
+            ? "Act fast"
+            : urgency === "CLIFF"
+              ? "Post-cliff"
+              : "Pre-window",
       value: currentValue,
-      color: urgency === "WINDOW" ? "#059669" : urgency === "URGENT" ? "#EA580C" : "#1F2937",
+      color:
+        urgency === "WINDOW"
+          ? "#059669"
+          : urgency === "URGENT"
+            ? "#EA580C"
+            : "#1F2937",
       highlight: urgency === "WINDOW" || urgency === "URGENT",
       dimmed: false,
       pct: null,
-      badge: urgency === "WINDOW"
-        ? { text: "Best time ✓", bg: "#D1FAE5", color: "#065F46" }
-        : urgency === "URGENT"
-        ? { text: "Act now", bg: "#FFEDD5", color: "#9A3412" }
-        : null,
+      badge:
+        urgency === "WINDOW"
+          ? { text: "Best time ✓", bg: "#D1FAE5", color: "#065F46" }
+          : urgency === "URGENT"
+            ? { text: "Act now", bg: "#FFEDD5", color: "#9A3412" }
+            : null,
     },
     {
-      title: urgency === "PLANNED" ? `+${sellWindow?.daysUntilWindow ?? "?"}d Window` : "Optimal window",
-      sub: urgency === "PLANNED" ? "Ideal listing zone"
-         : urgency === "WINDOW"  ? "You're here now"
-         : "Window closed",
+      title:
+        urgency === "PLANNED"
+          ? `+${sellWindow?.daysUntilWindow ?? "?"}d Window`
+          : "Optimal window",
+      sub:
+        urgency === "PLANNED"
+          ? "Ideal listing zone"
+          : urgency === "WINDOW"
+            ? "You're here now"
+            : "Window closed",
       value: currentValue,
-      color: urgency === "PLANNED" ? "#9126EF" : urgency === "WINDOW" ? "#059669" : "#9CA3AF",
+      color:
+        urgency === "PLANNED"
+          ? "#9126EF"
+          : urgency === "WINDOW"
+            ? "#059669"
+            : "#9CA3AF",
       highlight: urgency === "PLANNED",
       dimmed: urgency === "URGENT" || urgency === "CLIFF",
       pct: 0,
-      badge: urgency === "PLANNED"
-        ? { text: "Recommended", bg: "rgba(145,38,239,0.1)", color: "#9126EF" }
-        : null,
+      badge:
+        urgency === "PLANNED"
+          ? {
+              text: "Recommended",
+              bg: "rgba(145,38,239,0.1)",
+              color: "#9126EF",
+            }
+          : null,
     },
     {
       title: "After cliff",
@@ -711,6 +940,73 @@ function ScenarioComparison({
       badge: { text: `−${f(dropDollars)}`, bg: "#FEE2E2", color: "#991B1B" },
     },
   ];
+}
+
+function ScenarioColumn({ col, f }: { col: Col; f: (n: number) => string }) {
+  return (
+    <div
+      className="rounded-xl p-3 border flex flex-col gap-1"
+      style={{
+        backgroundColor: col.highlight ? "#F0FDF4" : "#F9FAFB",
+        borderColor: col.highlight ? "#6EE7B7" : "#E5E7EB",
+        opacity: col.dimmed ? 0.5 : 1,
+      }}
+    >
+      <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
+        {col.title}
+      </p>
+      <p
+        className="font-poppins font-bold text-sm leading-tight"
+        style={{ color: col.color }}
+      >
+        {f(col.value)}
+      </p>
+      <p className="text-[10px] text-gray-400 leading-tight">{col.sub}</p>
+      {col.pct !== null && col.pct !== 0 && (
+        <p className="text-[10px] font-semibold text-red-500">
+          {col.pct.toFixed(1)}%
+        </p>
+      )}
+      {col.badge && (
+        <span
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start mt-0.5"
+          style={{ backgroundColor: col.badge.bg, color: col.badge.color }}
+        >
+          {col.badge.text}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ScenarioComparison({
+  currentValue,
+  dropDollars,
+  daysAway,
+  sellWindow,
+}: {
+  currentValue: number;
+  dropDollars: number;
+  daysAway: number;
+  sellWindow: ReturnType<typeof computeSellWindow> | null;
+}) {
+  const f = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const urgency = sellWindow?.urgency ?? "PLANNED";
+  const postCliff = Math.max(0, currentValue - dropDollars);
+  const lossPct = currentValue > 0 ? (dropDollars / currentValue) * 100 : 0;
+  const dailyCost = daysAway > 0 ? dropDollars / daysAway : dropDollars;
+
+  const cols = getScenarioColumns(
+    urgency,
+    currentValue,
+    postCliff,
+    dropDollars,
+    sellWindow,
+    daysAway,
+    lossPct,
+    f,
+  );
 
   return (
     <div>
@@ -720,36 +1016,16 @@ function ScenarioComparison({
       </h3>
       <div className="grid grid-cols-3 gap-2">
         {cols.map((col) => (
-          <div
-            key={col.title}
-            className="rounded-xl p-3 border flex flex-col gap-1"
-            style={{
-              backgroundColor: col.highlight ? "#F0FDF4" : "#F9FAFB",
-              borderColor: col.highlight ? "#6EE7B7" : "#E5E7EB",
-              opacity: col.dimmed ? 0.5 : 1,
-            }}
-          >
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">{col.title}</p>
-            <p className="font-poppins font-bold text-sm leading-tight" style={{ color: col.color }}>{f(col.value)}</p>
-            <p className="text-[10px] text-gray-400 leading-tight">{col.sub}</p>
-            {col.pct !== null && col.pct !== 0 && (
-              <p className="text-[10px] font-semibold text-red-500">{col.pct.toFixed(1)}%</p>
-            )}
-            {col.badge && (
-              <span
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start mt-0.5"
-                style={{ backgroundColor: col.badge.bg, color: col.badge.color }}
-              >
-                {col.badge.text}
-              </span>
-            )}
-          </div>
+          <ScenarioColumn key={col.title} col={col} f={f} />
         ))}
       </div>
       <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5">
         <Zap className="w-3 h-3 text-amber-400 shrink-0" />
         Missing the cliff costs approx.{" "}
-        <strong className="text-gray-600 font-semibold">{f(dailyCost)}/day</strong> amortised over the window.
+        <strong className="text-gray-600 font-semibold">
+          {f(dailyCost)}/day
+        </strong>{" "}
+        amortised over the window.
       </p>
     </div>
   );
@@ -779,8 +1055,12 @@ function WhatIfSimulator({
   simulatedLoss: number;
   simulatedWindow: ReturnType<typeof computeSellWindow> | null;
 }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-  const pctFromPurchase = purchaseValue > 0 ? ((simulatedValue - purchaseValue) / purchaseValue) * 100 : 0;
+  const f = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const pctFromPurchase =
+    purchaseValue > 0
+      ? ((simulatedValue - purchaseValue) / purchaseValue) * 100
+      : 0;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
@@ -789,18 +1069,32 @@ function WhatIfSimulator({
           <SlidersHorizontal className="w-4 h-4 text-amber-500" />
           What-if Simulator
         </h3>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">Drag to explore</span>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+          Drag to explore
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
-          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Sell in</p>
-          <p className="text-2xl font-poppins font-bold text-gray-900">{sellOffsetDays}d</p>
-          <p className="text-xs text-gray-400 mt-1">{simulatedDaysAway}d until cliff</p>
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">
+            Sell in
+          </p>
+          <p className="text-2xl font-poppins font-bold text-gray-900">
+            {sellOffsetDays}d
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {simulatedDaysAway}d until cliff
+          </p>
         </div>
         <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
-          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Projected value</p>
-          <p className="text-2xl font-poppins font-bold text-emerald-600">{f(simulatedValue)}</p>
-          <p className="text-xs text-gray-400 mt-1">vs. now {f(currentValue)}</p>
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">
+            Projected value
+          </p>
+          <p className="text-2xl font-poppins font-bold text-emerald-600">
+            {f(simulatedValue)}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            vs. now {f(currentValue)}
+          </p>
         </div>
       </div>
       <input
@@ -817,20 +1111,36 @@ function WhatIfSimulator({
       </div>
       <div className="grid grid-cols-3 gap-2 mt-4">
         <div className="rounded-xl p-3 bg-red-50 border border-red-100">
-          <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-1">Value lost</p>
+          <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-1">
+            Value lost
+          </p>
           <p className="text-sm font-bold text-red-500">{f(simulatedLoss)}</p>
         </div>
         <div className="rounded-xl p-3 bg-purple-50 border border-purple-100">
-          <p className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider mb-1">PnL</p>
-          <p className="text-sm font-bold text-purple-600">{pctFromPurchase >= 0 ? "+" : ""}{pctFromPurchase.toFixed(1)}%</p>
+          <p className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider mb-1">
+            PnL
+          </p>
+          <p className="text-sm font-bold text-purple-600">
+            {pctFromPurchase >= 0 ? "+" : ""}
+            {pctFromPurchase.toFixed(1)}%
+          </p>
         </div>
         <div className="rounded-xl p-3 bg-emerald-50 border border-emerald-100">
-          <p className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider mb-1">Sell state</p>
-          <p className="text-sm font-bold text-emerald-600">{simulatedWindow?.urgency === "WINDOW" ? "Ideal" : simulatedWindow?.urgency === "URGENT" ? "Urgent" : "Later"}</p>
+          <p className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider mb-1">
+            Sell state
+          </p>
+          <p className="text-sm font-bold text-emerald-600">
+            {simulatedWindow?.urgency === "WINDOW"
+              ? "Ideal"
+              : simulatedWindow?.urgency === "URGENT"
+                ? "Urgent"
+                : "Later"}
+          </p>
         </div>
       </div>
       <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
-        This simulates waiting from today to a future sell date and estimates the remaining resale value.
+        This simulates waiting from today to a future sell date and estimates
+        the remaining resale value.
       </p>
     </div>
   );
@@ -846,13 +1156,17 @@ function ConditionGrader({
   condition: ConditionKey;
   setCondition: (c: ConditionKey) => void;
 }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const conf = CONDITIONS[condition];
   const adjusted = currentValue * conf.multiplier;
   const discount = currentValue - adjusted;
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 shadow-sm" style={{ backgroundColor: "#FAFAFA" }}>
+    <div
+      className="rounded-2xl border border-gray-200 p-5 shadow-sm"
+      style={{ backgroundColor: "#FAFAFA" }}
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <Activity className="w-4 h-4 text-amber-500" />
@@ -860,7 +1174,11 @@ function ConditionGrader({
         </h3>
         <span
           className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-          style={{ backgroundColor: conf.bg, color: conf.color, border: `1px solid ${conf.border}` }}
+          style={{
+            backgroundColor: conf.bg,
+            color: conf.color,
+            border: `1px solid ${conf.border}`,
+          }}
         >
           {conf.label} · {(conf.multiplier * 100).toFixed(0)}%
         </span>
@@ -882,10 +1200,16 @@ function ConditionGrader({
                 backgroundColor: selected ? c.bg : "#FFFFFF",
               }}
             >
-              <span className="text-xs font-bold" style={{ color: selected ? c.color : "#6B7280" }}>
+              <span
+                className="text-xs font-bold"
+                style={{ color: selected ? c.color : "#6B7280" }}
+              >
                 {c.label}
               </span>
-              <span className="text-[9px] font-medium" style={{ color: selected ? c.color : "#9CA3AF" }}>
+              <span
+                className="text-[9px] font-medium"
+                style={{ color: selected ? c.color : "#9CA3AF" }}
+              >
                 {(c.multiplier * 100).toFixed(0)}%
               </span>
             </button>
@@ -901,12 +1225,21 @@ function ConditionGrader({
         style={{ backgroundColor: conf.bg, borderColor: conf.border }}
       >
         <div>
-          <p className="text-xs font-semibold" style={{ color: conf.color }}>Condition-adjusted value</p>
+          <p className="text-xs font-semibold" style={{ color: conf.color }}>
+            Condition-adjusted value
+          </p>
           {condition !== "mint" && discount > 0 && (
-            <p className="text-[10px] text-gray-400 mt-0.5">−{f(discount)} from wear &amp; condition</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              −{f(discount)} from wear &amp; condition
+            </p>
           )}
         </div>
-        <p className="font-poppins font-bold text-lg" style={{ color: conf.color }}>{f(adjusted)}</p>
+        <p
+          className="font-poppins font-bold text-lg"
+          style={{ color: conf.color }}
+        >
+          {f(adjusted)}
+        </p>
       </div>
     </div>
   );
@@ -915,22 +1248,83 @@ function ConditionGrader({
 // ── Platform Estimates ────────────────────────────────────────────────────────
 // ── Condition Config ──────────────────────────────────────────────────────────
 const CONDITIONS = {
-  mint: { label: "Mint",  sub: "Like new — original box, no marks",   multiplier: 1.00, color: "#10B981", bg: "#F0FDF4", border: "#6EE7B7" },
-  good: { label: "Good",  sub: "Minor wear — fully functional",        multiplier: 0.92, color: "#9126EF", bg: "rgba(145,38,239,0.06)", border: "rgba(145,38,239,0.2)" },
-  fair: { label: "Fair",  sub: "Visible scratches — works perfectly",  multiplier: 0.78, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-  poor: { label: "Poor",  sub: "Heavy wear or cosmetic damage",        multiplier: 0.60, color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
+  mint: {
+    label: "Mint",
+    sub: "Like new — original box, no marks",
+    multiplier: 1.0,
+    color: "#10B981",
+    bg: "#F0FDF4",
+    border: "#6EE7B7",
+  },
+  good: {
+    label: "Good",
+    sub: "Minor wear — fully functional",
+    multiplier: 0.92,
+    color: "#9126EF",
+    bg: "rgba(145,38,239,0.06)",
+    border: "rgba(145,38,239,0.2)",
+  },
+  fair: {
+    label: "Fair",
+    sub: "Visible scratches — works perfectly",
+    multiplier: 0.78,
+    color: "#F59E0B",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+  },
+  poor: {
+    label: "Poor",
+    sub: "Heavy wear or cosmetic damage",
+    multiplier: 0.6,
+    color: "#EF4444",
+    bg: "#FEF2F2",
+    border: "#FECACA",
+  },
 } as const;
 type ConditionKey = keyof typeof CONDITIONS;
 
 const PLATFORMS_DATA = [
-  { code: "FB", name: "Facebook Marketplace", fee: 0.02,   tag: "No listing fee",     speed: "3–7 days"  },
-  { code: "SW", name: "Swappa",               fee: 0.03,   tag: "Electronics only",   speed: "1–3 days"  },
-  { code: "eB", name: "eBay",                 fee: 0.1325, tag: "Widest buyer reach",  speed: "3–10 days" },
-  { code: "BM", name: "Back Market",          fee: 0.20,   tag: "Certified refurb",   speed: "5–14 days" },
+  {
+    code: "FB",
+    name: "Facebook Marketplace",
+    fee: 0.02,
+    tag: "No listing fee",
+    speed: "3–7 days",
+  },
+  {
+    code: "SW",
+    name: "Swappa",
+    fee: 0.03,
+    tag: "Electronics only",
+    speed: "1–3 days",
+  },
+  {
+    code: "eB",
+    name: "eBay",
+    fee: 0.1325,
+    tag: "Widest buyer reach",
+    speed: "3–10 days",
+  },
+  {
+    code: "BM",
+    name: "Back Market",
+    fee: 0.2,
+    tag: "Certified refurb",
+    speed: "5–14 days",
+  },
 ];
 
-function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { currentValue: number; conditionMultiplier: number; urgency: UrgencyLevel }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+function PlatformEstimates({
+  currentValue,
+  conditionMultiplier,
+  urgency,
+}: {
+  currentValue: number;
+  conditionMultiplier: number;
+  urgency: UrgencyLevel;
+}) {
+  const f = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const adjusted = currentValue * conditionMultiplier;
   const ranked = [...PLATFORMS_DATA]
     .map((p) => ({ ...p, net: adjusted * (1 - p.fee) }))
@@ -946,7 +1340,7 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
       </h3>
       <div className="space-y-2">
         {ranked.map((p, i) => {
-          const isTop  = i === 0;
+          const isTop = i === 0;
           const isFast = p.code === fastCode;
           return (
             <div
@@ -965,19 +1359,34 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-semibold text-gray-800">{p.name}</span>
+                  <span className="text-xs font-semibold text-gray-800">
+                    {p.name}
+                  </span>
                   {isTop && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Best $</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                      Best $
+                    </span>
                   )}
                   {isFast && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">Fastest</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                      Fastest
+                    </span>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400">{p.tag} · {p.speed}</p>
+                <p className="text-[10px] text-gray-400">
+                  {p.tag} · {p.speed}
+                </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold" style={{ color: isTop ? "#059669" : "#1F2937" }}>{f(p.net)}</p>
-                <p className="text-[10px] text-gray-400">{((1 - p.fee) * 100).toFixed(0)}% net</p>
+                <p
+                  className="text-sm font-bold"
+                  style={{ color: isTop ? "#059669" : "#1F2937" }}
+                >
+                  {f(p.net)}
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  {((1 - p.fee) * 100).toFixed(0)}% net
+                </p>
               </div>
             </div>
           );
@@ -988,19 +1397,30 @@ function PlatformEstimates({ currentValue, conditionMultiplier, urgency }: { cur
 }
 
 // ── Market Demand ─────────────────────────────────────────────────────────────
-function MarketDemand({ category, daysAway }: { category: string; daysAway: number }) {
+function MarketDemand({
+  category,
+  daysAway,
+}: {
+  category: string;
+  daysAway: number;
+}) {
   const BASE: Record<string, number> = { Hardware: 7, Optics: 6, Audio: 5 };
   let score = BASE[category] ?? 6;
-  if (daysAway <= 7)       score += 2;
+  if (daysAway <= 7) score += 2;
   else if (daysAway <= 14) score += 1;
   else if (daysAway >= 60) score -= 2;
   score = Math.min(10, Math.max(1, score));
 
-  const level  = score >= 8 ? "High"   : score >= 5 ? "Moderate" : "Low";
-  const color  = score >= 8 ? "#10B981": score >= 5 ? "#F59E0B"  : "#EF4444";
-  const bgPill = score >= 8 ? "#D1FAE5": score >= 5 ? "#FEF3C7"  : "#FEE2E2";
-  const buyers = score >= 8 ? "100–180": score >= 5 ? "40–80"    : "10–30";
-  const trend  = daysAway <= 14 ? "↑ Rising — cliff creates buyer urgency" : daysAway >= 60 ? "→ Stable" : "→ Steady interest";
+  const level = score >= 8 ? "High" : score >= 5 ? "Moderate" : "Low";
+  const color = score >= 8 ? "#10B981" : score >= 5 ? "#F59E0B" : "#EF4444";
+  const bgPill = score >= 8 ? "#D1FAE5" : score >= 5 ? "#FEF3C7" : "#FEE2E2";
+  const buyers = score >= 8 ? "100–180" : score >= 5 ? "40–80" : "10–30";
+  const trend =
+    daysAway <= 14
+      ? "↑ Rising — cliff creates buyer urgency"
+      : daysAway >= 60
+        ? "→ Stable"
+        : "→ Steady interest";
 
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
@@ -1009,31 +1429,57 @@ function MarketDemand({ category, daysAway }: { category: string; daysAway: numb
           <Users className="w-4 h-4 text-amber-500" />
           Market Demand
         </h3>
-        <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color, backgroundColor: bgPill }}>
+        <span
+          className="text-xs font-bold px-2.5 py-1 rounded-full"
+          style={{ color, backgroundColor: bgPill }}
+        >
           {level}
         </span>
       </div>
       <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
         <div
           className="absolute left-0 top-0 h-full rounded-full"
-          style={{ width: `${score * 10}%`, backgroundColor: color, transition: "width 0.8s ease" }}
+          style={{
+            width: `${score * 10}%`,
+            backgroundColor: color,
+            transition: "width 0.8s ease",
+          }}
         />
       </div>
       <p className="text-[11px] text-gray-500 font-medium">{trend}</p>
-      <p className="text-[10px] text-gray-400 mt-0.5">~{buyers} active buyers estimated for this category today</p>
+      <p className="text-[10px] text-gray-400 mt-0.5">
+        ~{buyers} active buyers estimated for this category today
+      </p>
     </div>
   );
 }
 
 // ── Stat Tile ─────────────────────────────────────────────────────────────────
 function StatTile({
-  icon, label, value, sub, valueColor = "#1F2937",
-}: { icon: React.ReactNode; label: string; value: string; sub: string; valueColor?: string }) {
+  icon,
+  label,
+  value,
+  sub,
+  valueColor = "#1F2937",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  valueColor?: string;
+}) {
   return (
     <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
       <div className="flex items-center gap-1.5 mb-2">{icon}</div>
-      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">{label}</p>
-      <p className="font-bold text-sm leading-tight" style={{ color: valueColor }}>{value}</p>
+      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">
+        {label}
+      </p>
+      <p
+        className="font-bold text-sm leading-tight"
+        style={{ color: valueColor }}
+      >
+        {value}
+      </p>
       <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{sub}</p>
     </div>
   );
