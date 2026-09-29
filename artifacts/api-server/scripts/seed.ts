@@ -34,7 +34,7 @@ const DEMO_USER_EMAIL = "demo@liquid.app";
 function daysFromNow(days: number): Date {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  d.setHours(12, 0, 0, 0);   // noon UTC to avoid DST edge cases
+  d.setHours(12, 0, 0, 0); // noon UTC to avoid DST edge cases
   return d;
 }
 
@@ -44,7 +44,7 @@ const DEMO_ASSETS = [
     make: "Apple",
     model: "iPhone 14 Pro - 256GB",
     storageCapacity: "256GB",
-    purchasePrice: 109_900,          // cents
+    purchasePrice: 109_900, // cents
     currentEstimatedValue: 65_000,
     projectedDrop: 15_000,
     cliffDate: daysFromNow(12),
@@ -120,21 +120,23 @@ async function seed() {
 
   console.log(`   ✅  User: ${user.email} (${user.id})`);
 
-  // 2. Insert demo assets (skip if already present — idempotent)
-  for (const asset of DEMO_ASSETS) {
-    const [inserted] = await db
-      .insert(schema.assets)
-      .values({ ...asset, userId: user.id })
-      // If the exact (userId, model) combo exists, leave it alone
-      .onConflictDoNothing()
-      .returning({ id: schema.assets.id, model: schema.assets.model });
+  // 2. Insert demo assets concurrently (skip if already present — idempotent)
+  await Promise.all(
+    DEMO_ASSETS.map(async (asset) => {
+      const [inserted] = await db
+        .insert(schema.assets)
+        .values({ ...asset, userId: user.id })
+        // If the exact (userId, model) combo exists, leave it alone
+        .onConflictDoNothing()
+        .returning({ id: schema.assets.id, model: schema.assets.model });
 
-    if (inserted) {
-      console.log(`   ✅  Asset: ${asset.model}`);
-    } else {
-      console.log(`   ⏭   Asset already exists: ${asset.model}`);
-    }
-  }
+      if (inserted) {
+        console.log(`   ✅  Asset: ${asset.model}`);
+      } else {
+        console.log(`   ⏭   Asset already exists: ${asset.model}`);
+      }
+    }),
+  );
 
   console.log("\n🎉  Seed complete.");
   await pool.end();
