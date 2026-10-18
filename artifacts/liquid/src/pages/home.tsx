@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { formatCurrency } from "@/lib/currency";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -117,6 +118,7 @@ export default function Home() {
   const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
 
   const portfolio = data?.portfolio ?? [];
+  const portfolioById = useMemo(() => new Map(portfolio.map((a) => [a.id, a])), [portfolio]);
   const metrics = data?.metrics;
   const displayedNetWorth = optimisticNetWorth !== null ? optimisticNetWorth : metrics?.totalNetWorth ?? 0;
 
@@ -126,7 +128,7 @@ export default function Home() {
         if (body.status === "LIQUIDATE") {
           setSellingIds((prev) => new Set(prev).add(id));
           const prev = data?.metrics.totalNetWorth ?? null;
-          const asset = data?.portfolio.find((a) => a.id === id);
+          const asset = portfolioById.get(id);
           if (asset && data) setOptimisticNetWorth(data.metrics.totalNetWorth - asset.currentValue / 100);
           return { previousNetWorth: prev };
         }
@@ -154,7 +156,7 @@ export default function Home() {
   }, []);
 
   const handleSell = useCallback((id: string) => {
-    const asset = portfolio.find((a) => a.id === id);
+    const asset = portfolioById.get(id);
     if (asset) {
       setSoldRecords((prev) => {
         const next = new Map(prev);
@@ -163,7 +165,7 @@ export default function Home() {
       });
     }
     updateStatus.mutate({ id, data: { status: "LIQUIDATE" } });
-  }, [portfolio, updateStatus]);
+  }, [portfolioById, updateStatus]);
 
   const urgentAssets = useMemo(() => portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT"), [portfolio]);
   const firedAlerts = useMemo(() => portfolio.filter((a) => {
@@ -428,7 +430,7 @@ function RingRows({ healthScore, totalSaved, portfolio, soldRecordsSize }: { hea
 }
 
 function SessionPerformanceCard({ soldRecords, portfolio, totalSaved }: { soldRecords: Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>; portfolio: { depreciationCliff: { daysAway: number; projectedDrop: number } }[]; totalSaved: number }) {
-  const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const f = formatCurrency;
   const itemsSold = soldRecords.size;
   const totalProceeds = Array.from(soldRecords.values()).reduce((s, r) => s + r.saleValue, 0);
   const totalAtRisk = portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0);

@@ -30,7 +30,15 @@ app.use(
 );
 
 // ─── Security headers & parsing ────────────────────────────────────────────────
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(",")
+      : process.env.NODE_ENV === "production"
+        ? false
+        : "*",
+  }),
+);
 
 // Security: limit payload sizes to prevent DoS
 app.use(express.json({ limit: "1mb" }));

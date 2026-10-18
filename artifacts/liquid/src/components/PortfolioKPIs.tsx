@@ -7,6 +7,7 @@
 
 import { Link } from "wouter";
 import { Activity, Clock, AlertTriangle } from "lucide-react";
+import { formatCurrency as fmt } from "@/lib/currency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PortfolioKPIsProps {
@@ -17,11 +18,6 @@ interface PortfolioKPIsProps {
   urgentCount: number;
   /** Show sub-text "N items tracked · M sell windows open" */
   hasMetrics: boolean;
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 }
 
 // ─── Sub-component ────────────────────────────────────────────────────────────

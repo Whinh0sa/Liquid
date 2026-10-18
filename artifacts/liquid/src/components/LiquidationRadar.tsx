@@ -8,6 +8,7 @@
 import { BarChart2, Zap, Clock } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import type { UrgencyLevel } from "@/lib/sellWindow";
+import { formatCurrency as fmt } from "@/lib/currency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RadarAsset {
@@ -45,10 +46,6 @@ const TIMELINE_STEPS = [
   { title: "Catch the window",  description: "Capture the best remaining prices." },
   { title: "Exit cleanly",      description: "Liquidate leftovers before the cliff." },
 ];
-
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
-}
 
 // ─── Sub-panels ───────────────────────────────────────────────────────────────
 function Skeleton() {

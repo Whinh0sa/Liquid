@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import type { UrgencyLevel } from "@/lib/sellWindow";
+import { formatCurrency as fmt } from "@/lib/currency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AssetCardAsset {
@@ -20,11 +21,6 @@ export interface AssetCardAsset {
   purchasePrice: number;
   depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
   status: string;
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 }
 
 const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
