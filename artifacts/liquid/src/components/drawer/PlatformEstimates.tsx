@@ -1,27 +1,57 @@
 import { ShoppingCart } from "lucide-react";
 import type { UrgencyLevel } from "@/lib/sellWindow";
 
-export const PLATFORMS_DATA = [
-  { code: "FB", name: "Facebook Marketplace", fee: 0.02, tag: "No listing fee", speed: "3–7 days" },
-  { code: "SW", name: "Swappa", fee: 0.03, tag: "Electronics only", speed: "1–3 days" },
-  { code: "eB", name: "eBay", fee: 0.1325, tag: "Widest buyer reach", speed: "3–10 days" },
-  { code: "BM", name: "Back Market", fee: 0.20, tag: "Certified refurb", speed: "5–14 days" },
-];
+export interface PlatformFeeOption {
+  code: string;
+  name: string;
+  fee: number;
+  tag: string;
+  speed: string;
+}
+
+export function getPlatformsForCategory(category?: string): PlatformFeeOption[] {
+  const cat = (category ?? "TECH").toUpperCase();
+  if (cat === "WATCH") {
+    return [
+      { code: "C24", name: "Chrono24", fee: 0.065, tag: "Global collectors & escrow", speed: "7–21 days" },
+      { code: "eB", name: "eBay Authenticity", fee: 0.125, tag: "Escrow verified physical check", speed: "5–12 days" },
+      { code: "DIR", name: "Direct Collector / Forum", fee: 0.0, tag: "Face-to-face wire / meetup", speed: "1–5 days" },
+    ];
+  }
+  if (cat === "SNEAKER") {
+    return [
+      { code: "SX", name: "StockX", fee: 0.09, tag: "Instant sell / verified deadstock", speed: "2–5 days" },
+      { code: "GT", name: "GOAT", fee: 0.095, tag: "Sneakerheads marketplace", speed: "3–7 days" },
+      { code: "eB", name: "eBay Sneakers", fee: 0.08, tag: "Zero seller fee over $150", speed: "3–10 days" },
+    ];
+  }
+  // Default Electronics / Tech / Camera / Audio
+  return [
+    { code: "FB", name: "Facebook Marketplace", fee: 0.0, tag: "Local pickup / 0% fee", speed: "1–4 days" },
+    { code: "SW", name: "Swappa", fee: 0.03, tag: "Direct tech buyer payment (3%)", speed: "1–3 days" },
+    { code: "eB", name: "eBay Electronics", fee: 0.1325, tag: "Widest global buyer reach (13.25%)", speed: "3–10 days" },
+    { code: "BM", name: "Back Market Buyback", fee: 0.20, tag: "Instant trade-in buyback (20%)", speed: "5–10 days" },
+  ];
+}
 
 interface PlatformEstimatesProps {
   currentValue: number;
   conditionMultiplier: number;
   urgency: UrgencyLevel;
+  category?: string;
 }
 
 export function PlatformEstimates({
   currentValue,
   conditionMultiplier,
   urgency,
+  category,
 }: PlatformEstimatesProps) {
   const f = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const adjusted = currentValue * conditionMultiplier;
-  const ranked = [...PLATFORMS_DATA]
+  const platformList = getPlatformsForCategory(category);
+
+  const ranked = [...platformList]
     .map((p) => ({ ...p, net: adjusted * (1 - p.fee) }))
     .sort((a, b) => b.net - a.net);
 
@@ -31,7 +61,7 @@ export function PlatformEstimates({
     <div>
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
         <ShoppingCart className="w-4 h-4 text-amber-500" />
-        Where to Sell
+        Where to Sell (Net Payout Simulator)
       </h3>
       <div className="space-y-2">
         {ranked.map((p, i) => {

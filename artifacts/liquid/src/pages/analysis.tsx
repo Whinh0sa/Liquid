@@ -27,7 +27,7 @@ import AppLayout from "@/components/AppLayout";
 import AssetDrawer from "@/components/AssetDrawer";
 import { formatCurrencyWhole } from "@/lib/currency";
 import { URGENCY_PILL } from "@/lib/urgency";
-import { getAssetImage } from "@/lib/assetImages";
+import AssetImage from "@/components/ui/AssetImage";
 import { useToast } from "@/hooks/use-toast";
 
 type FilterTab = "ALL" | UrgencyLevel;
@@ -315,17 +315,13 @@ export default function Analysis() {
                         {/* Asset */}
                         <td className="py-3.5 px-4 sm:px-6">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                              <img
-                                src={getAssetImage(a.model, undefined, a.category)}
-                                alt={a.model}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-                                }}
-                              />
-                            </div>
+                            <AssetImage
+                              model={a.model}
+                              category={a.category}
+                              alt={a.model}
+                              aspectRatio="square"
+                              className="w-10 h-10 rounded-lg border border-slate-200"
+                            />
                             <div className="min-w-0">
                               <p className="font-semibold text-slate-900 group-hover:text-[#7C3AED] transition-colors truncate">
                                 {a.model}

@@ -28,6 +28,7 @@ import {
   Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { triggerActionFeedback } from "@/lib/feedback";
 import SpatialCanvas, { type CanvasBox, type ScanUrgency, type SpatialBox } from "./SpatialCanvas";
 import { parseVoiceCommand, getSpeechRecognitionCtor } from "@/lib/voiceSelection";
 import type { VoiceSelectableAsset } from "@/lib/voiceSelection";
@@ -526,6 +527,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
       setScanResult(withIds);
       setSelectedIds(new Set(withIds.detectedAssets.map((a: DetectedAsset, i: number) => a.id ?? `detected-${i}`)));
       setState("results");
+      triggerActionFeedback("confirm");
       toast({
         title: `Detected ${withIds.detectedAssets.length} asset(s)`,
         description: withIds.portfolioSummary.scanNotes?.slice(0, 120) ?? `${withIds.source} scan`,
@@ -570,6 +572,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
 
       await queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
       setState("committed");
+      triggerActionFeedback("success");
       toast({ title: `${res.count} asset(s) committed`, description: "Portfolio updated." });
       onCommitted?.(res.count);
       setTimeout(() => onOpenChange(false), 1200);

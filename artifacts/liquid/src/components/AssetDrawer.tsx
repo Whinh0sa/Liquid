@@ -15,6 +15,7 @@ import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/
 import { formatCurrency } from "@/lib/currency";
 import ExitListingModal from "@/components/ExitListingModal";
 import AssetImage from "@/components/ui/AssetImage";
+import { triggerActionFeedback } from "@/lib/feedback";
 import { BRAND } from "@/lib/tokens";
 
 // Sub-components
@@ -105,10 +106,12 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
   const handleSell = useCallback(() => {
     if (!asset || sellStage !== "idle") return;
 
+    triggerActionFeedback("confirm");
     setSellStage("processing");
     const t1 = setTimeout(() => {
       onSell(asset.id);
       setSellStage("success");
+      triggerActionFeedback("success");
 
       const t2 = setTimeout(() => {
         onClose();
@@ -346,6 +349,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
                 currentValue={currentValue}
                 conditionMultiplier={conditionMultiplier}
                 urgency={sellWindow?.urgency ?? "PLANNED"}
+                category={asset.category}
               />
 
               {/* Market Demand */}

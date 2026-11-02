@@ -6,7 +6,7 @@
 //   • High-density view switcher: Grid (Card tiles) vs. Dense Table (Ledger rows)
 //   • Streamlined color tokens adhering to the 3-tier semantic model
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { LayoutGrid, List, Search, Filter, Clock, AlertTriangle, CheckCircle, Package } from "lucide-react";
 import AssetCard from "@/components/AssetCard";
 import { computeSellWindow } from "@/lib/sellWindow";
@@ -66,6 +66,11 @@ export default function AssetLedgerGrid({
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [displayLimit, setDisplayLimit] = useState(24);
+
+  useEffect(() => {
+    setDisplayLimit(24);
+  }, [activeTab, searchQuery, selectedCategory]);
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -126,6 +131,11 @@ export default function AssetLedgerGrid({
       return true;
     });
   }, [portfolio, activeTab, selectedCategory, searchQuery, soldRecords]);
+
+  const visibleAssets = useMemo(
+    () => filteredAssets.slice(0, displayLimit),
+    [filteredAssets, displayLimit],
+  );
 
   return (
     <section className="space-y-4">
@@ -317,7 +327,7 @@ export default function AssetLedgerGrid({
                   </div>
                 </div>
               ))
-            : filteredAssets.map((asset) => (
+            : visibleAssets.map((asset) => (
                 <AssetCard
                   key={asset.id}
                   asset={asset}
@@ -330,6 +340,19 @@ export default function AssetLedgerGrid({
                   viewType={viewType}
                 />
               ))}
+        </div>
+      )}
+
+      {/* Progressive Pagination */}
+      {!isLoading && filteredAssets.length > displayLimit && (
+        <div className="flex justify-center pt-4">
+          <button
+            type="button"
+            onClick={() => setDisplayLimit((prev) => prev + 24)}
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-xs"
+          >
+            Show More Assets ({visibleAssets.length} of {filteredAssets.length} displayed)
+          </button>
         </div>
       )}
     </section>

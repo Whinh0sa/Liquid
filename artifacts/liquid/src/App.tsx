@@ -12,6 +12,9 @@ import Analysis from "@/pages/analysis";
 import Rings from "@/pages/rings";
 import Alerts from "@/pages/alerts";
 import { registerClerkTokenGetter } from "./main";
+import { initTelemetry } from "@/lib/telemetry";
+
+initTelemetry();
 
 const queryClient = new QueryClient({
   defaultOptions: {

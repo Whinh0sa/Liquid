@@ -167,6 +167,51 @@ export default function Home() {
     updateStatus.mutate({ id, data: { status: "LIQUIDATE" } });
   }, [portfolioById, updateStatus]);
 
+  const handleBatchSell = useCallback(async (targets: PortfolioAsset[]) => {
+    if (targets.length === 0) return;
+    const ids = targets.map((a) => a.id);
+
+    setSoldRecords((prev) => {
+      const next = new Map(prev);
+      targets.forEach((asset) => {
+        next.set(asset.id, {
+          saleValue: asset.currentValue / 100,
+          dropAvoided: asset.depreciationCliff.projectedDrop / 100,
+          soldAt: Date.now(),
+        });
+      });
+      return next;
+    });
+
+    setSellingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+
+    try {
+      await customFetch("/api/portfolio/batch-liquidate", {
+        method: "POST",
+        body: JSON.stringify({ assetIds: ids }),
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
+      toast({
+        title: "Batch Exits Executed",
+        description: `Successfully initiated liquidation for ${targets.length} assets.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Batch Liquidation Failed",
+        description: err?.message || "Could not execute batch exits.",
+        variant: "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
+    } finally {
+      setSellingIds(new Set());
+      setShowBatchModal(false);
+    }
+  }, [queryClient, toast]);
+
   const computedMetrics = useMemo(
     () => computePortfolioMetrics(portfolio, sellingIds, soldRecords),
     [portfolio, sellingIds, soldRecords],
@@ -296,10 +341,7 @@ export default function Home() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    batchTargets.forEach((a) => handleSell(a.id));
-                    setShowBatchModal(false);
-                  }}
+                  onClick={() => handleBatchSell(batchTargets)}
                   className="w-full h-11 rounded-xl font-bold text-white text-xs tracking-wide flex items-center justify-center gap-2 transition-all hover:opacity-95"
                   style={{ backgroundColor: "#059669" }}
                 >

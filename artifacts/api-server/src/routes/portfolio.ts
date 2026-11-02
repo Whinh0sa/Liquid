@@ -13,7 +13,7 @@
 // DELETE /api/portfolio/:id/alerts/:alertId → hard-delete an alert
 
 import { Router } from "express";
-import { eq, and, isNull, lte } from "drizzle-orm";
+import { eq, and, isNull, lte, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   UpdateAssetStatusParams,
@@ -31,6 +31,7 @@ router.use(requireAuth);
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 import { STARTER_ASSETS } from "../services/starterAssets.js";
+import { fetchMarketSoldComps, calculateFairMarketValue } from "../services/pricingWorker.js";
 
 
 /** Compute daysAway from a stored cliffDate (UTC, integer, may be negative). */
@@ -61,11 +62,25 @@ function toApiAsset(row: typeof assets.$inferSelect) {
 
 // ─── GET /api/portfolio ───────────────────────────────────────────────────────
 router.get("/portfolio", async (req, res) => {
-  const rows = await db
+  const limitParam = typeof req.query.limit === "string" ? parseInt(req.query.limit, 10) : undefined;
+  const offsetParam = typeof req.query.offset === "string" ? parseInt(req.query.offset, 10) : undefined;
+  const limit = limitParam && !isNaN(limitParam) ? Math.min(100, Math.max(1, limitParam)) : undefined;
+  const offset = offsetParam && !isNaN(offsetParam) ? Math.max(0, offsetParam) : undefined;
+
+  let query = db
     .select()
     .from(assets)
     .where(and(eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)))
     .orderBy(assets.cliffDate);
+
+  if (limit !== undefined) {
+    query = (query as any).limit(limit);
+  }
+  if (offset !== undefined) {
+    query = (query as any).offset(offset);
+  }
+
+  const rows = await query;
 
   const portfolio = rows.map(toApiAsset);
 
@@ -76,7 +91,11 @@ router.get("/portfolio", async (req, res) => {
       .filter((a) => a.depreciationCliff.daysAway < 15)
       .reduce((s, a) => s + a.depreciationCliff.projectedDrop, 0) / 100;
 
-  res.json({ portfolio, metrics: { totalNetWorth, capitalAtRisk } });
+  res.json({
+    portfolio,
+    metrics: { totalNetWorth, capitalAtRisk },
+    pagination: limit !== undefined ? { limit, offset: offset ?? 0, returned: rows.length } : undefined,
+  });
 });
 
 // ─── POST /api/portfolio ──────────────────────────────────────────────────────
@@ -124,6 +143,47 @@ router.post("/portfolio/seed", async (req, res) => {
   res.status(201).json({ portfolio: seeded, message: "Starter assets seeded successfully" });
 });
 
+// ─── POST /api/portfolio/sync-pricing ─────────────────────────────────────────
+router.post("/portfolio/sync-pricing", async (req, res) => {
+  const userAssets = await db
+    .select()
+    .from(assets)
+    .where(and(eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)));
+
+  const syncResults = [];
+
+  for (const asset of userAssets) {
+    const comps = fetchMarketSoldComps(
+      asset.model,
+      asset.category,
+      asset.currentEstimatedValue,
+    );
+    const updatedValue = calculateFairMarketValue(
+      asset.currentEstimatedValue,
+      comps,
+    );
+
+    if (updatedValue !== asset.currentEstimatedValue) {
+      await db
+        .update(assets)
+        .set({ currentEstimatedValue: updatedValue, updatedAt: new Date() })
+        .where(eq(assets.id, asset.id));
+    }
+
+    syncResults.push({
+      assetId: asset.id,
+      model: asset.model,
+      previousValue: asset.currentEstimatedValue,
+      updatedValue,
+      delta: updatedValue - asset.currentEstimatedValue,
+      comps,
+    });
+  }
+
+  req.log.info({ count: syncResults.length }, "Portfolio pricing synced");
+  res.json({ syncedCount: syncResults.length, results: syncResults });
+});
+
 // ─── PATCH /api/portfolio/:id ─────────────────────────────────────────────────
 router.patch("/portfolio/:id", async (req, res) => {
   const paramsResult = UpdateAssetStatusParams.safeParse(req.params);
@@ -154,6 +214,40 @@ router.patch("/portfolio/:id", async (req, res) => {
 
   req.log.info({ id, status }, "Asset status updated");
   res.json(toApiAsset(updated));
+});
+
+// ─── POST /api/portfolio/batch-liquidate ──────────────────────────────────────
+const BatchLiquidateBody = z.object({
+  assetIds: z.array(z.string()).min(1).max(100),
+});
+
+router.post("/portfolio/batch-liquidate", async (req, res) => {
+  const result = BatchLiquidateBody.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.flatten() });
+    return;
+  }
+
+  const { assetIds } = result.data;
+
+  const updatedRows = await db
+    .update(assets)
+    .set({ status: "LIQUIDATE", updatedAt: new Date() })
+    .where(
+      and(
+        inArray(assets.id, assetIds),
+        eq(assets.userId, req.auth.dbUserId),
+        isNull(assets.deletedAt),
+      ),
+    )
+    .returning();
+
+  req.log.info({ count: updatedRows.length, assetIds }, "Batch liquidation complete");
+
+  res.json({
+    liquidatedCount: updatedRows.length,
+    assets: updatedRows.map(toApiAsset),
+  });
 });
 
 // ─── DELETE /api/portfolio/:id ────────────────────────────────────────────────

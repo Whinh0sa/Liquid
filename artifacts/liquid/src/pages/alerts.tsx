@@ -26,7 +26,7 @@ import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrencyWhole } from "@/lib/currency";
 import { URGENCY_PILL } from "@/lib/urgency";
-import { getAssetImage } from "@/lib/assetImages";
+import AssetImage from "@/components/ui/AssetImage";
 import { useToast } from "@/hooks/use-toast";
 
 type AlertFilter = "ALL" | "ACTIONABLE" | "MONITORING";
@@ -296,17 +296,13 @@ export default function Alerts() {
                   >
                     {/* Left: Catalyst Icon & Asset Description */}
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 mt-0.5">
-                        <img
-                          src={getAssetImage(a.model, undefined, a.category)}
-                          alt={a.model}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-                          }}
-                        />
-                      </div>
+                      <AssetImage
+                        model={a.model}
+                        category={a.category}
+                        alt={a.model}
+                        aspectRatio="square"
+                        className="w-11 h-11 rounded-lg border border-slate-200 mt-0.5"
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
