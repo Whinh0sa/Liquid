@@ -7,8 +7,8 @@
 
 import { BarChart2, Zap, Clock } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
-import type { UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrency as fmt } from "@/lib/currency";
+import { URGENCY_PILL, URGENCY_HEAT } from "@/lib/urgency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RadarAsset {
@@ -26,20 +26,6 @@ interface LiquidationRadarProps {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const HEAT: Record<UrgencyLevel, string> = {
-  CLIFF:   "#EF4444",
-  URGENT:  "#F97316",
-  WINDOW:  "#10B981",
-  PLANNED: "#9126EF",
-};
-
-const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
-  PLANNED: { label: "Plan ahead",     bg: "#DBEAFE", text: "#1D4ED8", border: "#BFDBFE" },
-  WINDOW:  { label: "⚡ Sell now",    bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
-  URGENT:  { label: "Last chance",    bg: "#FFEDD5", text: "#9A3412", border: "#FED7AA" },
-  CLIFF:   { label: "Window closed",  bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
-};
-
 const TIMELINE_STEPS = [
   { title: "Sell now",          description: "Move the most urgent assets first." },
   { title: "Prep alerts",       description: "Set floors and queue the next exits." },
@@ -97,10 +83,10 @@ function HeatmapPanel({
                 <div className="flex-1 h-5 bg-gray-100 rounded-md overflow-hidden">
                   <div
                     className="h-full rounded-md transition-all duration-700"
-                    style={{ width: `${pct}%`, backgroundColor: HEAT[sw.urgency], opacity: 0.85 }}
+                    style={{ width: `${pct}%`, backgroundColor: URGENCY_HEAT[sw.urgency], opacity: 0.85 }}
                   />
                 </div>
-                <span className="text-[10px] font-bold shrink-0" style={{ color: HEAT[sw.urgency] }}>
+                <span className="text-[10px] font-bold shrink-0" style={{ color: URGENCY_HEAT[sw.urgency] }}>
                   {a.depreciationCliff.daysAway}d
                 </span>
               </div>

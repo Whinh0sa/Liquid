@@ -51,9 +51,14 @@ export function computeSellWindow(
   let urgency: UrgencyLevel;
   if (isAtCliff) {
     urgency = "CLIFF";
-  } else if (isPastWindow || (0 > windowEnd && cliffDay > 0)) {
+  } else if (isPastWindow || (0 > windowEnd && cliffDay > 0) || cliffDay <= 3) {
+    // 1–3 days out the listing window has effectively closed (lead time +
+    // buffer consume it, so windowEnd clamps to 0) — last chance, not optimal.
     urgency = "URGENT";
-  } else if (isWindowOpen) {
+  } else if ((cliffDay >= 4 && cliffDay <= 14) || isWindowOpen) {
+    // Demo sell band: a cliff 4–14 days out is inside the actionable sell
+    // window even when the narrower ideal listing window (2–7 days at
+    // cliffDay=10) has not literally opened yet.
     urgency = "WINDOW";
   } else {
     urgency = "PLANNED";

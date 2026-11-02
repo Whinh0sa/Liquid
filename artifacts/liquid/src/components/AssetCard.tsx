@@ -9,8 +9,8 @@ import {
   CheckCircle, ShieldCheck, X,
 } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
-import type { UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrency as fmt } from "@/lib/currency";
+import { URGENCY_PILL } from "@/lib/urgency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AssetCardAsset {
@@ -22,13 +22,6 @@ export interface AssetCardAsset {
   depreciationCliff: { daysAway: number; projectedDrop: number; reason: string };
   status: string;
 }
-
-const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
-  PLANNED: { label: "Plan ahead",    bg: "#DBEAFE", text: "#1D4ED8", border: "#BFDBFE" },
-  WINDOW:  { label: "⚡ Sell now",   bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
-  URGENT:  { label: "Last chance",   bg: "#FFEDD5", text: "#9A3412", border: "#FED7AA" },
-  CLIFF:   { label: "Window closed", bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
-};
 
 // ─── RecoveryCard (shown post-sell) ──────────────────────────────────────────
 function RecoveryCard({

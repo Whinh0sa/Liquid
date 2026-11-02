@@ -41,6 +41,9 @@ app.use(
 );
 
 // Security: limit payload sizes to prevent DoS
+// AI scan uploads a base64 photo, so /api/ai gets a larger scoped JSON limit.
+// body-parser marks req._body once parsed, so the global parser skips it after.
+app.use("/api/ai", express.json({ limit: "12mb" }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 

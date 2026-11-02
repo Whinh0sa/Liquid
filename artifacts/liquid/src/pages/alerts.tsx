@@ -8,11 +8,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { computeSellWindow } from "@/lib/sellWindow";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
-}
+import { formatCurrencyWhole } from "@/lib/currency";
 
 // ─── Severity config derived from urgency ────────────────────────────────────
 const SEVERITY = {
@@ -203,8 +199,8 @@ export default function Alerts() {
 
                   {/* Financial impact */}
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-gray-900">{fmt(current)}</p>
-                    <p className="text-xs text-red-500 font-semibold">−{fmt(drop)}</p>
+                    <p className="text-sm font-bold text-gray-900">{formatCurrencyWhole(current)}</p>
+                    <p className="text-xs text-red-500 font-semibold">−{formatCurrencyWhole(drop)}</p>
                     <p className="text-[10px] text-gray-400">if cliff hit</p>
                   </div>
 
@@ -253,7 +249,7 @@ export default function Alerts() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-gray-500">At risk</p>
-                    <p className="text-sm font-semibold text-gray-700">{fmt(drop)}</p>
+                    <p className="text-sm font-semibold text-gray-700">{formatCurrencyWhole(drop)}</p>
                   </div>
                 </motion.div>
               );

@@ -5,32 +5,15 @@ import { useGetPortfolio, getGetPortfolioQueryKey } from "@workspace/api-client-
 import { ArrowLeft, Activity, TrendingUp, Shield, Zap } from "lucide-react";
 import { computeSellWindow } from "@/lib/sellWindow";
 import AppLayout from "@/components/AppLayout";
-
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
-}
+import { formatCurrencyWhole } from "@/lib/currency";
+import { computePortfolioHealth } from "@/lib/portfolioHealth";
 
 
 export default function Rings() {
   const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
   const portfolio = data?.portfolio ?? [];
 
-  const healthScore = useMemo(() => {
-    if (portfolio.length === 0) return { grade: "A", score: 100, color: "#10B981", label: "Excellent" };
-    let score = 100;
-    portfolio.forEach((a) => {
-      const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
-      if (sw.urgency === "CLIFF")        score -= 28;
-      else if (sw.urgency === "URGENT")  score -= 18;
-      else if (sw.urgency === "WINDOW")  score -= 5;
-      else                               score += 3;
-    });
-    score = Math.min(100, Math.max(0, score));
-    const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 45 ? "D" : "F";
-    const color = score >= 75 ? "#10B981" : score >= 55 ? "#F59E0B" : "#EF4444";
-    const label = score >= 90 ? "Excellent" : score >= 75 ? "Good" : score >= 60 ? "Fair" : score >= 45 ? "At risk" : "Critical";
-    return { grade, score, color, label };
-  }, [portfolio]);
+  const healthScore = useMemo(() => computePortfolioHealth(portfolio), [portfolio]);
 
   const totalAtRisk  = portfolio.reduce((s: number, a) => s + a.depreciationCliff.projectedDrop / 100, 0);
   const totalValue   = portfolio.reduce((s: number, a) => s + a.currentValue / 100, 0);
@@ -153,7 +136,7 @@ export default function Rings() {
                     <span className="text-xs font-bold shrink-0" style={{ color: a.color }}>
                       {a.sw.urgency === "CLIFF" ? "Closed" : a.sw.urgency === "URGENT" ? "Urgent" : a.sw.urgency === "WINDOW" ? "Open" : "Planned"}
                     </span>
-                    <span className="text-xs text-gray-400 shrink-0 w-16 text-right">{fmt(a.currentValue / 100)}</span>
+                    <span className="text-xs text-gray-400 shrink-0 w-16 text-right">{formatCurrencyWhole(a.currentValue / 100)}</span>
                   </div>
                 </motion.div>
               ))}
@@ -164,8 +147,8 @@ export default function Rings() {
         {/* Stat cards */}
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { icon: TrendingUp, label: "Total portfolio value", value: fmt(totalValue),   color: "#9126EF", bg: "rgba(145,38,239,0.06)" },
-            { icon: Shield,     label: "Total at risk",         value: fmt(totalAtRisk),  color: "#EF4444", bg: "#FEF2F2" },
+            { icon: TrendingUp, label: "Total portfolio value", value: formatCurrencyWhole(totalValue),   color: "#9126EF", bg: "rgba(145,38,239,0.06)" },
+            { icon: Shield,     label: "Total at risk",         value: formatCurrencyWhole(totalAtRisk),  color: "#EF4444", bg: "#FEF2F2" },
             { icon: Zap,        label: "Assets need action",    value: `${windowCount}`,  color: "#F59E0B", bg: "#FFFBEB" },
           ].map((s, i) => (
             <motion.div key={s.label}

@@ -8,17 +8,8 @@ import {
 } from "lucide-react";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 import AppLayout from "@/components/AppLayout";
-
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 });
-}
-
-const URGENCY_COLOR: Record<UrgencyLevel, { bg: string; text: string; border: string; label: string }> = {
-  PLANNED: { bg: "rgba(145,38,239,0.1)", text: "#9126EF", border: "rgba(145,38,239,0.2)", label: "Plan ahead" },
-  WINDOW:  { bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7", label: "⚡ Sell now" },
-  URGENT:  { bg: "#FFEDD5", text: "#9A3412", border: "#FED7AA", label: "Last chance" },
-  CLIFF:   { bg: "#FEE2E2", text: "#991B1B", border: "#FECACA", label: "Window closed" },
-};
+import { formatCurrencyWhole } from "@/lib/currency";
+import { URGENCY_PILL as URGENCY_COLOR } from "@/lib/urgency";
 
 
 export default function Analysis() {
@@ -51,9 +42,9 @@ export default function Analysis() {
 
   const stats = [
     { icon: AlertTriangle, label: "Urgent assets",  value: `${urgentCount}`,     sub: "need action now",     color: "#EF4444", bg: "#FEF2F2" },
-    { icon: TrendingDown,  label: "Total at risk",  value: fmt(totalAtRisk),     sub: "projected loss",      color: "#F97316", bg: "#FFF7ED" },
+    { icon: TrendingDown,  label: "Total at risk",  value: formatCurrencyWhole(totalAtRisk),     sub: "projected loss",      color: "#F97316", bg: "#FFF7ED" },
     { icon: Clock,         label: "Avg days left",  value: `${avgDays}d`,        sub: "to cliff across all", color: "#9126EF", bg: "rgba(145,38,239,0.06)" },
-    { icon: Zap,           label: "Daily decay",    value: fmt(dailyDecay),      sub: "amortised loss/day",  color: "#F59E0B", bg: "#FFFBEB" },
+    { icon: Zap,           label: "Daily decay",    value: formatCurrencyWhole(dailyDecay),      sub: "amortised loss/day",  color: "#F59E0B", bg: "#FFFBEB" },
   ];
 
   const urgencyOrder: UrgencyLevel[] = ["CLIFF", "URGENT", "WINDOW", "PLANNED"];
@@ -142,7 +133,7 @@ export default function Analysis() {
                             <p className="text-sm font-bold text-red-500">−{dropPct}%</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-gray-900">{fmt(current)}</p>
+                            <p className="text-sm font-bold text-gray-900">{formatCurrencyWhole(current)}</p>
                             <p className={`text-[10px] font-semibold ${pnl < 0 ? "text-red-500" : "text-emerald-500"}`}>
                               {pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}% P&L
                             </p>

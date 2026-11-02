@@ -14,6 +14,7 @@ import {
 import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircle, Activity, Zap, ShoppingCart, Users, SlidersHorizontal } from "lucide-react";
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrency } from "@/lib/currency";
+import ExitListingModal from "@/components/ExitListingModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Asset {
@@ -80,6 +81,8 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
   const [sellStage, setSellStage] = useState<SellStage>("idle");
   const [sellOffsetDays, setSellOffsetDays] = useState(0);
   const [condition, setCondition] = useState<ConditionKey>("good");
+
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // Reset stage when a different asset opens
   useEffect(() => { setSellStage("idle"); }, [asset?.id]);
@@ -523,8 +526,8 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
 
             </div>
 
-            {/* ── Sell button ──────────────────────────────────────────────── */}
-            <div className="px-6 pb-6 pt-4 border-t border-gray-100">
+            {/* ── Sell + Exit Listing buttons ───────────────────────────────────── */}
+            <div className="px-6 pb-6 pt-4 border-t border-gray-100 space-y-3">
               {isAlreadySold ? (
                 <div className="w-full h-14 flex items-center justify-center rounded-xl text-sm font-semibold text-red-500 bg-red-50 border border-red-100">
                   {asset.status === "LIQUIDATE" ? "Sale pending…" : "In transit"}
@@ -556,6 +559,14 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                       : sellStage === "success"
                       ? "FUNDS SECURED!"
                       : `SELL NOW · ${fmt(conditionAdjustedValue)}`}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="btn-generate-exit-listing"
+                    onClick={() => setShowExitModal(true)}
+                    className="w-full h-11 rounded-xl font-bold text-sm tracking-wide bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                  >
+                    ⚡ Generate Exit Listing
                   </button>
                   <AnimatePresence mode="wait">
                     {sellStage === "success" ? (
@@ -590,6 +601,15 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                 </>
               )}
             </div>
+
+            <ExitListingModal
+              open={showExitModal}
+              onOpenChange={setShowExitModal}
+              assetId={asset.id}
+              assetModel={asset.model}
+              assetCategory={asset.category}
+              conditionLabel={CONDITIONS[condition]?.label}
+            />
           </motion.div>
         </>
       )}
