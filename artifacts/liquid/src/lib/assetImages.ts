@@ -51,8 +51,16 @@ const PRODUCT_IMAGES: ProductImageMatch[] = [
   },
 ];
 
-const DEFAULT_TECH = "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-const DEFAULT_FASHION = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80";
+const CATEGORY_DEFAULTS: Record<string, string> = {
+  TECH: "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80",
+  FASHION: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
+  AUDIO: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+  CAMERA: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80",
+  GAMING: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80",
+  WATCH: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+  SNEAKER: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=600&q=80",
+  OTHER: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80",
+};
 
 /**
  * Resolves an authentic product image URL for an asset based on model, make, and category.
@@ -66,9 +74,6 @@ export function getAssetImage(model?: string, make?: string, category?: string):
     }
   }
 
-  if (category?.toUpperCase() === "FASHION") {
-    return DEFAULT_FASHION;
-  }
-
-  return DEFAULT_TECH;
+  const catUpper = category?.toUpperCase() ?? "TECH";
+  return CATEGORY_DEFAULTS[catUpper] || CATEGORY_DEFAULTS.TECH;
 }

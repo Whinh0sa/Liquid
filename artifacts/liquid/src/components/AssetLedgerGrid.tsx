@@ -216,7 +216,7 @@ export default function AssetLedgerGrid({
         </div>
 
         {/* Search, Category & View Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
           {/* Search Input */}
           <div className="relative flex-1 md:w-56">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />

@@ -64,7 +64,7 @@ router.get("/portfolio", async (req, res) => {
   const rows = await db
     .select()
     .from(assets)
-    .where(eq(assets.userId, req.auth.dbUserId))
+    .where(and(eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)))
     .orderBy(assets.cliffDate);
 
   const portfolio = rows.map(toApiAsset);
@@ -103,7 +103,7 @@ router.post("/portfolio/seed", async (req, res) => {
   const existing = await db
     .select({ id: assets.id })
     .from(assets)
-    .where(eq(assets.userId, req.auth.dbUserId))
+    .where(and(eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)))
     .limit(1);
 
   if (existing.length > 0) {
@@ -144,7 +144,7 @@ router.patch("/portfolio/:id", async (req, res) => {
   const [updated] = await db
     .update(assets)
     .set({ status, updatedAt: new Date() })
-    .where(and(eq(assets.id, id), eq(assets.userId, req.auth.dbUserId)))
+    .where(and(eq(assets.id, id), eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)))
     .returning();
 
   if (!updated) {
@@ -161,8 +161,9 @@ router.delete("/portfolio/:id", async (req, res) => {
   const { id } = req.params;
 
   const [deleted] = await db
-    .delete(assets)
-    .where(and(eq(assets.id, id), eq(assets.userId, req.auth.dbUserId)))
+    .update(assets)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(assets.id, id), eq(assets.userId, req.auth.dbUserId), isNull(assets.deletedAt)))
     .returning({ id: assets.id });
 
   if (!deleted) {
@@ -179,7 +180,7 @@ async function requireAsset(id: string, userId: string) {
   const [row] = await db
     .select({ id: assets.id })
     .from(assets)
-    .where(and(eq(assets.id, id), eq(assets.userId, userId)))
+    .where(and(eq(assets.id, id), eq(assets.userId, userId), isNull(assets.deletedAt)))
     .limit(1);
   return row ?? null;
 }

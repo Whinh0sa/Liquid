@@ -41,6 +41,12 @@ import { z } from "zod/v4";
 export const assetCategoryEnum = pgEnum("asset_category", [
   "TECH",
   "FASHION",
+  "AUDIO",
+  "CAMERA",
+  "GAMING",
+  "WATCH",
+  "SNEAKER",
+  "OTHER",
 ]);
 
 /**
@@ -160,6 +166,9 @@ export const assets = pgTable(
       .defaultNow()
       .notNull()
       .$onUpdate(() => new Date()),
+
+    /** Soft-deletion timestamp. When set, the asset is treated as removed. */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     // Fast portfolio queries for a single user.

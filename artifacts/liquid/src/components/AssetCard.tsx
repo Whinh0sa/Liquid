@@ -9,6 +9,7 @@
 // When an asset is sold/selling it renders <RecoveryCard>.
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Bell,
   BellRing,
@@ -23,7 +24,7 @@ import {
 import { computeSellWindow } from "@/lib/sellWindow";
 import { formatCurrency as fmt } from "@/lib/currency";
 import { URGENCY_PILL } from "@/lib/urgency";
-import { getAssetImage } from "@/lib/assetImages";
+import AssetImage from "@/components/ui/AssetImage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AssetCardAsset {
@@ -50,7 +51,12 @@ function RecoveryCard({
   const barPct = saleValue > 0 ? Math.round((wouldBeWorth / saleValue) * 100) : 0;
 
   return (
-    <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50/40 to-white p-5 flex flex-col gap-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="rounded-2xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50/40 to-white p-5 flex flex-col gap-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
@@ -101,7 +107,7 @@ function RecoveryCard({
         </div>
         <span className="text-[11px] text-slate-400 font-medium">Exit complete</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -229,21 +235,22 @@ export default function AssetCard({
   // ── List view ──────────────────────────────────────────────────────────────
   if (viewType === "list") {
     return (
-      <div
+      <motion.div
+        layout
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
         onClick={() => onOpen(asset)}
       >
         <div className="flex items-center gap-3.5 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-            <img
-              src={getAssetImage(asset.model, undefined, asset.category)}
-              alt={asset.model}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-              }}
-            />
-          </div>
+          <AssetImage
+            model={asset.model}
+            category={asset.category}
+            alt={asset.model}
+            aspectRatio="square"
+            className="w-12 h-12 rounded-xl border border-slate-200"
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -296,6 +303,7 @@ export default function AssetCard({
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
+              aria-label={`Sell ${asset.model} now`}
               onClick={() => onSell(asset.id)}
               className="h-8 px-3 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90"
               style={{ backgroundColor: "#059669" }}
@@ -304,6 +312,7 @@ export default function AssetCard({
             </button>
             <button
               type="button"
+              aria-label={`Inspect ${asset.model} details`}
               onClick={() => onOpen(asset)}
               className="h-8 px-3 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
             >
@@ -311,28 +320,30 @@ export default function AssetCard({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // ── Tile view ──────────────────────────────────────────────────────────────
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className={`bg-white rounded-2xl p-4 flex flex-col gap-3.5 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
       onClick={() => onOpen(asset)}
     >
       {/* Product Image Header */}
       <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
-        <img
-          src={getAssetImage(asset.model, undefined, asset.category)}
+        <AssetImage
+          model={asset.model}
+          category={asset.category}
           alt={asset.model}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-          }}
+          aspectRatio="hero"
+          className="h-full group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-2.5 right-2.5">
+        <div className="absolute top-2.5 right-2.5 z-10">
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-xs backdrop-blur-xs whitespace-nowrap"
             style={{
@@ -392,6 +403,7 @@ export default function AssetCard({
       <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
+          aria-label={`Sell ${asset.model} now`}
           onClick={() => onSell(asset.id)}
           className="flex-1 h-8 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90"
           style={{ backgroundColor: "#059669" }}
@@ -400,6 +412,7 @@ export default function AssetCard({
         </button>
         <button
           type="button"
+          aria-label={`Inspect ${asset.model} details`}
           onClick={() => onOpen(asset)}
           className="h-8 px-3.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
         >
@@ -408,6 +421,6 @@ export default function AssetCard({
       </div>
 
       <div className="pt-2 border-t border-slate-100 mt-auto">{alertRow}</div>
-    </div>
+    </motion.div>
   );
 }

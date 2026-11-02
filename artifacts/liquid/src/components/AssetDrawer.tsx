@@ -14,7 +14,7 @@ import { X, Clock, Calendar, DollarSign, TrendingDown, CheckCircle } from "lucid
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrency } from "@/lib/currency";
 import ExitListingModal from "@/components/ExitListingModal";
-import { getAssetImage } from "@/lib/assetImages";
+import AssetImage from "@/components/ui/AssetImage";
 import { BRAND } from "@/lib/tokens";
 
 // Sub-components
@@ -207,15 +207,12 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
 
             {/* Product Hero Image */}
             <div className="relative w-full h-44 bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
-              <img
-                src={getAssetImage(asset.model, undefined, asset.category)}
+              <AssetImage
+                model={asset.model}
+                category={asset.category}
                 alt={asset.model}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
-                }}
+                aspectRatio="hero"
+                className="h-full"
               />
             </div>
 

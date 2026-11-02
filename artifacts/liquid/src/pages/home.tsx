@@ -33,6 +33,7 @@ import AssetLedgerGrid from "@/components/AssetLedgerGrid";
 import LiquidationRadar from "@/components/LiquidationRadar";
 import SpatialScanModal from "@/components/SpatialScanModal";
 import AddItemModal from "@/components/AddItemModal";
+import EmptyPortfolio from "@/components/EmptyPortfolio";
 import { computeSellWindow } from "@/lib/sellWindow";
 import { computePortfolioHealth } from "@/lib/portfolioHealth";
 import { computePortfolioMetrics } from "@/services/portfolioMetrics";
@@ -101,18 +102,41 @@ export default function Home() {
   const updateStatus = useUpdateAssetStatus({
     mutation: {
       onMutate: async ({ id, data: body }) => {
+        const queryKey = getGetPortfolioQueryKey();
+        await queryClient.cancelQueries({ queryKey });
+        const previousData = queryClient.getQueryData<any>(queryKey);
+
         if (body.status === "LIQUIDATE") {
           setSellingIds((prev) => new Set(prev).add(id));
-          const prev = data?.metrics.totalNetWorth ?? null;
           const asset = portfolioById.get(id);
           if (asset && data) setOptimisticNetWorth(data.metrics.totalNetWorth - asset.currentValue / 100);
-          return { previousNetWorth: prev };
         }
-        return undefined;
+
+        if (previousData?.portfolio) {
+          queryClient.setQueryData(queryKey, {
+            ...previousData,
+            portfolio: previousData.portfolio.map((asset: any) =>
+              asset.id === id ? { ...asset, status: body.status ?? asset.status } : asset
+            ),
+          });
+        }
+
+        return {
+          previousData,
+          previousNetWorth: data?.metrics.totalNetWorth ?? null,
+        };
       },
-      onError: (_err, _vars, context: { previousNetWorth?: number | null } | undefined) => {
+      onError: (_err, _vars, context: { previousData?: any; previousNetWorth?: number | null } | undefined) => {
+        if (context?.previousData) {
+          queryClient.setQueryData(getGetPortfolioQueryKey(), context.previousData);
+        }
         setOptimisticNetWorth(context?.previousNetWorth ?? null);
         setSellingIds(new Set());
+        toast({
+          title: "Update failed",
+          description: "Could not update asset status. Changes rolled back.",
+          variant: "destructive",
+        });
       },
       onSettled: () => {
         setSellingIds(new Set());
@@ -306,44 +330,10 @@ export default function Home() {
 
       {/* ── Empty State / First-Time Onboarding ───────────────────────── */}
       {!isLoading && portfolio.length === 0 && (
-        <section className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 sm:p-12 text-center shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#7C3AED] border border-purple-100 flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-7 h-7" />
-          </div>
-          <h2 className="font-poppins font-bold text-xl text-slate-900">
-            No Physical Assets Tracked Yet
-          </h2>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-6 leading-relaxed">
-            Liquid continuously monitors secondary market sold comps across eBay, StockX, and Chrono24 to alert you before prices fall off a cliff. Add your first item or load a sample portfolio to explore.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-xs flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Your First Asset
-            </button>
-            <button
-              type="button"
-              disabled={isSeeding}
-              onClick={handleSeedStarter}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              {isSeeding ? "Provisioning..." : "Load Starter Portfolio (5 Assets)"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowSpatialModal(true)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-2"
-            >
-              <Zap className="w-4 h-4 text-[#7C3AED]" />
-              Scan Space With Camera
-            </button>
-          </div>
-        </section>
+        <EmptyPortfolio
+          onAddClick={() => setShowAddModal(true)}
+          onScanClick={() => setShowSpatialModal(true)}
+        />
       )}
 
       {/* ── Urgent Alert Notice (Operational, not promotional) ─────────── */}
