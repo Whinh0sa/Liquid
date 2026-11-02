@@ -8,9 +8,11 @@
 
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Bell, Menu, X, ArrowUpRight } from "lucide-react";
+import { Bell, Menu, X, ArrowUpRight, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
+import NotificationCenter from "@/components/NotificationCenter";
+import AddItemModal from "@/components/AddItemModal";
 
 // ─── Nav links ────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
@@ -34,6 +36,7 @@ export default function AppLayout({
 }: AppLayoutProps) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col bg-[#F8F9FA] text-slate-900 font-sans antialiased selection:bg-purple-100 selection:text-purple-900">
@@ -78,14 +81,16 @@ export default function AppLayout({
 
           {/* Right-Side Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/alerts"
-              aria-label="View price alerts"
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-xs active:scale-95"
             >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-white" />
-            </Link>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Item</span>
+            </button>
+
+            <NotificationCenter />
 
             <SignedIn>
               <UserButton
@@ -167,6 +172,9 @@ export default function AppLayout({
       >
         {children}
       </main>
+
+      {/* Add Item Modal */}
+      <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} />
     </div>
   );
 }

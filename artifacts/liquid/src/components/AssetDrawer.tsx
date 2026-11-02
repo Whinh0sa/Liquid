@@ -15,6 +15,7 @@ import { X, AlertTriangle, TrendingDown, Calendar, DollarSign, Clock, CheckCircl
 import { computeSellWindow, buildExtendedChart, type UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrency } from "@/lib/currency";
 import ExitListingModal from "@/components/ExitListingModal";
+import { getAssetImage } from "@/lib/assetImages";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Asset {
@@ -193,6 +194,19 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Product Picture Hero */}
+            <div className="relative w-full h-44 bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
+              <img
+                src={getAssetImage(asset.model, undefined, asset.category)}
+                alt={asset.model}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
+                }}
+              />
             </div>
 
             {/* ── Scrollable body ──────────────────────────────────────────── */}

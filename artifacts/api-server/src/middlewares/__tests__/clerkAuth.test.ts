@@ -40,6 +40,9 @@ vi.mock('@workspace/db/schema', () => ({
     id: 'user_id_col',
     clerkUserId: 'clerk_user_id_col',
   },
+  assets: {
+    id: 'asset_id_col',
+  },
 }));
 
 vi.mock('drizzle-orm', () => ({

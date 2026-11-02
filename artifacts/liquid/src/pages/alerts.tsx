@@ -26,6 +26,7 @@ import AssetDrawer from "@/components/AssetDrawer";
 import { computeSellWindow, type UrgencyLevel } from "@/lib/sellWindow";
 import { formatCurrencyWhole } from "@/lib/currency";
 import { URGENCY_PILL } from "@/lib/urgency";
+import { getAssetImage } from "@/lib/assetImages";
 import { useToast } from "@/hooks/use-toast";
 
 type AlertFilter = "ALL" | "ACTIONABLE" | "MONITORING";
@@ -295,22 +296,16 @@ export default function Alerts() {
                   >
                     {/* Left: Catalyst Icon & Asset Description */}
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                          isUrgent
-                            ? "bg-red-50 text-red-600 border border-red-100"
-                            : isWindow
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                            : "bg-slate-50 text-slate-500 border border-slate-200"
-                        }`}
-                      >
-                        {isUrgent ? (
-                          <AlertTriangle className="w-4 h-4" />
-                        ) : isWindow ? (
-                          <Zap className="w-4 h-4" />
-                        ) : (
-                          <CalendarDays className="w-4 h-4" />
-                        )}
+                      <div className="w-11 h-11 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 mt-0.5">
+                        <img
+                          src={getAssetImage(a.model, undefined, a.category)}
+                          alt={a.model}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
+                          }}
+                        />
                       </div>
 
                       <div className="min-w-0 flex-1">

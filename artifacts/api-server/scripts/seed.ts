@@ -136,6 +136,28 @@ async function seed() {
     }
   }
 
+  // 3. Check for any registered users who have 0 assets and seed them too
+  const allUsers = await db.select().from(schema.users);
+  for (const u of allUsers) {
+    if (u.id === user.id) continue;
+    const existing = await db
+      .select({ id: schema.assets.id })
+      .from(schema.assets)
+      .where(sql`${schema.assets.userId} = ${u.id}`)
+      .limit(1);
+
+    if (existing.length === 0) {
+      console.log(`   🌱  Seeding starter inventory for user: ${u.email} (${u.displayName || u.id})`);
+      for (const asset of DEMO_ASSETS) {
+        await db
+          .insert(schema.assets)
+          .values({ ...asset, userId: u.id })
+          .onConflictDoNothing();
+      }
+      console.log(`   ✅  Provisioned ${DEMO_ASSETS.length} starter assets for ${u.email}`);
+    }
+  }
+
   console.log("\n🎉  Seed complete.");
   await pool.end();
 }

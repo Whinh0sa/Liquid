@@ -6,6 +6,7 @@ import {
   useGetPortfolio,
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
+  customFetch,
 } from "@workspace/api-client-react";
 import {
   AlertTriangle,
@@ -21,6 +22,8 @@ import {
   CalendarDays,
   Clock,
   Activity,
+  Plus,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "wouter";
 import AssetDrawer from "@/components/AssetDrawer";
@@ -29,8 +32,11 @@ import PortfolioKPIs from "@/components/PortfolioKPIs";
 import AssetLedgerGrid from "@/components/AssetLedgerGrid";
 import LiquidationRadar from "@/components/LiquidationRadar";
 import SpatialScanModal from "@/components/SpatialScanModal";
+import AddItemModal from "@/components/AddItemModal";
 import { computeSellWindow } from "@/lib/sellWindow";
 import { computePortfolioHealth } from "@/lib/portfolioHealth";
+
+import { useToast } from "@/hooks/use-toast";
 
 interface PortfolioAsset {
   id: string;
@@ -52,6 +58,7 @@ const RELEASE_EVENTS = [
 
 export default function Home() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [optimisticNetWorth, setOptimisticNetWorth] = useState<number | null>(null);
   const [sellingIds, setSellingIds] = useState<Set<string>>(new Set());
   const [soldRecords, setSoldRecords] = useState<Map<string, { saleValue: number; dropAvoided: number; soldAt: number }>>(new Map());
@@ -59,7 +66,29 @@ export default function Home() {
   const [drawerAsset, setDrawerAsset] = useState<PortfolioAsset | null>(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showSpatialModal, setShowSpatialModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [itemsView, setItemsView] = useState<"tiles" | "list">("tiles");
+
+  const handleSeedStarter = async () => {
+    setIsSeeding(true);
+    try {
+      await customFetch("/api/portfolio/seed", { method: "POST" });
+      await queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
+      toast({
+        title: "Starter Portfolio Loaded",
+        description: "Added 5 calibrated physical assets for tracking.",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Could Not Seed Portfolio",
+        description: e?.message || "Portfolio may already contain assets.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
 
@@ -258,10 +287,53 @@ export default function Home() {
         atRiskTotal={atRiskTotal}
         dailyDecay={dailyDecay}
         healthScore={healthScore}
+        onAddClick={() => setShowAddModal(true)}
         onScanClick={() => setShowSpatialModal(true)}
         onBatchSellClick={() => setShowBatchModal(true)}
         batchSellCount={batchTargets.length}
       />
+
+      {/* ── Empty State / First-Time Onboarding ───────────────────────── */}
+      {!isLoading && portfolio.length === 0 && (
+        <section className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 sm:p-12 text-center shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#7C3AED] border border-purple-100 flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-7 h-7" />
+          </div>
+          <h2 className="font-poppins font-bold text-xl text-slate-900">
+            No Physical Assets Tracked Yet
+          </h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-6 leading-relaxed">
+            Liquid continuously monitors secondary market sold comps across eBay, StockX, and Chrono24 to alert you before prices fall off a cliff. Add your first item or load a sample portfolio to explore.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-xs flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Your First Asset
+            </button>
+            <button
+              type="button"
+              disabled={isSeeding}
+              onClick={handleSeedStarter}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              {isSeeding ? "Provisioning..." : "Load Starter Portfolio (5 Assets)"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSpatialModal(true)}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center gap-2"
+            >
+              <Zap className="w-4 h-4 text-[#7C3AED]" />
+              Scan Space With Camera
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ── Urgent Alert Notice (Operational, not promotional) ─────────── */}
       <AnimatePresence>
@@ -422,6 +494,12 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Add Item Modal ─────────────────────────────────────────────── */}
+      <AddItemModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+      />
 
       {/* ── Spatial Scan Modal (Preserved for DIR-003 AI Camera Scanning) ── */}
       <SpatialScanModal

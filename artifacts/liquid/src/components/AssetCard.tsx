@@ -23,6 +23,7 @@ import {
 import { computeSellWindow } from "@/lib/sellWindow";
 import { formatCurrency as fmt } from "@/lib/currency";
 import { URGENCY_PILL } from "@/lib/urgency";
+import { getAssetImage } from "@/lib/assetImages";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AssetCardAsset {
@@ -232,29 +233,41 @@ export default function AssetCard({
         className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
         onClick={() => onOpen(asset)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-              {asset.category}
-            </span>
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
-              style={{
-                color: urgencyPill.text,
-                backgroundColor: urgencyPill.bg,
-                borderColor: urgencyPill.border,
+        <div className="flex items-center gap-3.5 flex-1 min-w-0">
+          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+            <img
+              src={getAssetImage(asset.model, undefined, asset.category)}
+              alt={asset.model}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
               }}
-            >
-              {urgencyPill.label}
-            </span>
+            />
           </div>
-          <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors truncate">
-            {asset.model}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-            <Clock className="w-3 h-3 text-slate-400" />
-            <span>Cliff in {cliff.daysAway}d: drops −{fmt(cliff.projectedDrop / 100)}</span>
-          </p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                {asset.category}
+              </span>
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                style={{
+                  color: urgencyPill.text,
+                  backgroundColor: urgencyPill.bg,
+                  borderColor: urgencyPill.border,
+                }}
+              >
+                {urgencyPill.label}
+              </span>
+            </div>
+            <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors truncate">
+              {asset.model}
+            </h3>
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span>Cliff in {cliff.daysAway}d: drops −{fmt(cliff.projectedDrop / 100)}</span>
+            </p>
+          </div>
         </div>
 
         {isAlertFired && (
@@ -305,28 +318,43 @@ export default function AssetCard({
   // ── Tile view ──────────────────────────────────────────────────────────────
   return (
     <div
-      className={`bg-white rounded-2xl p-5 flex flex-col gap-4 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
+      className={`bg-white rounded-2xl p-4 flex flex-col gap-3.5 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
       onClick={() => onOpen(asset)}
     >
+      {/* Product Image Header */}
+      <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
+        <img
+          src={getAssetImage(asset.model, undefined, asset.category)}
+          alt={asset.model}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src =
+              "https://images.unsplash.com/photo-1468495244123-6c6c332eeede?auto=format&fit=crop&w=600&q=80";
+          }}
+        />
+        <div className="absolute top-2.5 right-2.5">
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-xs backdrop-blur-xs whitespace-nowrap"
+            style={{
+              color: urgencyPill.text,
+              backgroundColor: urgencyPill.bg,
+              borderColor: urgencyPill.border,
+            }}
+          >
+            {urgencyPill.label}
+          </span>
+        </div>
+      </div>
+
       <div className="flex items-start justify-between gap-2">
         <div>
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
             {asset.category}
           </span>
-          <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors">
+          <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors line-clamp-1">
             {asset.model}
           </h3>
         </div>
-        <span
-          className="text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0"
-          style={{
-            color: urgencyPill.text,
-            backgroundColor: urgencyPill.bg,
-            borderColor: urgencyPill.border,
-          }}
-        >
-          {urgencyPill.label}
-        </span>
       </div>
 
       {isAlertFired && (

@@ -30,6 +30,9 @@ router.use(requireAuth);
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
+import { STARTER_ASSETS } from "../services/starterAssets.js";
+
+
 /** Compute daysAway from a stored cliffDate (UTC, integer, may be negative). */
 function daysAwayFromCliff(cliffDate: Date): number {
   const msPerDay = 86_400_000;
@@ -93,6 +96,32 @@ router.post("/portfolio", async (req, res) => {
 
   req.log.info({ id: inserted.id, model: inserted.model }, "Asset created");
   res.status(201).json(toApiAsset(inserted));
+});
+
+// ─── POST /api/portfolio/seed ───────────────────────────────────────────
+router.post("/portfolio/seed", async (req, res) => {
+  const existing = await db
+    .select({ id: assets.id })
+    .from(assets)
+    .where(eq(assets.userId, req.auth.dbUserId))
+    .limit(1);
+
+  if (existing.length > 0) {
+    res.status(400).json({ error: "Portfolio already has assets" });
+    return;
+  }
+
+  const seeded = [];
+  for (const asset of STARTER_ASSETS) {
+    const [row] = await db
+      .insert(assets)
+      .values({ ...asset, userId: req.auth.dbUserId })
+      .returning();
+    seeded.push(toApiAsset(row));
+  }
+
+  req.log.info({ count: seeded.length }, "Starter assets seeded");
+  res.status(201).json({ portfolio: seeded, message: "Starter assets seeded successfully" });
 });
 
 // ─── PATCH /api/portfolio/:id ─────────────────────────────────────────────────

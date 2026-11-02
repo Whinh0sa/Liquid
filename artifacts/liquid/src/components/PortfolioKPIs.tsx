@@ -8,7 +8,7 @@
 //
 // High-craft, streamlined styling aligned with Liquid Design System.
 
-import { ArrowUpRight, TrendingDown, Clock, ShieldCheck, Zap, Activity } from "lucide-react";
+import { ArrowUpRight, TrendingDown, Clock, ShieldCheck, Zap, Activity, Plus } from "lucide-react";
 import { formatCurrency as fmt } from "@/lib/currency";
 
 export interface PortfolioKPIsProps {
@@ -20,6 +20,7 @@ export interface PortfolioKPIsProps {
   atRiskTotal?: number;
   dailyDecay?: number;
   healthScore?: { score: number; grade: string; label: string; color: string };
+  onAddClick?: () => void;
   onScanClick?: () => void;
   onBatchSellClick?: () => void;
   batchSellCount?: number;
@@ -35,6 +36,7 @@ export default function PortfolioKPIs({
   atRiskTotal = 0,
   dailyDecay = 0,
   healthScore = { score: 85, grade: "A", label: "Optimal", color: "#10B981" },
+  onAddClick,
   onScanClick,
   onBatchSellClick,
   batchSellCount = 0,
@@ -71,7 +73,19 @@ export default function PortfolioKPIs({
         </div>
 
         {/* ── Action Buttons ────────────────────────────────────────── */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {onAddClick && (
+            <button
+              type="button"
+              onClick={onAddClick}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all hover:bg-[#6D28D9] flex items-center gap-1.5 active:scale-95"
+              style={{ backgroundColor: "#7C3AED" }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Item
+            </button>
+          )}
+
           {batchSellCount > 0 && onBatchSellClick && (
             <button
               type="button"
