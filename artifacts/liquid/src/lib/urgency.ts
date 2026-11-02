@@ -1,15 +1,24 @@
 import type { UrgencyLevel } from "./sellWindow";
 
+/**
+ * Canonical 4-Tier Semantic Urgency System
+ * Conforms to WCAG 4.5:1 contrast and eliminates visual clutter.
+ *
+ * - WINDOW: Emerald (#059669 / #ECFDF5) — Peak Liquidity / Optimal Window Open
+ * - URGENT: Amber (#D97706 / #FFFBEB)   — Imminent Cliff (<14 days)
+ * - CLIFF:  Crimson (#DC2626 / #FEF2F2) — Cliff passed / Holding Burn Active
+ * - PLANNED: Slate (#475569 / #F1F5F9)  — Normal depreciation / Safe holding
+ */
 export const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
-  PLANNED: { label: "Plan ahead", bg: "#DBEAFE", text: "#1D4ED8", border: "#BFDBFE" },
-  WINDOW: { label: "⚡ Sell now", bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
-  URGENT: { label: "Last chance", bg: "#FFEDD5", text: "#9A3412", border: "#FED7AA" },
-  CLIFF: { label: "Window closed", bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
+  WINDOW:  { label: "⚡ Sell Now",    bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
+  URGENT:  { label: "Urgent Cliff",  bg: "#FFFBEB", text: "#92400E", border: "#FDE68A" },
+  CLIFF:   { label: "Window Closed", bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
+  PLANNED: { label: "Planned Hold",  bg: "#F1F5F9", text: "#475569", border: "#E2E8F0" },
 };
 
 export const URGENCY_HEAT: Record<UrgencyLevel, string> = {
-  CLIFF: "#EF4444",
-  URGENT: "#F97316",
-  WINDOW: "#10B981",
-  PLANNED: "#9126EF",
+  WINDOW:  "#10B981", // Emerald
+  URGENT:  "#F59E0B", // Amber
+  CLIFF:   "#EF4444", // Crimson
+  PLANNED: "#94A3B8", // Slate
 };

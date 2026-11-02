@@ -1,10 +1,17 @@
-// ─── AssetLedgerGrid ──────────────────────────────────────────────────────────
+// ─── AssetLedgerGrid — Workstation Ledger Component ──────────────────────────
 //
-// The full asset ledger: view-type toggle (tiles / list) + the grid of
-// <AssetCard> items and their loading skeletons.
+// The central asset workspace:
+//   • Filter tabs: All, Sell Window, Urgent Cliffs, Exited
+//   • Real-time search & category filter
+//   • High-density view switcher: Grid (Card tiles) vs. Dense Table (Ledger rows)
+//   • Streamlined color tokens adhering to the 3-tier semantic model
 
-import { LayoutGrid, List } from "lucide-react";
+import { useState, useMemo } from "react";
+import { LayoutGrid, List, Search, Filter, Clock, AlertTriangle, CheckCircle, Package } from "lucide-react";
 import AssetCard from "@/components/AssetCard";
+import { computeSellWindow } from "@/lib/sellWindow";
+import { formatCurrency as fmt } from "@/lib/currency";
+import { URGENCY_PILL } from "@/lib/urgency";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DepreciationCliff {
@@ -42,7 +49,8 @@ interface AssetLedgerGridProps {
   onSetAlert: (id: string, price: number | null) => void;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+type FilterTab = "all" | "window" | "urgent" | "exited";
+
 export default function AssetLedgerGrid({
   isLoading,
   portfolio,
@@ -55,79 +63,275 @@ export default function AssetLedgerGrid({
   onOpen,
   onSetAlert,
 }: AssetLedgerGridProps) {
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+
+  // Extract unique categories
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    portfolio.forEach((a) => set.add(a.category));
+    return ["ALL", ...Array.from(set)];
+  }, [portfolio]);
+
+  // Tab counts
+  const tabCounts = useMemo(() => {
+    let windowCount = 0;
+    let urgentCount = 0;
+    let exitedCount = 0;
+
+    portfolio.forEach((a) => {
+      const isExited = a.status === "LIQUIDATE" || a.status === "IN_TRANSIT" || soldRecords.has(a.id);
+      if (isExited) {
+        exitedCount++;
+      } else {
+        const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+        if (sw.urgency === "WINDOW") windowCount++;
+        if (sw.urgency === "URGENT" || a.depreciationCliff.daysAway <= 14) urgentCount++;
+      }
+    });
+
+    return {
+      all: portfolio.length,
+      window: windowCount,
+      urgent: urgentCount,
+      exited: exitedCount,
+    };
+  }, [portfolio, soldRecords]);
+
+  // Filtered portfolio
+  const filteredAssets = useMemo(() => {
+    return portfolio.filter((a) => {
+      const isExited = a.status === "LIQUIDATE" || a.status === "IN_TRANSIT" || soldRecords.has(a.id);
+      const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
+
+      // Tab filter
+      if (activeTab === "window" && (sw.urgency !== "WINDOW" || isExited)) return false;
+      if (activeTab === "urgent" && (a.depreciationCliff.daysAway > 14 || isExited)) return false;
+      if (activeTab === "exited" && !isExited) return false;
+
+      // Category filter
+      if (selectedCategory !== "ALL" && a.category !== selectedCategory) return false;
+
+      // Search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          a.model.toLowerCase().includes(q) ||
+          a.category.toLowerCase().includes(q) ||
+          a.depreciationCliff.reason.toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [portfolio, activeTab, selectedCategory, searchQuery, soldRecords]);
+
   return (
-    <section>
-      {/* ── Header + view toggle ──────────────────────────────────── */}
-      <div className="flex items-end justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">Your Items</h2>
-          <span className="text-sm text-gray-400">{portfolio.length} items tracked</span>
-        </div>
-
-        <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white p-1 self-start">
+    <section className="space-y-4">
+      {/* ── Control Bar ───────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Segmented Filter Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           <button
             type="button"
-            onClick={() => onViewChange("tiles")}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              viewType === "tiles" ? "bg-amber-50 text-amber-600" : "text-gray-500 hover:text-gray-700"
+            onClick={() => setActiveTab("all")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeTab === "all"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
-            <LayoutGrid className="w-4 h-4" />
-            Tiles
+            <span>All Assets</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                activeTab === "all" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {tabCounts.all}
+            </span>
           </button>
+
           <button
             type="button"
-            onClick={() => onViewChange("list")}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              viewType === "list" ? "bg-amber-50 text-amber-600" : "text-gray-500 hover:text-gray-700"
+            onClick={() => setActiveTab("window")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeTab === "window"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
             }`}
           >
-            <List className="w-4 h-4" />
-            List
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>In Sell Window</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                activeTab === "window" ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-800"
+              }`}
+            >
+              {tabCounts.window}
+            </span>
           </button>
-        </div>
-      </div>
 
-      {/* ── Grid / list ───────────────────────────────────────────── */}
-      <div
-        className={
-          viewType === "tiles"
-            ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
-            : "grid grid-cols-1 gap-3"
-        }
-      >
-        {isLoading
-          ? [1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`bg-white rounded-3xl border border-gray-100 p-5 animate-pulse ${
-                  viewType === "list" ? "flex items-center gap-4" : ""
+          <button
+            type="button"
+            onClick={() => setActiveTab("urgent")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeTab === "urgent"
+                ? "bg-amber-600 text-white"
+                : "text-slate-600 hover:text-amber-800 hover:bg-amber-50"
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span>Urgent Cliffs</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                activeTab === "urgent" ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {tabCounts.urgent}
+            </span>
+          </button>
+
+          {tabCounts.exited > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("exited")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                activeTab === "exited"
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              <CheckCircle className="w-3 h-3 text-emerald-500" />
+              <span>Exited</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  activeTab === "exited" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
                 }`}
               >
-                {viewType === "list" && (
-                  <div className="h-16 w-16 bg-gray-100 rounded-2xl shrink-0" />
-                )}
-                <div className={viewType === "list" ? "flex-1" : ""}>
-                  <div className="h-3 bg-gray-100 rounded w-1/3 mb-3" />
-                  <div className="h-6 bg-gray-100 rounded w-2/3 mb-4" />
-                  <div className="h-8 bg-gray-100 rounded w-full" />
-                </div>
-              </div>
-            ))
-          : portfolio.map((asset) => (
-              <AssetCard
-                key={asset.id}
-                asset={asset}
-                isSelling={sellingIds.has(asset.id)}
-                soldRecord={soldRecords.get(asset.id)}
-                alertPrice={priceAlerts.get(asset.id)}
-                onSell={onSell}
-                onOpen={onOpen}
-                onSetAlert={onSetAlert}
-                viewType={viewType}
-              />
-            ))}
+                {tabCounts.exited}
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Search, Category & View Switcher */}
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <div className="relative flex-1 md:w-56">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search assets..."
+              className="w-full h-8 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200/90 rounded-xl outline-none focus:border-purple-500 focus:bg-white text-slate-900 placeholder:text-slate-400"
+            />
+          </div>
+
+          {/* Category Dropdown */}
+          {categories.length > 2 && (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="h-8 px-2 text-xs bg-slate-50 border border-slate-200/90 rounded-xl outline-none focus:border-purple-500 text-slate-700 font-medium"
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c === "ALL" ? "All Categories" : c}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* View Mode Toggle */}
+          <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 shrink-0">
+            <button
+              type="button"
+              aria-label="Grid view"
+              onClick={() => onViewChange("tiles")}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                viewType === "tiles" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label="List view"
+              onClick={() => onViewChange("list")}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                viewType === "list" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ── Asset Grid / List ──────────────────────────────────────── */}
+      {filteredAssets.length === 0 && !isLoading ? (
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
+            <Package className="w-6 h-6" />
+          </div>
+          <h3 className="font-semibold text-slate-900 text-sm mb-1">No matching assets found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+            Try adjusting your search query, selecting another category, or clearing the filter tab.
+          </p>
+          {(searchQuery || selectedCategory !== "ALL" || activeTab !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("ALL");
+                setActiveTab("all");
+              }}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div
+          className={
+            viewType === "tiles"
+              ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+              : "grid grid-cols-1 gap-2.5"
+          }
+        >
+          {isLoading
+            ? [1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className={`bg-white rounded-2xl border border-slate-200/80 p-5 animate-pulse ${
+                    viewType === "list" ? "flex items-center gap-4" : ""
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="h-3 bg-slate-100 rounded w-1/4 mb-2.5" />
+                    <div className="h-5 bg-slate-100 rounded w-2/3 mb-4" />
+                    <div className="h-6 bg-slate-100 rounded w-1/3" />
+                  </div>
+                </div>
+              ))
+            : filteredAssets.map((asset) => (
+                <AssetCard
+                  key={asset.id}
+                  asset={asset}
+                  isSelling={sellingIds.has(asset.id)}
+                  soldRecord={soldRecords.get(asset.id)}
+                  alertPrice={priceAlerts.get(asset.id)}
+                  onSell={onSell}
+                  onOpen={onOpen}
+                  onSetAlert={onSetAlert}
+                  viewType={viewType}
+                />
+              ))}
+        </div>
+      )}
     </section>
   );
 }

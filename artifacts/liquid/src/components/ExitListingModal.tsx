@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { customFetch, getGetPortfolioQueryKey } from "@workspace/api-client-react";
@@ -21,7 +21,13 @@ export default function ExitListingModal({ open, onOpenChange, assetId, assetMod
 
   const reset = useCallback(() => { setResult(null); setError(null); setActiveTab("eBay"); setLoading(false); setCopied(null); }, []);
 
-  useEffect(() => { if (!open) { const t = setTimeout(reset, 300); return () => clearTimeout(t); } }, [open, reset]);
+  useEffect(() => {
+    if (!open) {
+      const t = setTimeout(reset, 300);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [open, reset]);
 
   const fetchListing = useCallback(async () => {
     if (!assetId) return;
