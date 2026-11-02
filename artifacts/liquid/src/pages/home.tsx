@@ -35,6 +35,7 @@ import SpatialScanModal from "@/components/SpatialScanModal";
 import AddItemModal from "@/components/AddItemModal";
 import { computeSellWindow } from "@/lib/sellWindow";
 import { computePortfolioHealth } from "@/lib/portfolioHealth";
+import { computePortfolioMetrics } from "@/services/portfolioMetrics";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -142,26 +143,36 @@ export default function Home() {
     updateStatus.mutate({ id, data: { status: "LIQUIDATE" } });
   }, [portfolioById, updateStatus]);
 
-  const urgentAssets = useMemo(() => portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT"), [portfolio]);
-  const firedAlerts = useMemo(() => portfolio.filter((a) => {
-    const floor = priceAlerts.get(a.id);
-    return floor !== undefined && a.currentValue / 100 <= floor && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT" && !sellingIds.has(a.id);
-  }), [portfolio, priceAlerts, sellingIds]);
+  const computedMetrics = useMemo(
+    () => computePortfolioMetrics(portfolio, sellingIds, soldRecords),
+    [portfolio, sellingIds, soldRecords],
+  );
 
-  const windowOpenCount = useMemo(() => portfolio.filter((a) => computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100).urgency === "WINDOW").length, [portfolio]);
-  const totalSaved = useMemo(() => Array.from(soldRecords.values()).reduce((sum, r) => sum + r.dropAvoided, 0), [soldRecords]);
-  const atRiskTotal = useMemo(() => portfolio.reduce((s, a) => s + a.depreciationCliff.projectedDrop / 100, 0), [portfolio]);
-  const dailyDecay = useMemo(() => portfolio.reduce((sum, a) => {
-    const days = a.depreciationCliff.daysAway;
-    const drop = a.depreciationCliff.projectedDrop / 100;
-    return days > 0 ? sum + drop / days : sum;
-  }, 0), [portfolio]);
+  const urgentAssets = useMemo(
+    () => portfolio.filter((a) => a.depreciationCliff.daysAway <= 14 && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT"),
+    [portfolio],
+  );
+  const firedAlerts = useMemo(
+    () =>
+      portfolio.filter((a) => {
+        const floor = priceAlerts.get(a.id);
+        return (
+          floor !== undefined &&
+          a.currentValue / 100 <= floor &&
+          a.status !== "LIQUIDATE" &&
+          a.status !== "IN_TRANSIT" &&
+          !sellingIds.has(a.id)
+        );
+      }),
+    [portfolio, priceAlerts, sellingIds],
+  );
+
+  const windowOpenCount = computedMetrics.windowOpenCount;
+  const totalSaved = computedMetrics.totalSavedDollars;
+  const atRiskTotal = computedMetrics.atRiskTotalDollars;
+  const dailyDecay = computedMetrics.dailyDecayRateDollars;
+  const batchTargets = computedMetrics.batchSellTargets;
   const healthScore = useMemo(() => computePortfolioHealth(portfolio), [portfolio]);
-
-  const batchTargets = useMemo(() => portfolio.filter((a) => {
-    const sw = computeSellWindow(a.depreciationCliff.daysAway, a.depreciationCliff.projectedDrop / 100);
-    return (sw.urgency === "WINDOW" || sw.urgency === "URGENT") && a.status !== "LIQUIDATE" && a.status !== "IN_TRANSIT" && !sellingIds.has(a.id) && !soldRecords.has(a.id);
-  }), [portfolio, sellingIds, soldRecords]);
 
   return (
     <AppLayout>
