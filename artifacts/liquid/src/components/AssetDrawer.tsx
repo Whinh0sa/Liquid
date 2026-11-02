@@ -39,20 +39,20 @@ const URGENCY_CONFIG: Record<UrgencyLevel, {
   bg: string; border: string; text: string; badge: string; badgeBg: string; label: string;
 }> = {
   PLANNED: {
-    bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8",
-    badge: "#2563EB", badgeBg: "#DBEAFE", label: "Plan ahead",
+    bg: "#F8FAFC", border: "#E2E8F0", text: "#334155",
+    badge: "#64748B", badgeBg: "#F1F5F9", label: "Plan Ahead",
   },
   WINDOW: {
-    bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D",
-    badge: "#10B981", badgeBg: "#D1FAE5", label: "⚡ Sell now — optimal window",
+    bg: "#ECFDF5", border: "#A7F3D0", text: "#065F46",
+    badge: "#059669", badgeBg: "#D1FAE5", label: "⚡ Optimal Window Open",
   },
   URGENT: {
-    bg: "#FFF7ED", border: "#FED7AA", text: "#C2410C",
-    badge: "#F97316", badgeBg: "#FFEDD5", label: "Last chance",
+    bg: "#FFFBEB", border: "#FDE68A", text: "#92400E",
+    badge: "#D97706", badgeBg: "#FEF3C7", label: "Urgent Cliff",
   },
   CLIFF: {
     bg: "#FEF2F2", border: "#FECACA", text: "#DC2626",
-    badge: "#EF4444", badgeBg: "#FEE2E2", label: "Window closed",
+    badge: "#DC2626", badgeBg: "#FEE2E2", label: "Window Closed",
   },
 };
 

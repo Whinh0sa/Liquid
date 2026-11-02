@@ -183,19 +183,35 @@ function LandingNav() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <Link href="/dashboard">
-                  <button className="w-full text-left px-3 py-3 text-sm font-semibold text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-                    Log in
-                  </button>
-                </Link>
-                <Link href="/dashboard">
-                  <button
-                    className="w-full px-3 py-3 text-sm font-bold text-white rounded-xl"
-                    style={{ backgroundColor: "#9126EF" }}
-                  >
-                    Start tracking free
-                  </button>
-                </Link>
+                <SignedIn>
+                  <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <button
+                      className="w-full px-3 py-3 text-sm font-bold text-white rounded-xl"
+                      style={{ backgroundColor: "#9126EF" }}
+                    >
+                      Go to Dashboard
+                    </button>
+                  </Link>
+                </SignedIn>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button
+                      onClick={() => setMobileOpen(false)}
+                      className="w-full text-left px-3 py-3 text-sm font-semibold text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      Log in
+                    </button>
+                  </SignInButton>
+                  <SignInButton mode="modal">
+                    <button
+                      onClick={() => setMobileOpen(false)}
+                      className="w-full px-3 py-3 text-sm font-bold text-white rounded-xl"
+                      style={{ backgroundColor: "#9126EF" }}
+                    >
+                      Start tracking free
+                    </button>
+                  </SignInButton>
+                </SignedOut>
               </div>
             </motion.div>
           </motion.div>
@@ -476,9 +492,9 @@ export default function Landing() {
               </div>
               {/* Asset rows */}
               {[
-                { name: "iPhone 15 Pro Max", tag: "⚡ Sell now", tagColor: "#059669", tagBg: "rgba(5,150,105,0.1)", value: "£840", pct: "-12%", pctColor: "#EF4444" },
-                { name: "Rolex Submariner",  tag: "Plan ahead",  tagColor: "#3B82F6", tagBg: "rgba(59,130,246,0.1)", value: "£9,200", pct: "+4%", pctColor: "#059669" },
-                { name: "Air Jordan 1 OG",   tag: "Last chance", tagColor: "#F59E0B", tagBg: "rgba(245,158,11,0.1)",  value: "£620", pct: "-8%", pctColor: "#EF4444" },
+                { name: "iPhone 15 Pro Max", tag: "⚡ Sell now", tagColor: "#059669", tagBg: "#ECFDF5", value: "£840", pct: "-12%", pctColor: "#DC2626" },
+                { name: "Rolex Submariner",  tag: "Planned hold", tagColor: "#475569", tagBg: "#F1F5F9", value: "£9,200", pct: "+4%", pctColor: "#059669" },
+                { name: "Air Jordan 1 OG",   tag: "Urgent cliff", tagColor: "#D97706", tagBg: "#FFFBEB", value: "£620", pct: "-8%", pctColor: "#DC2626" },
               ].map(({ name, tag, tagColor, tagBg, value, pct, pctColor }) => (
                 <div key={name} className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
                   <div className="flex items-center gap-3">
