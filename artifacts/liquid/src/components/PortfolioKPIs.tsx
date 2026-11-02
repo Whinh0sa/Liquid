@@ -8,7 +8,7 @@
 //
 // High-craft, streamlined styling aligned with Liquid Design System.
 
-import { ArrowUpRight, TrendingDown, Clock, ShieldCheck, Zap, Activity, Plus } from "lucide-react";
+import { TrendingDown, Clock, ShieldCheck, Zap, Activity, Plus } from "lucide-react";
 import { formatCurrency as fmt } from "@/lib/currency";
 
 export interface PortfolioKPIsProps {
@@ -35,12 +35,14 @@ export default function PortfolioKPIs({
   urgentCount,
   atRiskTotal = 0,
   dailyDecay = 0,
-  healthScore = { score: 85, grade: "A", label: "Optimal", color: "#10B981" },
+  healthScore = { score: 100, grade: "A", label: "Optimal", color: "#10B981" },
   onAddClick,
   onScanClick,
   onBatchSellClick,
   batchSellCount = 0,
 }: PortfolioKPIsProps) {
+  const isZeroInventory = !isLoading && itemCount === 0;
+
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 sm:p-6 transition-all">
       {/* ── Top Header Row ────────────────────────────────────────── */}
@@ -77,6 +79,7 @@ export default function PortfolioKPIs({
           {onAddClick && (
             <button
               type="button"
+              aria-label="Add a physical asset to your portfolio"
               onClick={onAddClick}
               className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all hover:bg-[#6D28D9] flex items-center gap-1.5 active:scale-95"
               style={{ backgroundColor: "#7C3AED" }}
@@ -89,6 +92,7 @@ export default function PortfolioKPIs({
           {batchSellCount > 0 && onBatchSellClick && (
             <button
               type="button"
+              aria-label={`Batch exit ${batchSellCount} assets in urgent window`}
               onClick={onBatchSellClick}
               className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 transition-colors flex items-center gap-1.5"
             >
@@ -100,6 +104,7 @@ export default function PortfolioKPIs({
           {onScanClick && (
             <button
               type="button"
+              aria-label="Scan physical asset with camera"
               onClick={onScanClick}
               data-testid="btn-spatial-scan"
               className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all hover:opacity-95 hover:-translate-y-0.5 flex items-center gap-1.5"
@@ -186,15 +191,17 @@ export default function PortfolioKPIs({
           </div>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl font-bold text-slate-900 font-poppins">
-              Grade {healthScore.grade}
+              {isZeroInventory ? "Grade —" : `Grade ${healthScore.grade}`}
             </span>
-            <span className="text-xs text-slate-500 font-medium">({healthScore.score}/100)</span>
+            <span className="text-xs text-slate-500 font-medium">
+              {isZeroInventory ? "(No inventory)" : `(${healthScore.score}/100)`}
+            </span>
           </div>
           <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
-                width: `${healthScore.score}%`,
+                width: `${isZeroInventory ? 0 : healthScore.score}%`,
                 backgroundColor: healthScore.score >= 80 ? "#10B981" : healthScore.score >= 60 ? "#F59E0B" : "#EF4444",
               }}
             />

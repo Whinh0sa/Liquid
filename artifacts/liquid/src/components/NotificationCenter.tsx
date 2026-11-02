@@ -5,7 +5,6 @@ import {
   Bell,
   AlertTriangle,
   Zap,
-  Clock,
   ArrowRight,
   CheckCircle2,
   X,
@@ -59,7 +58,9 @@ export default function NotificationCenter() {
       {/* Bell Button */}
       <button
         type="button"
-        aria-label="Notification center"
+        aria-label="Signals and alerts center"
+        aria-expanded={open}
+        aria-haspopup="dialog"
         onClick={() => setOpen(!open)}
         className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
       >
@@ -77,6 +78,8 @@ export default function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.15 }}
+            role="dialog"
+            aria-label="Active signals and alerts"
             className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
           >
             {/* Header */}
@@ -94,6 +97,7 @@ export default function NotificationCenter() {
               </div>
               <button
                 type="button"
+                aria-label="Close notification popover"
                 onClick={() => setOpen(false)}
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
               >

@@ -104,8 +104,9 @@ export function buildExtendedChart(
   const drop = projectedDropCents / 100;
   const seed = currentValueCents % 997;
 
-  // Daily bleed rate — mild, realistic
-  const dailyBleed = drop / (daysAway * 4);
+  // Daily bleed rate — mild, realistic (guard against daysAway <= 0 divide by zero)
+  const safeDays = Math.max(1, Math.abs(daysAway));
+  const dailyBleed = drop / (safeDays * 4);
 
   // ── Historical: 4 anchor points ──────────────────────────────────────────
   const historical: ChartPoint[] = [

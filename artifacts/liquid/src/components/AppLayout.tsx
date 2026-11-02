@@ -8,7 +8,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Bell, Menu, X, ArrowUpRight, Plus } from "lucide-react";
+import { Menu, X, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -83,6 +83,7 @@ export default function AppLayout({
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
+              aria-label="Add a new physical asset"
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-xs active:scale-95"
             >
@@ -103,7 +104,11 @@ export default function AppLayout({
             </SignedIn>
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors">
+                <button
+                  type="button"
+                  aria-label="Sign into your Liquid account"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                >
                   Sign In
                 </button>
               </SignInButton>
@@ -112,8 +117,9 @@ export default function AppLayout({
             {/* Mobile Hamburger */}
             <button
               type="button"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation-menu"
               className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -126,6 +132,9 @@ export default function AppLayout({
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
+              id="mobile-navigation-menu"
+              role="navigation"
+              aria-label="Mobile navigation"
               key="mobile-menu"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}

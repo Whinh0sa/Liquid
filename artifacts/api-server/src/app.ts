@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app: Express = express();
 app.disable("x-powered-by"); // Security: hide express signature
+app.set("trust proxy", 1);   // Security: trust first reverse proxy (Vercel/Railway/AWS/Cloudflare)
 
 // ─── Structured request logging ───────────────────────────────────────────────
 app.use(
@@ -30,13 +31,29 @@ app.use(
 );
 
 // ─── Security headers & parsing ────────────────────────────────────────────────
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+  : undefined;
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",")
-      : process.env.NODE_ENV === "production"
-        ? false
-        : "*",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile clients, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // In development or when no strict origins specified, allow origin
+      if (!allowedOrigins || allowedOrigins.includes("*")) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // If production and origin not listed
+      if (process.env.NODE_ENV === "production") {
+        return callback(new Error(`CORS blocked: Origin ${origin} is not allowed`));
+      }
+      return callback(null, true);
+    },
+    credentials: true,
   }),
 );
 
