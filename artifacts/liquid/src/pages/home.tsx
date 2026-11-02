@@ -200,7 +200,7 @@ export default function Home() {
                               : { backgroundColor: "#FFFBEB", color: "#92400E" }
                           }
                         >
-                          {sw.urgency === "WINDOW" ? "⚡ Peak Window" : "Urgent Cliff"}
+                          {sw.urgency === "WINDOW" ? "Peak Window" : "Urgent Cliff"}
                         </span>
                       </div>
                       <div className="text-right shrink-0">

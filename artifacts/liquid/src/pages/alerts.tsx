@@ -154,14 +154,9 @@ export default function Alerts() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold tracking-widest uppercase text-[#7C3AED] bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                Signals
-              </span>
-              <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
-                Catalyst Events &amp; Risk Alerts
-              </h1>
-            </div>
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+              Catalyst Events &amp; Risk Alerts
+            </h1>
             <p className="text-sm text-slate-500 mt-1">
               Automated triggers monitoring product lifecycle shifts, hardware keynote announcements, and secondary market floors.
             </p>
@@ -379,45 +374,6 @@ export default function Alerts() {
             </div>
           )}
         </section>
-
-        {/* Institutional Risk Methodology Cards */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs">
-            <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-2 mb-3">
-              <Cpu className="w-4 h-4 text-[#7C3AED]" />
-              Catalyst Detection Methodology
-            </h2>
-            <div className="space-y-2 text-xs text-slate-600 leading-relaxed">
-              <p>
-                • <strong>Manufacturer Hardware Cycles</strong>: Liquid tracks confirmed keynote release windows (Apple September, Samsung February, NVIDIA Q3/Q4) to flag depreciation cliffs before secondary prices drop.
-              </p>
-              <p>
-                • <strong>Optimal Liquidation Window</strong>: Initiates 14–21 days prior to announced events when trade-in and resale volume peaks.
-              </p>
-              <p>
-                • <strong>Decay Rate Acceleration</strong>: Assets held past event dates suffer a permanent 15%–35% step down in recoverable equity.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs">
-            <h2 className="text-xs font-semibold text-slate-900 flex items-center gap-2 mb-3">
-              <TrendingDown className="w-4 h-4 text-amber-600" />
-              Automated Price Floor Thresholds
-            </h2>
-            <div className="space-y-2 text-xs text-slate-600 leading-relaxed">
-              <p>
-                • <strong>Floor Breaches</strong>: Triggered when median eBay/StockX sold comps fall below 80% of trailing 30-day valuation.
-              </p>
-              <p>
-                • <strong>Condition-Adjusted Baselines</strong>: Pristine items maintain value 1.4× longer than Fair or Damaged condition tiers.
-              </p>
-              <p>
-                • <strong>Platform Routing</strong>: Directs inventory to optimal resale channels (eBay for electronics, Chrono24 for horology).
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Asset Inspection & Liquidation Drawer */}

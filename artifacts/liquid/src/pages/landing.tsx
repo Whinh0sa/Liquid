@@ -492,7 +492,7 @@ export default function Landing() {
               </div>
               {/* Asset rows */}
               {[
-                { name: "iPhone 15 Pro Max", tag: "⚡ Sell now", tagColor: "#059669", tagBg: "#ECFDF5", value: "£840", pct: "-12%", pctColor: "#DC2626" },
+                { name: "iPhone 15 Pro Max", tag: "Sell now", tagColor: "#059669", tagBg: "#ECFDF5", value: "£840", pct: "-12%", pctColor: "#DC2626" },
                 { name: "Rolex Submariner",  tag: "Planned hold", tagColor: "#475569", tagBg: "#F1F5F9", value: "£9,200", pct: "+4%", pctColor: "#059669" },
                 { name: "Air Jordan 1 OG",   tag: "Urgent cliff", tagColor: "#D97706", tagBg: "#FFFBEB", value: "£620", pct: "-8%", pctColor: "#DC2626" },
               ].map(({ name, tag, tagColor, tagBg, value, pct, pctColor }) => (

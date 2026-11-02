@@ -161,14 +161,9 @@ export default function Analysis() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold tracking-widest uppercase text-[#7C3AED] bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                Terminal
-              </span>
-              <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
-                Liquidation Terminal
-              </h1>
-            </div>
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+              Liquidation Terminal
+            </h1>
             <p className="text-sm text-slate-500 mt-1">
               Portfolio risk breakdown, depreciation curves, and calibrated exit velocity.
             </p>
@@ -256,7 +251,7 @@ export default function Analysis() {
                 {(
                   [
                     { key: "ALL", label: "All" },
-                    { key: "WINDOW", label: "⚡ Windows" },
+                    { key: "WINDOW", label: "Sell Windows" },
                     { key: "URGENT", label: "Urgent" },
                     { key: "CLIFF", label: "Closed" },
                     { key: "PLANNED", label: "Planned" },
@@ -399,51 +394,6 @@ export default function Analysis() {
               </table>
             </div>
           )}
-        </div>
-
-        {/* Strategic Liquidation Playbooks */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs flex gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
-              <Zap className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-900 mb-1">
-                Prioritize Optimal Windows
-              </p>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Assets flagged with ⚡ are within their peak secondary pricing window. Listing now recovers the highest percentage of capital.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs flex gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
-              <TrendingDown className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-900 mb-1">
-                Holding Decay Index
-              </p>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Daily decay compounds as release dates approach. Monitor the burn rate per 24 hours to schedule exits in advance.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs flex gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-[#7C3AED]" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-900 mb-1">
-                Condition-Calibrated Pricing
-              </p>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Open any asset drawer to calibrate Pristine, Good, or Fair grades, auto-adjusting projected resale quotes and marketplace routing.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

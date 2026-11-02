@@ -152,14 +152,9 @@ export default function Rings() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold tracking-widest uppercase text-[#7C3AED] bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                Scorecard
-              </span>
-              <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
-                Portfolio Health Rings
-              </h1>
-            </div>
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+              Portfolio Health Rings
+            </h1>
             <p className="text-sm text-slate-500 mt-1">
               Concentric risk modeling measuring capital preservation, cliff exposure, and urgency balance.
             </p>

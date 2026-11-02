@@ -10,7 +10,7 @@ import type { UrgencyLevel } from "./sellWindow";
  * - PLANNED: Slate (#475569 / #F1F5F9)  — Normal depreciation / Safe holding
  */
 export const URGENCY_PILL: Record<UrgencyLevel, { label: string; bg: string; text: string; border: string }> = {
-  WINDOW:  { label: "⚡ Sell Now",    bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
+  WINDOW:  { label: "Sell Now",       bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
   URGENT:  { label: "Urgent Cliff",  bg: "#FFFBEB", text: "#92400E", border: "#FDE68A" },
   CLIFF:   { label: "Window Closed", bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
   PLANNED: { label: "Planned Hold",  bg: "#F1F5F9", text: "#475569", border: "#E2E8F0" },

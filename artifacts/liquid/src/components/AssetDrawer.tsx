@@ -44,7 +44,7 @@ const URGENCY_CONFIG: Record<UrgencyLevel, {
   },
   WINDOW: {
     bg: "#ECFDF5", border: "#A7F3D0", text: "#065F46",
-    badge: "#059669", badgeBg: "#D1FAE5", label: "⚡ Optimal Window Open",
+    badge: "#059669", badgeBg: "#D1FAE5", label: "Optimal Window Open",
   },
   URGENT: {
     bg: "#FFFBEB", border: "#FDE68A", text: "#92400E",
@@ -566,7 +566,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling }: Asset
                     onClick={() => setShowExitModal(true)}
                     className="w-full h-11 rounded-xl font-bold text-sm tracking-wide bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors inline-flex items-center justify-center gap-1.5"
                   >
-                    ⚡ Generate Exit Listing
+                    Generate Exit Listing
                   </button>
                   <AnimatePresence mode="wait">
                     {sellStage === "success" ? (
