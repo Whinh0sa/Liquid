@@ -140,7 +140,7 @@ export default function AssetLedgerGrid({
   return (
     <section className="space-y-4">
       {/* ── Control Bar ───────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Segmented Filter Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           <button
@@ -148,14 +148,14 @@ export default function AssetLedgerGrid({
             onClick={() => setActiveTab("all")}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === "all"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E]"
             }`}
           >
             <span>All Assets</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === "all" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                activeTab === "all" ? "bg-white/20 dark:bg-black/20 text-white dark:text-slate-900" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
               }`}
             >
               {tabCounts.all}
@@ -168,14 +168,14 @@ export default function AssetLedgerGrid({
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === "window"
                 ? "bg-emerald-600 text-white"
-                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+                : "text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>In Sell Window</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === "window" ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-800"
+                activeTab === "window" ? "bg-white/20 text-white" : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
               }`}
             >
               {tabCounts.window}
@@ -188,14 +188,14 @@ export default function AssetLedgerGrid({
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === "urgent"
                 ? "bg-amber-600 text-white"
-                : "text-slate-600 hover:text-amber-800 hover:bg-amber-50"
+                : "text-slate-600 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30"
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             <span>Urgent Cliffs</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === "urgent" ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
+                activeTab === "urgent" ? "bg-white/20 text-white" : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
               }`}
             >
               {tabCounts.urgent}
@@ -208,15 +208,15 @@ export default function AssetLedgerGrid({
               onClick={() => setActiveTab("exited")}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                 activeTab === "exited"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E]"
               }`}
             >
               <CheckCircle className="w-3 h-3 text-emerald-500" />
               <span>Exited</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  activeTab === "exited" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                  activeTab === "exited" ? "bg-white/20 dark:bg-black/20 text-white dark:text-slate-900" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 {tabCounts.exited}
@@ -235,7 +235,7 @@ export default function AssetLedgerGrid({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search assets..."
-              className="w-full h-8 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200/90 rounded-xl outline-none focus:border-purple-500 focus:bg-white text-slate-900 placeholder:text-slate-400"
+              className="w-full h-8 pl-8 pr-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200/90 dark:border-slate-700 rounded-xl outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-[#131722] text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
             />
           </div>
 
@@ -244,7 +244,7 @@ export default function AssetLedgerGrid({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="h-8 px-2 text-xs bg-slate-50 border border-slate-200/90 rounded-xl outline-none focus:border-purple-500 text-slate-700 font-medium"
+              className="h-8 px-2 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200/90 dark:border-slate-700 rounded-xl outline-none focus:border-purple-500 text-slate-700 dark:text-slate-200 font-medium"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -255,13 +255,13 @@ export default function AssetLedgerGrid({
           )}
 
           {/* View Mode Toggle */}
-          <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 shrink-0">
+          <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1A1F2E] p-0.5 shrink-0">
             <button
               type="button"
               aria-label="Grid view"
               onClick={() => onViewChange("tiles")}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                viewType === "tiles" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700"
+                viewType === "tiles" ? "bg-white dark:bg-[#23283A] text-slate-900 dark:text-slate-100 shadow-sm" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export default function AssetLedgerGrid({
               aria-label="List view"
               onClick={() => onViewChange("list")}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                viewType === "list" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700"
+                viewType === "list" ? "bg-white dark:bg-[#23283A] text-slate-900 dark:text-slate-100 shadow-sm" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -282,12 +282,12 @@ export default function AssetLedgerGrid({
 
       {/* ── Asset Grid / List ──────────────────────────────────────── */}
       {filteredAssets.length === 0 && !isLoading ? (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
+        <div className="bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-12 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#1A1F2E] flex items-center justify-center mx-auto mb-3 text-slate-400">
             <Package className="w-6 h-6" />
           </div>
-          <h3 className="font-semibold text-slate-900 text-sm mb-1">No matching assets found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1">No matching assets found</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
             Try adjusting your search query, selecting another category, or clearing the filter tab.
           </p>
           {(searchQuery || selectedCategory !== "ALL" || activeTab !== "all") && (
@@ -298,7 +298,7 @@ export default function AssetLedgerGrid({
                 setSelectedCategory("ALL");
                 setActiveTab("all");
               }}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-[#1A1F2E] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#23283A] transition-colors"
             >
               Reset Filters
             </button>
@@ -316,14 +316,14 @@ export default function AssetLedgerGrid({
             ? [1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className={`bg-white rounded-2xl border border-slate-200/80 p-5 animate-pulse ${
+                  className={`bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 animate-pulse ${
                     viewType === "list" ? "flex items-center gap-4" : ""
                   }`}
                 >
                   <div className="flex-1">
-                    <div className="h-3 bg-slate-100 rounded w-1/4 mb-2.5" />
-                    <div className="h-5 bg-slate-100 rounded w-2/3 mb-4" />
-                    <div className="h-6 bg-slate-100 rounded w-1/3" />
+                    <div className="h-3 bg-slate-100 dark:bg-[#1A1F2E] rounded w-1/4 mb-2.5" />
+                    <div className="h-5 bg-slate-100 dark:bg-[#1A1F2E] rounded w-2/3 mb-4" />
+                    <div className="h-6 bg-slate-100 dark:bg-[#1A1F2E] rounded w-1/3" />
                   </div>
                 </div>
               ))
@@ -349,7 +349,7 @@ export default function AssetLedgerGrid({
           <button
             type="button"
             onClick={() => setDisplayLimit((prev) => prev + 24)}
-            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-xs"
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#23283A] transition-colors shadow-xs"
           >
             Show More Assets ({visibleAssets.length} of {filteredAssets.length} displayed)
           </button>

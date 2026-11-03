@@ -33,7 +33,7 @@ function Skeleton() {
   return (
     <>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
+        <div key={i} className="h-10 rounded-xl bg-slate-100 dark:bg-[#1A1F2E] animate-pulse" />
       ))}
     </>
   );
@@ -49,14 +49,14 @@ function HeatmapPanel({
   onOpenAsset: (a: RadarAsset) => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+    <div className="bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-slate-500" />
             Liquidation Heatmap
           </h3>
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-400">
             By Proximity
           </span>
         </div>
@@ -75,13 +75,13 @@ function HeatmapPanel({
               return (
                 <div
                   key={a.id}
-                  className="flex items-center gap-3 cursor-pointer group p-1.5 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-3 cursor-pointer group p-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1A1F2E] transition-colors"
                   onClick={() => onOpenAsset(a)}
                 >
-                  <span className="text-xs font-medium text-slate-700 w-28 truncate shrink-0 group-hover:text-purple-600 transition-colors">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 w-28 truncate shrink-0 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     {a.model}
                   </span>
-                  <div className="flex-1 h-3.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-3.5 bg-slate-100 dark:bg-[#0B0D13] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, backgroundColor: heatColor }}
@@ -97,7 +97,7 @@ function HeatmapPanel({
         </div>
       </div>
 
-      <div className="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-[11px] text-slate-400">
+      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-[11px] text-slate-400">
         <span>&larr; Immediate Cliff</span>
         <span>Safe Holding &rarr;</span>
       </div>
@@ -122,14 +122,14 @@ function OpportunityRadarPanel({
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+    <div className="bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <Zap className="w-4 h-4 text-emerald-600" />
             Opportunity Radar
           </h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             {windowOpenCount} Open
           </span>
         </div>
@@ -150,14 +150,14 @@ function OpportunityRadarPanel({
               return (
                 <div
                   key={a.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 cursor-pointer hover:border-slate-200 transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#1A1F2E]/60 hover:bg-slate-50 dark:hover:bg-[#1A1F2E] cursor-pointer hover:border-slate-200 dark:hover:border-slate-700 transition-colors"
                   onClick={() => onOpenAsset(a)}
                 >
                   <div className="min-w-0 pr-2">
-                    <p className="text-xs font-semibold text-slate-900 truncate">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
                       {a.model}
                     </p>
-                    <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                       {fmt(a.currentValue / 100)} · saves −{fmt(a.depreciationCliff.projectedDrop / 100)}
                     </p>
                   </div>
@@ -174,7 +174,7 @@ function OpportunityRadarPanel({
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 pt-3 border-t border-slate-100 mt-4">
+      <p className="text-[11px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-4">
         Exiting within the optimal window locks in top secondary market pricing.
       </p>
     </div>
@@ -200,43 +200,43 @@ function HoldingCostPanel({
   const atRisk = portfolio.reduce((sum, a) => sum + a.depreciationCliff.projectedDrop / 100, 0);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+    <div className="bg-white dark:bg-[#131722] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <TrendingDown className="w-4 h-4 text-rose-500" />
             Cost of Holding
           </h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
             Daily Burn
           </span>
         </div>
 
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-xs font-medium text-slate-600">Daily amortized decay</span>
-            <span className="text-xs font-bold text-rose-600 font-poppins">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Daily amortized decay</span>
+            <span className="text-xs font-bold text-rose-600 dark:text-rose-400 font-poppins">
               -{fmt(calculatedDecay)}/day
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-xs font-medium text-slate-600">30-day projected loss</span>
-            <span className="text-xs font-bold text-amber-600 font-poppins">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">30-day projected loss</span>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-poppins">
               -{fmt(calculatedDecay * 30)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-xs font-medium text-slate-600">Cliff downside at risk</span>
-            <span className="text-xs font-bold text-slate-900 font-poppins">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Cliff downside at risk</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 font-poppins">
               {fmt(atRisk)}
             </span>
           </div>
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 pt-3 border-t border-slate-100 mt-4 leading-relaxed">
+      <p className="text-[11px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 leading-relaxed">
         Calculates secondary depreciation momentum across active inventory.
       </p>
     </div>

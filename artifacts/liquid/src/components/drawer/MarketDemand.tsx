@@ -25,9 +25,9 @@ export function MarketDemand({ category, daysAway }: MarketDemandProps) {
         : "→ Steady interest";
 
   return (
-    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+    <div className="bg-gray-50 dark:bg-[#1A1F2E] rounded-xl border border-gray-100 dark:border-slate-800 p-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-2">
           <Users className="w-4 h-4 text-amber-500" />
           Market Demand
         </h3>
@@ -38,14 +38,14 @@ export function MarketDemand({ category, daysAway }: MarketDemandProps) {
           {level}
         </span>
       </div>
-      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+      <div className="relative h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
         <div
           className="absolute left-0 top-0 h-full rounded-full"
           style={{ width: `${score * 10}%`, backgroundColor: color, transition: "width 0.8s ease" }}
         />
       </div>
-      <p className="text-[11px] text-gray-500 font-medium">{trend}</p>
-      <p className="text-[10px] text-gray-400 mt-0.5">
+      <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium">{trend}</p>
+      <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
         ~{buyers} active buyers estimated for this category today
       </p>
     </div>

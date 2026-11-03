@@ -150,21 +150,21 @@ export default function Alerts() {
           <div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 mb-2 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 mb-2 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 dark:text-slate-100 tracking-tight">
               Catalyst Events &amp; Risk Alerts
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Automated triggers monitoring product lifecycle shifts, hardware keynote announcements, and secondary market floors.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-600 shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-600 dark:text-slate-400 shadow-xs">
               <BellRing className="w-3.5 h-3.5 text-amber-500" />
               {criticalCount + windowCount} Actionable Triggers
             </span>
@@ -179,15 +179,15 @@ export default function Alerts() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center gap-4"
+              className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex items-center gap-4"
             >
               <div
                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                   card.tone === "crimson"
-                    ? "bg-red-50 text-red-600 border border-red-100"
+                    ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50"
                     : card.tone === "emerald"
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                    : "bg-slate-50 text-slate-600 border border-slate-200"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50"
+                    : "bg-slate-50 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                 }`}
               >
                 <card.icon className="w-5 h-5" />
@@ -199,10 +199,10 @@ export default function Alerts() {
                 <p
                   className={`font-poppins font-bold text-xl sm:text-2xl tracking-tight ${
                     card.tone === "crimson"
-                      ? "text-red-600"
+                      ? "text-red-600 dark:text-red-400"
                       : card.tone === "emerald"
-                      ? "text-emerald-600"
-                      : "text-slate-900"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {card.value}
@@ -214,15 +214,15 @@ export default function Alerts() {
         </div>
 
         {/* Alert Feed Container */}
-        <section className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <section className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
           {/* Header & Filters */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BellRing className="w-4 h-4 text-[#7C3AED]" />
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Active Catalyst Feed
               </h2>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-400">
                 {filteredAlerts.length} Active
               </span>
             </div>
@@ -235,11 +235,11 @@ export default function Alerts() {
                   placeholder="Search alert by asset or catalyst..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] focus:border-[#7C3AED] w-full sm:w-60"
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1A1F2E] text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] focus:border-[#7C3AED] w-full sm:w-60"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200/70">
+              <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#1A1F2E] p-1 rounded-lg border border-slate-200/70 dark:border-slate-700">
                 {(
                   [
                     { key: "ALL", label: "All Signals" },
@@ -252,8 +252,8 @@ export default function Alerts() {
                     onClick={() => setFilter(tab.key)}
                     className={`px-2.5 py-1 text-xs font-medium rounded-md whitespace-nowrap transition-all ${
                       filter === tab.key
-                        ? "bg-white text-slate-900 font-semibold shadow-xs"
-                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                        ? "bg-white dark:bg-[#23283A] text-slate-900 dark:text-slate-100 font-semibold shadow-xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#23283A]"
                     }`}
                   >
                     {tab.label}
@@ -267,19 +267,19 @@ export default function Alerts() {
           {isLoading ? (
             <div className="p-5 space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-slate-50 rounded-lg animate-pulse" />
+                <div key={i} className="h-20 bg-slate-50 dark:bg-[#1A1F2E] rounded-lg animate-pulse" />
               ))}
             </div>
           ) : filteredAlerts.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center gap-2">
               <CheckCircle className="w-8 h-8 text-emerald-500" />
-              <p className="text-sm font-semibold text-slate-800">No active alerts match criteria</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No active alerts match criteria</p>
               <p className="text-xs text-slate-400">
                 All portfolio assets are stable or outside the active filter criteria.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredAlerts.map((a, i) => {
                 const pill = URGENCY_PILL[a.sw.urgency];
                 const isUrgent = a.sw.urgency === "CLIFF" || a.sw.urgency === "URGENT";
@@ -292,7 +292,7 @@ export default function Alerts() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     onClick={() => setSelectedAsset(a)}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 hover:bg-slate-50/70 transition-all cursor-pointer group"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 hover:bg-slate-50/70 dark:hover:bg-[#1A1F2E]/70 transition-all cursor-pointer group"
                   >
                     {/* Left: Catalyst Icon & Asset Description */}
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
@@ -301,12 +301,12 @@ export default function Alerts() {
                         category={a.category}
                         alt={a.model}
                         aspectRatio="square"
-                        className="w-11 h-11 rounded-lg border border-slate-200 mt-0.5"
+                        className="w-11 h-11 rounded-lg border border-slate-200 dark:border-slate-800 mt-0.5"
                       />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="font-semibold text-slate-900 group-hover:text-[#7C3AED] transition-colors truncate">
+                          <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-[#7C3AED] dark:group-hover:text-purple-400 transition-colors truncate">
                             {a.model}
                           </p>
                           <span
@@ -320,12 +320,12 @@ export default function Alerts() {
                             {pill.label}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium text-slate-800">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 flex-wrap">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
                             {a.depreciationCliff.reason}
                           </span>
-                          <span className="text-slate-300">•</span>
-                          <span className="font-mono text-slate-600">
+                          <span className="text-slate-300 dark:text-slate-600">•</span>
+                          <span className="font-mono text-slate-600 dark:text-slate-400">
                             Cliff hits in {a.depreciationCliff.daysAway} days
                           </span>
                         </p>
@@ -336,12 +336,12 @@ export default function Alerts() {
                     </div>
 
                     {/* Right: Financial Impact & Action */}
-                    <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
                       <div className="text-left sm:text-right">
-                        <p className="text-xs font-mono font-bold text-slate-900">
+                        <p className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
                           {formatCurrencyWhole(a.current)}
                         </p>
-                        <p className="text-[11px] font-mono font-semibold text-red-600">
+                        <p className="text-[11px] font-mono font-semibold text-red-600 dark:text-red-400">
                           −{formatCurrencyWhole(a.drop)} (−{a.dropPct.toFixed(0)}%)
                         </p>
                         <p className="text-[10px] text-slate-400">At-risk cliff drop</p>
@@ -353,7 +353,7 @@ export default function Alerts() {
                           e.stopPropagation();
                           setSelectedAsset(a);
                         }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-purple-50 hover:text-[#7C3AED] hover:border-purple-200 border border-slate-200 transition-all"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-[#1A1F2E] hover:bg-purple-50 dark:hover:bg-[#23283A] hover:text-[#7C3AED] dark:hover:text-purple-300 hover:border-purple-200 dark:hover:border-purple-800 border border-slate-200 dark:border-slate-700 transition-all"
                       >
                         Inspect
                         <ChevronRight className="w-3.5 h-3.5" />

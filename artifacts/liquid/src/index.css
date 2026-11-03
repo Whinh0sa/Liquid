@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -161,13 +161,75 @@
   --destructive-border: hsl(var(--destructive));
 }
 
+.dark {
+  /* ── Dark Obsidian Slate (#0B0D13) Palette ── */
+  --background: 224 25% 6%;         /* #0B0D13 Dark Obsidian Slate */
+  --foreground: 210 40% 98%;        /* #F8FAFC Crisp Silver */
+
+  --card: 224 24% 10%;              /* #131722 Obsidian Surface */
+  --card-foreground: 210 40% 98%;   /* #F8FAFC */
+  --card-border: 224 20% 18%;       /* #23283A Slate Border */
+
+  --popover: 224 24% 10%;           /* #131722 */
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 224 20% 18%;
+
+  --border: 224 20% 18%;            /* #23283A */
+  --input: 224 20% 18%;
+
+  --muted: 224 20% 14%;             /* #181C2A */
+  --muted-foreground: 215 20% 65%;  /* #94A3B8 */
+
+  --primary: 263 90% 66%;           /* #8B5CF6 Electric Purple */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 224 20% 14%;
+  --secondary-foreground: 210 40% 98%;
+
+  --accent: 224 20% 16%;
+  --accent-foreground: 263 90% 70%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --ring: 263 90% 66%;
+
+  --sidebar: 224 25% 6%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-border: 224 20% 18%;
+  --sidebar-primary: 263 90% 66%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 224 20% 14%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-ring: 263 90% 66%;
+
+  /* Dark shadows */
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.5);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.6);
+  --shadow-sm: 0px 2px 6px 0px rgba(0,0,0,0.7), 0px 1px 2px -1px rgba(0,0,0,0.5);
+  --shadow: 0px 4px 12px 0px rgba(0,0,0,0.8), 0px 2px 4px -1px rgba(0,0,0,0.6);
+  --shadow-md: 0px 6px 16px 0px rgba(0,0,0,0.85);
+  --shadow-lg: 0px 8px 24px 0px rgba(0,0,0,0.9);
+  --shadow-xl: 0px 12px 32px 0px rgba(0,0,0,0.95);
+  --shadow-2xl: 0px 24px 48px 0px rgba(0,0,0,0.98);
+
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --primary-border: hsl(var(--primary));
+  --secondary-border: hsl(var(--secondary));
+  --muted-border: hsl(var(--muted));
+  --accent-border: hsl(var(--accent));
+  --destructive-border: hsl(var(--destructive));
+}
+
 @layer base {
   * {
     @apply border-border;
   }
 
   html, body {
-    background-color: #FFFFFF;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   body {

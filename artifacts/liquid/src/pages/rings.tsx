@@ -148,21 +148,21 @@ export default function Rings() {
           <div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 mb-2 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 mb-2 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 dark:text-slate-100 tracking-tight">
               Portfolio Health Rings
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Concentric risk modeling measuring capital preservation, cliff exposure, and urgency balance.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-700 shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-700 dark:text-slate-300 shadow-xs">
               <Award className="w-3.5 h-3.5 text-[#7C3AED]" />
               Rating: {healthScore.grade} ({healthScore.label})
             </span>
@@ -170,13 +170,13 @@ export default function Rings() {
         </div>
 
         {/* Concentric Rings Visual + Metrics Grid */}
-        <div className="grid lg:grid-cols-[auto_1fr] gap-8 bg-white rounded-xl border border-slate-200/90 p-6 sm:p-8 shadow-xs items-center">
+        <div className="grid lg:grid-cols-[auto_1fr] gap-8 bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-xs items-center">
           {/* Ring Graphic */}
           <div className="flex items-center justify-center">
             {isLoading ? (
               <div
                 style={{ width: SIZE, height: SIZE }}
-                className="rounded-full bg-slate-100 animate-pulse"
+                className="rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse"
               />
             ) : (
               <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
@@ -193,6 +193,7 @@ export default function Rings() {
                         fill="none"
                         stroke={ring.track}
                         strokeWidth={SW}
+                        className="opacity-40 dark:opacity-20"
                       />
                       {/* Progress Arc */}
                       <circle
@@ -219,8 +220,8 @@ export default function Rings() {
                   textAnchor="middle"
                   fontSize="38"
                   fontWeight="800"
-                  fill="#0F172A"
                   fontFamily="'Poppins', sans-serif"
+                  className="fill-slate-900 dark:fill-slate-100"
                 >
                   {healthScore.grade}
                 </text>
@@ -259,7 +260,7 @@ export default function Rings() {
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
-                className="p-3.5 rounded-lg bg-slate-50/70 border border-slate-100"
+                className="p-3.5 rounded-lg bg-slate-50/70 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
@@ -267,13 +268,13 @@ export default function Rings() {
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: ring.color }}
                     />
-                    <span className="text-xs font-semibold text-slate-900">{ring.label}</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{ring.label}</span>
                   </div>
                   <span className="text-xs font-mono font-bold" style={{ color: ring.color }}>
                     {ring.detail}
                   </span>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden bg-slate-200">
+                <div className="h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
                   <motion.div
                     className="h-full rounded-full"
                     initial={{ width: 0 }}
@@ -282,16 +283,16 @@ export default function Rings() {
                     style={{ backgroundColor: ring.color }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1.5">{ring.desc}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{ring.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
 
         {/* Per-Asset Health Breakdown */}
-        <section className="bg-white rounded-xl border border-slate-200/90 p-5 sm:p-6 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+        <section className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Activity className="w-4 h-4 text-[#7C3AED]" />
               Individual Asset Health Index
             </h2>
@@ -303,7 +304,7 @@ export default function Rings() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-12 bg-slate-50 rounded-lg animate-pulse" />
+                <div key={i} className="h-12 bg-slate-50 dark:bg-[#1A1F2E] rounded-lg animate-pulse" />
               ))}
             </div>
           ) : (
@@ -317,7 +318,7 @@ export default function Rings() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.04 }}
                     onClick={() => setSelectedAsset(a)}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 transition-all cursor-pointer group"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/70 dark:hover:bg-[#1A1F2E]/70 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-3 sm:w-64 min-w-0">
                       <AssetImage
@@ -325,10 +326,10 @@ export default function Rings() {
                         category={a.category}
                         alt={a.model}
                         aspectRatio="square"
-                        className="w-8 h-8 rounded-lg border border-slate-200"
+                        className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800"
                       />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-slate-900 group-hover:text-[#7C3AED] transition-colors truncate">
+                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 group-hover:text-[#7C3AED] dark:group-hover:text-purple-400 transition-colors truncate">
                           {a.model}
                         </p>
                         <p className="text-[10px] text-slate-400 capitalize">{a.category}</p>
@@ -336,7 +337,7 @@ export default function Rings() {
                     </div>
 
                     <div className="flex-1 flex items-center gap-3">
-                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-slate-100 dark:bg-[#0B0D13] rounded-full overflow-hidden">
                         <motion.div
                           className="h-full rounded-full"
                           initial={{ width: 0 }}
@@ -345,7 +346,7 @@ export default function Rings() {
                           style={{ backgroundColor: a.barColor }}
                         />
                       </div>
-                      <span className="text-[11px] font-mono text-slate-500 w-12 text-right">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 w-12 text-right">
                         {a.score}/100
                       </span>
                     </div>
@@ -361,7 +362,7 @@ export default function Rings() {
                       >
                         {pill.label}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-900 w-18 text-right">
+                      <span className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 w-18 text-right">
                         {formatCurrencyWhole(a.currentValue / 100)}
                       </span>
                       <button
@@ -370,7 +371,7 @@ export default function Rings() {
                           e.stopPropagation();
                           setSelectedAsset(a);
                         }}
-                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -412,15 +413,15 @@ export default function Rings() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center gap-4"
+              className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex items-center gap-4"
             >
               <div
                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                   s.tone === "crimson"
-                    ? "bg-red-50 text-red-600 border border-red-100"
+                    ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50"
                     : s.tone === "amber"
-                    ? "bg-amber-50 text-amber-600 border border-amber-100"
-                    : "bg-purple-50 text-[#7C3AED] border border-purple-100"
+                    ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50"
+                    : "bg-purple-50 dark:bg-purple-950/40 text-[#7C3AED] dark:text-purple-400 border border-purple-100 dark:border-purple-900/50"
                 }`}
               >
                 <s.icon className="w-5 h-5" />
@@ -430,10 +431,10 @@ export default function Rings() {
                 <p
                   className={`font-poppins font-bold text-xl tracking-tight ${
                     s.tone === "crimson"
-                      ? "text-red-600"
+                      ? "text-red-600 dark:text-red-400"
                       : s.tone === "amber"
-                      ? "text-amber-700"
-                      : "text-slate-900"
+                      ? "text-amber-700 dark:text-amber-400"
+                      : "text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {s.value}

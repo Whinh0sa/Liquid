@@ -13,6 +13,7 @@ import Rings from "@/pages/rings";
 import Alerts from "@/pages/alerts";
 import { registerClerkTokenGetter } from "./main";
 import { initTelemetry } from "@/lib/telemetry";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 initTelemetry();
 
@@ -84,12 +85,14 @@ function App() {
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <ClerkTokenRegistrar />
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

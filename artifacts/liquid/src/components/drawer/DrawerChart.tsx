@@ -25,11 +25,11 @@ export function CustomTooltip({
   const isCliff = typeof label === "string" && label.includes("cliff");
   const isWindow = typeof label === "string" && label.includes("★");
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2.5 shadow-lg min-w-[130px]">
-      <p className="text-xs font-semibold text-gray-500 mb-1">
+    <div className="bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-800 rounded-xl px-3 py-2.5 shadow-lg min-w-[130px]">
+      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
         {isCliff ? "⚠️ Cliff Event" : isWindow ? "⭐ Ideal sell-by" : label}
       </p>
-      <p className="text-sm font-bold text-gray-900">
+      <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
         {formatCurrency(payload[0].value)}
       </p>
       {isCliff && <p className="text-[10px] text-red-500 mt-1">Value drops sharply here</p>}
@@ -54,7 +54,7 @@ export function DrawerChart({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Price Trajectory</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Price Trajectory</h3>
         <div className="flex items-center gap-3 text-[10px] text-gray-400 font-medium">
           <span className="flex items-center gap-1">
             <span className="w-3 h-0.5 bg-red-400 inline-block rounded" />

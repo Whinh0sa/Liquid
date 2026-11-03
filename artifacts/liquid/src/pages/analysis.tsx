@@ -157,21 +157,21 @@ export default function Analysis() {
           <div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 mb-2 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 mb-2 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Workstation Dashboard
             </Link>
-            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 tracking-tight">
+            <h1 className="font-poppins font-bold text-2xl sm:text-3xl text-slate-950 dark:text-slate-100 tracking-tight">
               Liquidation Terminal
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Portfolio risk breakdown, depreciation curves, and calibrated exit velocity.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-600 shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-600 dark:text-slate-400 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Live Pricing Feed
             </span>
@@ -186,17 +186,17 @@ export default function Analysis() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+              className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-slate-500">{s.label}</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{s.label}</span>
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     s.tone === "crimson"
-                      ? "bg-red-50 text-red-600 border border-red-100"
+                      ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50"
                       : s.tone === "amber"
-                      ? "bg-amber-50 text-amber-600 border border-amber-100"
-                      : "bg-slate-50 text-slate-600 border border-slate-200"
+                      ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50"
+                      : "bg-slate-50 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                   }`}
                 >
                   <s.icon className="w-4 h-4" />
@@ -206,10 +206,10 @@ export default function Analysis() {
                 <p
                   className={`font-poppins font-bold text-xl sm:text-2xl tracking-tight ${
                     s.tone === "crimson"
-                      ? "text-red-600"
+                      ? "text-red-600 dark:text-red-400"
                       : s.tone === "amber"
-                      ? "text-amber-700"
-                      : "text-slate-900"
+                      ? "text-amber-700 dark:text-amber-400"
+                      : "text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {s.value}
@@ -221,15 +221,15 @@ export default function Analysis() {
         </div>
 
         {/* Liquidation Table Ledger */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-[#131722] rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
           {/* Controls Bar */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart2 className="w-4 h-4 text-[#7C3AED]" />
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Asset Urgency &amp; Valuation Ledger
               </h2>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-400">
                 {filteredAssets.length} of {portfolio.length}
               </span>
             </div>
@@ -243,12 +243,12 @@ export default function Analysis() {
                   placeholder="Filter assets or category..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] focus:border-[#7C3AED] w-full sm:w-56"
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1A1F2E] text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] focus:border-[#7C3AED] w-full sm:w-56"
                 />
               </div>
 
               {/* Urgency Filter Tabs */}
-              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200/70 overflow-x-auto">
+              <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#1A1F2E] p-1 rounded-lg border border-slate-200/70 dark:border-slate-700 overflow-x-auto">
                 {(
                   [
                     { key: "ALL", label: "All" },
@@ -263,8 +263,8 @@ export default function Analysis() {
                     onClick={() => setSelectedUrgency(tab.key)}
                     className={`px-2.5 py-1 text-xs font-medium rounded-md whitespace-nowrap transition-all ${
                       selectedUrgency === tab.key
-                        ? "bg-white text-slate-900 font-semibold shadow-xs"
-                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                        ? "bg-white dark:bg-[#23283A] text-slate-900 dark:text-slate-100 font-semibold shadow-xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#23283A]"
                     }`}
                   >
                     {tab.label}
@@ -278,13 +278,13 @@ export default function Analysis() {
           {isLoading ? (
             <div className="p-6 space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-14 bg-slate-50 rounded-lg animate-pulse" />
+                <div key={i} className="h-14 bg-slate-50 dark:bg-[#1A1F2E] rounded-lg animate-pulse" />
               ))}
             </div>
           ) : filteredAssets.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center gap-2">
               <CheckCircle className="w-8 h-8 text-emerald-500" />
-              <p className="text-sm font-semibold text-slate-800">No assets match the active filter</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No assets match the active filter</p>
               <p className="text-xs text-slate-400">
                 Try switching the urgency tab or clearing your search query.
               </p>
@@ -293,7 +293,7 @@ export default function Analysis() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-[#0B0D13]/70 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     <th className="py-3 px-4 sm:px-6">Asset &amp; Category</th>
                     <th className="py-3 px-4 text-right">Current Value</th>
                     <th className="py-3 px-4 text-right">Basis &amp; P&amp;L</th>
@@ -303,14 +303,14 @@ export default function Analysis() {
                     <th className="py-3 px-4 sm:px-6 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                   {filteredAssets.map((a) => {
                     const pill = URGENCY_PILL[a.sw.urgency];
                     return (
                       <tr
                         key={a.id}
                         onClick={() => setSelectedAsset(a)}
-                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                        className="hover:bg-slate-50/80 dark:hover:bg-[#1A1F2E]/70 transition-colors cursor-pointer group"
                       >
                         {/* Asset */}
                         <td className="py-3.5 px-4 sm:px-6">
@@ -320,10 +320,10 @@ export default function Analysis() {
                               category={a.category}
                               alt={a.model}
                               aspectRatio="square"
-                              className="w-10 h-10 rounded-lg border border-slate-200"
+                              className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-800"
                             />
                             <div className="min-w-0">
-                              <p className="font-semibold text-slate-900 group-hover:text-[#7C3AED] transition-colors truncate">
+                              <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-[#7C3AED] dark:group-hover:text-purple-400 transition-colors truncate">
                                 {a.model}
                               </p>
                               <p className="text-[11px] text-slate-400 capitalize">{a.category}</p>
@@ -332,16 +332,16 @@ export default function Analysis() {
                         </td>
 
                         {/* Current Value */}
-                        <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                        <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                           {formatCurrencyWhole(a.current)}
                         </td>
 
                         {/* Cost & PnL */}
                         <td className="py-3.5 px-4 text-right">
-                          <p className="font-mono text-slate-600">{formatCurrencyWhole(a.purchase)}</p>
+                          <p className="font-mono text-slate-600 dark:text-slate-400">{formatCurrencyWhole(a.purchase)}</p>
                           <p
                             className={`font-mono text-[10px] font-semibold ${
-                              a.pnl >= 0 ? "text-emerald-600" : "text-red-600"
+                              a.pnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {a.pnl >= 0 ? "+" : ""}
@@ -351,7 +351,7 @@ export default function Analysis() {
 
                         {/* Cliff Horizon */}
                         <td className="py-3.5 px-4 text-center">
-                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-slate-800">
+                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-slate-800 dark:text-slate-200">
                             {a.depreciationCliff.daysAway}d
                           </span>
                           <p className="text-[10px] text-slate-400">
@@ -361,10 +361,10 @@ export default function Analysis() {
 
                         {/* Drop Risk */}
                         <td className="py-3.5 px-4 text-right">
-                          <p className="font-mono font-semibold text-red-600">
+                          <p className="font-mono font-semibold text-red-600 dark:text-red-400">
                             −{formatCurrencyWhole(a.dropDollars)}
                           </p>
-                          <p className="font-mono text-[10px] text-red-500">
+                          <p className="font-mono text-[10px] text-red-500 dark:text-red-400">
                             −{a.dropPct.toFixed(0)}%
                           </p>
                         </td>
@@ -391,7 +391,7 @@ export default function Analysis() {
                               e.stopPropagation();
                               setSelectedAsset(a);
                             }}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-purple-50 hover:text-[#7C3AED] hover:border-purple-200 border border-slate-200 transition-all"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-[#1A1F2E] hover:bg-purple-50 dark:hover:bg-[#23283A] hover:text-[#7C3AED] dark:hover:text-purple-300 hover:border-purple-200 dark:hover:border-purple-800 border border-slate-200 dark:border-slate-700 transition-all"
                           >
                             Inspect
                             <ChevronRight className="w-3.5 h-3.5" />

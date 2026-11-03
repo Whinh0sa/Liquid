@@ -139,7 +139,7 @@ export function ScenarioComparison({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3 flex items-center gap-2">
         <Activity className="w-4 h-4 text-amber-500" />
         Sell Scenario Comparison
       </h3>
@@ -147,20 +147,22 @@ export function ScenarioComparison({
         {cols.map((col) => (
           <div
             key={col.title}
-            className="rounded-xl p-3 border flex flex-col gap-1"
+            className={`rounded-xl p-3 border flex flex-col gap-1 ${
+              col.highlight
+                ? "bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60"
+                : "bg-slate-50 dark:bg-[#1A1F2E] border-slate-200 dark:border-slate-800"
+            }`}
             style={{
-              backgroundColor: col.highlight ? "#F0FDF4" : "#F9FAFB",
-              borderColor: col.highlight ? "#6EE7B7" : "#E5E7EB",
               opacity: col.dimmed ? 0.5 : 1,
             }}
           >
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
+            <p className="text-[9px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide leading-tight">
               {col.title}
             </p>
             <p className="font-poppins font-bold text-sm leading-tight" style={{ color: col.color }}>
               {f(col.value)}
             </p>
-            <p className="text-[10px] text-gray-400 leading-tight">{col.sub}</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-400 leading-tight">{col.sub}</p>
             {col.pct !== null && col.pct !== 0 && (
               <p className="text-[10px] font-semibold text-red-500">{col.pct.toFixed(1)}%</p>
             )}
@@ -175,10 +177,10 @@ export function ScenarioComparison({
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5">
+      <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-2 flex items-center gap-1.5">
         <Zap className="w-3 h-3 text-amber-400 shrink-0" />
         Missing the cliff costs approx.{" "}
-        <strong className="text-gray-600 font-semibold">{f(dailyCost)}/day</strong> amortised over the window.
+        <strong className="text-gray-600 dark:text-slate-200 font-semibold">{f(dailyCost)}/day</strong> amortised over the window.
       </p>
     </div>
   );
@@ -213,26 +215,26 @@ export function WhatIfSimulator({
     purchaseValue > 0 ? ((simulatedValue - purchaseValue) / purchaseValue) * 100 : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+    <div className="bg-white dark:bg-[#131722] rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-amber-500" />
           What-if Simulator
         </h3>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300">
           Drag to explore
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
-          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Sell in</p>
-          <p className="text-2xl font-poppins font-bold text-gray-900">{sellOffsetDays}d</p>
-          <p className="text-xs text-gray-400 mt-1">{simulatedDaysAway}d until cliff</p>
+        <div className="rounded-xl p-3 bg-gray-50 dark:bg-[#1A1F2E] border border-gray-100 dark:border-slate-800">
+          <p className="text-[10px] text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Sell in</p>
+          <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-slate-100">{sellOffsetDays}d</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{simulatedDaysAway}d until cliff</p>
         </div>
-        <div className="rounded-xl p-3 bg-gray-50 border border-gray-100">
-          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Projected value</p>
-          <p className="text-2xl font-poppins font-bold text-emerald-600">{f(simulatedValue)}</p>
-          <p className="text-xs text-gray-400 mt-1">vs. now {f(currentValue)}</p>
+        <div className="rounded-xl p-3 bg-gray-50 dark:bg-[#1A1F2E] border border-gray-100 dark:border-slate-800">
+          <p className="text-[10px] text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Projected value</p>
+          <p className="text-2xl font-poppins font-bold text-emerald-600 dark:text-emerald-400">{f(simulatedValue)}</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">vs. now {f(currentValue)}</p>
         </div>
       </div>
       <input

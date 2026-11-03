@@ -178,25 +178,25 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(680px,96vw)] w-[96vw] max-h-[92vh] overflow-y-auto p-0 bg-white border border-slate-200 rounded-2xl shadow-2xl">
+      <DialogContent className="max-w-[min(680px,96vw)] w-[96vw] max-h-[92vh] overflow-y-auto p-0 bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
         <DialogTitle className="sr-only">Add Portfolio Asset</DialogTitle>
 
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-[#0B0D13]/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
               <PlusCircle className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-poppins font-bold text-lg text-slate-900 leading-tight">
+                <h2 className="font-poppins font-bold text-lg text-slate-900 dark:text-slate-100 leading-tight">
                   Add Asset to Portfolio
                 </h2>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   Step {step} of 2
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {step === 1
                   ? "Select item category and hardware specification."
                   : "Calibrate valuation, depreciation trajectory, and cliff event."}
@@ -206,14 +206,14 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Step Progress Bar */}
-        <div className="w-full bg-slate-100 h-1">
+        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1">
           <div
             className="h-full bg-[#7C3AED] transition-all duration-300"
             style={{ width: step === 1 ? "50%" : "100%" }}
@@ -234,7 +234,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
               >
                 {/* Category Selection Grid */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                     1. Select Asset Category
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -253,12 +253,12 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                           }}
                           className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-2 ${
                             isSelected
-                              ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                              ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-sm"
+                              : "bg-white dark:bg-[#1A1F2E] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#23283A]"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <Icon className={`w-4 h-4 ${isSelected ? "text-purple-300" : "text-slate-500"}`} />
+                            <Icon className={`w-4 h-4 ${isSelected ? "text-purple-300 dark:text-purple-700" : "text-slate-500 dark:text-slate-400"}`} />
                             <span className="text-[10px] font-mono opacity-80">
                               {(c.defaultDropRate * 100).toFixed(0)}% drop
                             </span>
@@ -275,7 +275,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Brand & Model Input Row */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Manufacturer / Brand
                     </label>
                     <input
@@ -284,7 +284,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                       value={make}
                       onChange={(e) => setMake(e.target.value)}
                       placeholder="e.g. Apple, Sony, Rolex"
-                      className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-medium"
+                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
                     />
                     <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
                       {selectedCatMeta.sampleMakes.map((p) => (
@@ -295,7 +295,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                             setMake(p);
                             if (PRESET_MODELS[p]?.[0]) setModel(PRESET_MODELS[p][0]);
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 whitespace-nowrap transition-colors"
+                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
                         >
                           {p}
                         </button>
@@ -304,7 +304,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Model Name &amp; Spec
                     </label>
                     <input
@@ -313,7 +313,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                       value={model}
                       onChange={(e) => setModel(e.target.value)}
                       placeholder="e.g. iPhone 15 Pro Max, Submariner"
-                      className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-medium"
+                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
                     />
                     {PRESET_MODELS[make] && (
                       <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
@@ -322,7 +322,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                             key={m}
                             type="button"
                             onClick={() => setModel(m)}
-                            className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 whitespace-nowrap transition-colors"
+                            className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 whitespace-nowrap transition-colors"
                           >
                             {m}
                           </button>
@@ -334,7 +334,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
 
                 {/* Storage & Spec Variant */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Storage / Variant / Condition Note (Optional)
                   </label>
                   <input
@@ -342,13 +342,13 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     value={storageCapacity}
                     onChange={(e) => setStorageCapacity(e.target.value)}
                     placeholder="e.g. 256GB Titanium, 44mm Oystersteel, Mint with Box"
-                    className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-medium"
+                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
                   />
                 </div>
 
                 {/* Live Preview Card */}
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-white border border-slate-200 shrink-0">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-white dark:bg-[#0B0D13] border border-slate-200 dark:border-slate-800 shrink-0">
                     <AssetImage
                       model={model}
                       make={make}
@@ -360,26 +360,26 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Live Studio Imagery
                       </span>
                     </div>
-                    <p className="text-xs font-semibold text-slate-900 mt-1 truncate">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
                       {make} {model} {storageCapacity ? `(${storageCapacity})` : ""}
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       Category default risk profile: {(dropRate * 100).toFixed(0)}% projected drop.
                     </p>
                   </div>
                 </div>
 
                 {/* Step 1 Actions */}
-                <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => onOpenChange(false)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
                   >
                     Cancel
                   </button>
@@ -407,7 +407,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Financials: Purchase vs Current Resale */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Original Purchase Price ($)
                     </label>
                     <div className="relative">
@@ -422,13 +422,13 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                         value={purchasePrice}
                         onChange={(e) => setPurchasePrice(e.target.value)}
                         placeholder="1099"
-                        className="w-full h-10 pl-7 pr-3 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-semibold"
+                        className="w-full h-10 pl-7 pr-3 text-xs font-mono bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-semibold"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Current Resale Benchmark ($)
                     </label>
                     <div className="relative">
@@ -443,35 +443,35 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                         value={currentValue}
                         onChange={(e) => setCurrentValue(e.target.value)}
                         placeholder="750"
-                        className="w-full h-10 pl-7 pr-3 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-semibold"
+                        className="w-full h-10 pl-7 pr-3 text-xs font-mono bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-semibold"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Valuation Analysis Box */}
-                <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-100 grid grid-cols-3 gap-3 text-center">
+                <div className="p-3.5 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 grid grid-cols-3 gap-3 text-center">
                   <div>
-                    <span className="text-[10px] text-purple-700 font-semibold uppercase tracking-wider block">
+                    <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
                       Value Retained
                     </span>
-                    <span className="font-mono text-base font-bold text-purple-900">
+                    <span className="font-mono text-base font-bold text-purple-900 dark:text-purple-100">
                       {retentionPct}%
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-purple-700 font-semibold uppercase tracking-wider block">
+                    <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
                       Cliff Drop Rate
                     </span>
-                    <span className="font-mono text-base font-bold text-purple-900">
+                    <span className="font-mono text-base font-bold text-purple-900 dark:text-purple-100">
                       {(dropRate * 100).toFixed(0)}%
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-purple-700 font-semibold uppercase tracking-wider block">
+                    <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
                       Projected Loss
                     </span>
-                    <span className="font-mono text-base font-bold text-rose-600">
+                    <span className="font-mono text-base font-bold text-rose-600 dark:text-rose-400">
                       -${projectedDropDollars}
                     </span>
                   </div>
@@ -480,17 +480,17 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Days to Cliff Slider */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-700">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Days Until Depreciation Cliff
                     </label>
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                           cliffDays <= 14
-                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
                             : cliffDays <= 45
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                              : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                         }`}
                       >
                         {cliffDays <= 14
@@ -499,7 +499,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                             ? "Window Open"
                             : "Monitoring / Safe"}
                       </span>
-                      <span className="font-mono font-bold text-xs text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                      <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#1A1F2E] px-2 py-0.5 rounded">
                         {cliffDays} days
                       </span>
                     </div>
@@ -524,7 +524,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                         className={`flex-1 py-1 text-xs font-mono font-semibold rounded-lg border transition-all ${
                           cliffDays === d
                             ? "bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                            : "bg-slate-50 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#23283A]"
                         }`}
                       >
                         {d}d
@@ -535,7 +535,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
 
                 {/* Cliff Reason & Presets */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Depreciation Catalyst / Expected Event
                   </label>
                   <input
@@ -544,7 +544,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     value={cliffReason}
                     onChange={(e) => setCliffReason(e.target.value)}
                     placeholder="e.g. Hardware Keynote Expected"
-                    className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white text-slate-900 font-medium"
+                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
                   />
                   <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
                     {CLIFF_REASONS.map((r) => (
@@ -552,7 +552,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                         key={r}
                         type="button"
                         onClick={() => setCliffReason(r)}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 whitespace-nowrap transition-colors"
+                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
                       >
                         {r}
                       </button>
@@ -561,11 +561,11 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 </div>
 
                 {/* Step 2 Actions */}
-                <div className="pt-2 flex items-center justify-between gap-3 border-t border-slate-100">
+                <div className="pt-2 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors flex items-center gap-1.5"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
@@ -574,7 +574,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     <button
                       type="button"
                       onClick={() => onOpenChange(false)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                      className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
                     >
                       Cancel
                     </button>

@@ -229,11 +229,11 @@ function HudCard({
       onMouseEnter={() => onHover(asset.id ?? `detected-${idx}`)}
       onMouseLeave={() => onHover(null)}
       className={[
-        "group rounded-3xl border bg-white p-4 shadow-sm transition-all",
+        "group rounded-3xl border bg-white dark:bg-[#131722] p-4 shadow-sm transition-all",
         focused
-          ? "border-purple-300 shadow-[0_0_0_3px_rgba(145,38,239,0.12)]"
-          : "border-gray-100 hover:border-gray-200",
-        selected ? "bg-purple-50/40" : "",
+          ? "border-purple-300 dark:border-purple-500/50 shadow-[0_0_0_3px_rgba(145,38,239,0.12)]"
+          : "border-gray-100 dark:border-slate-800 hover:border-gray-200 dark:hover:border-slate-700",
+        selected ? "bg-purple-50/40 dark:bg-purple-950/20" : "",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-2">
@@ -248,12 +248,12 @@ function HudCard({
               "h-5 w-5 rounded-md border grid place-items-center transition-colors",
               selected
                 ? "bg-purple-600 border-purple-600 text-white"
-                : "border-gray-200 bg-white hover:border-gray-300",
+                : "border-gray-200 dark:border-slate-700 bg-white dark:bg-[#1A1F2E] hover:border-gray-300 dark:hover:border-slate-600",
             ].join(" ")}
           >
             {selected && <Check className="w-3 h-3" />}
           </button>
-          <span className="font-mono text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gray-900 text-white">
+          <span className="font-mono text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full bg-gray-900 dark:bg-slate-800 text-white">
             {idLabel}
           </span>
           <span
@@ -263,49 +263,49 @@ function HudCard({
             {asset.urgency}
           </span>
         </div>
-        <span className="text-[10px] font-mono text-gray-400">{asset.category}</span>
+        <span className="text-[10px] font-mono text-gray-400 dark:text-slate-500">{asset.category}</span>
       </div>
 
-      <p className="mt-2 font-semibold text-sm text-gray-900 leading-tight truncate">{asset.name}</p>
+      <p className="mt-2 font-semibold text-sm text-gray-900 dark:text-slate-100 leading-tight truncate">{asset.name}</p>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white border border-gray-200 inline-flex items-center gap-1">
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 inline-flex items-center gap-1">
           <Clock className="w-3 h-3 text-gray-400" />
           {asset.depreciationCliffDays}d cliff
         </span>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
           cond {asset.condition} x{mult.toFixed(2)}
         </span>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 border border-red-200 text-red-600">
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
           cliff
         </span>
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="font-poppins font-bold text-lg text-gray-900">
-          {formatCurrencyWhole(price)} <span className="text-[11px] font-medium text-gray-400">est</span>
+        <span className="font-poppins font-bold text-lg text-gray-900 dark:text-slate-100">
+          {formatCurrencyWhole(price)} <span className="text-[11px] font-medium text-gray-400 dark:text-slate-500">est</span>
         </span>
-        <span className="text-[10px] text-gray-400">
+        <span className="text-[10px] text-gray-400 dark:text-slate-500">
           conf {Math.round((asset.confidence ?? 0.8) * 100)}%
         </span>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-gray-900 text-white">
+        <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-gray-900 dark:bg-slate-800 text-white">
           eBay {formatCurrencyWhole(platformNet(price, "eBay"))}
         </span>
         {asset.category === "TECH" && (
-          <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-white border border-gray-200">
+          <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
             Swappa {formatCurrencyWhole(platformNet(price, "Swappa"))}
           </span>
         )}
-        <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+        <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300">
           Mkt {formatCurrencyWhole(platformNet(price, "Marketplace"))}
         </span>
       </div>
 
       {asset.cliffReason && (
-        <p className="mt-2 text-[11px] leading-[1.4] text-gray-500 line-clamp-2">
+        <p className="mt-2 text-[11px] leading-[1.4] text-gray-500 dark:text-slate-400 line-clamp-2">
           ↳ {asset.cliffReason}
         </p>
       )}
@@ -602,20 +602,20 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(1120px,96vw)] w-[96vw] max-h-[92vh] overflow-hidden p-0 bg-[#F8F9FA] border-gray-200 flex flex-col sm:rounded-3xl">
+      <DialogContent className="max-w-[min(1120px,96vw)] w-[96vw] max-h-[92vh] overflow-hidden p-0 bg-[#F8F9FA] dark:bg-[#0B0D13] border-gray-200 dark:border-slate-800 flex flex-col sm:rounded-3xl">
         <DialogTitle className="sr-only">Spatial Scan</DialogTitle>
 
         {/* Modal Top Bar */}
-        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 bg-white flex items-center justify-between">
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-[#131722] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-purple-600 text-white grid place-items-center">
               <ScanLine className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-black tracking-[0.2em] uppercase text-purple-600">
+              <p className="text-xs font-black tracking-[0.2em] uppercase text-purple-600 dark:text-purple-400">
                 LIQUID 2.0 // SPATIAL TERMINAL
               </p>
-              <p className="text-sm font-bold text-gray-900">Scan a space. Unlock dead capital.</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-slate-100">Scan a space. Unlock dead capital.</p>
             </div>
           </div>
 
@@ -624,7 +624,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
               <button
                 type="button"
                 onClick={() => void doScan()}
-                className="h-9 px-4 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-black transition-colors"
+                className="h-9 px-4 rounded-full bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold hover:bg-black dark:hover:bg-white transition-colors"
               >
                 Scan with Liquid
               </button>
@@ -634,7 +634,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                 type="button"
                 aria-label="Reset scanner"
                 onClick={() => reset()}
-                className="h-9 w-9 rounded-full bg-gray-100 grid place-items-center hover:bg-gray-200 transition-colors"
+                className="h-9 w-9 rounded-full bg-gray-100 dark:bg-[#1A1F2E] text-slate-700 dark:text-slate-300 grid place-items-center hover:bg-gray-200 dark:hover:bg-[#23283A] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -661,16 +661,16 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                   onDragLeave={() => setDragOver(false)}
                   onDrop={onDrop}
                   className={[
-                    "rounded-3xl border-2 border-dashed bg-white p-8 sm:p-12 text-center min-h-[280px] flex flex-col items-center justify-center gap-4 transition-colors",
-                    dragOver ? "border-purple-400 bg-purple-50" : "border-gray-200 hover:border-gray-300",
+                    "rounded-3xl border-2 border-dashed bg-white dark:bg-[#131722] p-8 sm:p-12 text-center min-h-[280px] flex flex-col items-center justify-center gap-4 transition-colors",
+                    dragOver ? "border-purple-400 bg-purple-50 dark:bg-purple-950/20" : "border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700",
                   ].join(" ")}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-gray-900 text-white grid place-items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-900 dark:bg-slate-800 text-white grid place-items-center">
                     <Upload className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Drop a desk or room photo here</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-slate-100">Drop a desk or room photo here</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                       or click to browse — runs automated valuation model on recognized items
                     </p>
                   </div>
@@ -678,14 +678,14 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="h-10 px-4 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-black transition-colors"
+                      className="h-10 px-4 rounded-xl bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold hover:bg-black dark:hover:bg-white transition-colors"
                     >
                       Upload Photo
                     </button>
                     <button
                       type="button"
                       onClick={() => cameraInputRef.current?.click()}
-                      className="h-10 px-4 rounded-xl bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 inline-flex items-center gap-2 transition-colors"
+                      className="h-10 px-4 rounded-xl bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#23283A] inline-flex items-center gap-2 transition-colors"
                     >
                       <Camera className="w-4 h-4" />
                       Camera
@@ -693,16 +693,16 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-3 gap-3 text-[11px] text-gray-500">
-                  <div className="rounded-xl bg-white border border-gray-100 p-3 flex gap-2">
+                <div className="grid sm:grid-cols-3 gap-3 text-[11px] text-gray-500 dark:text-slate-400">
+                  <div className="rounded-xl bg-white dark:bg-[#131722] border border-gray-100 dark:border-slate-800 p-3 flex gap-2">
                     <ImageIcon className="w-4 h-4 shrink-0 text-gray-400" />
                     Spatial segmentation identifies makes, models, and condition grades automatically.
                   </div>
-                  <div className="rounded-xl bg-white border border-gray-100 p-3 flex gap-2">
+                  <div className="rounded-xl bg-white dark:bg-[#131722] border border-gray-100 dark:border-slate-800 p-3 flex gap-2">
                     <TrendingDown className="w-4 h-4 shrink-0 text-amber-500" />
                     Calculates holding cost and daily burn rate against secondary market floors.
                   </div>
-                  <div className="rounded-xl bg-white border border-gray-100 p-3 flex gap-2">
+                  <div className="rounded-xl bg-white dark:bg-[#131722] border border-gray-100 dark:border-slate-800 p-3 flex gap-2">
                     <PackageCheck className="w-4 h-4 shrink-0 text-emerald-500" />
                     Select segments and 1-click batch import directly to your authenticated portfolio.
                   </div>
@@ -784,7 +784,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                   />
 
                   {/* Voice / Tactile Search Command Bar */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-[#131722] p-2">
                     <button
                       type="button"
                       data-testid="btn-voice-mic"
@@ -793,7 +793,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                         "h-10 w-10 rounded-xl grid place-items-center border transition-colors shrink-0",
                         voiceListening
                           ? "bg-red-500 border-red-500 text-white animate-pulse"
-                          : "bg-gray-900 border-gray-900 text-white hover:bg-black",
+                          : "bg-gray-900 dark:bg-slate-800 border-gray-900 dark:border-slate-700 text-white hover:bg-black dark:hover:bg-slate-700",
                       ].join(" ")}
                       aria-label={voiceListening ? "Stop listening" : "Voice filter"}
                     >
@@ -816,7 +816,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                           ? voiceTranscript || "Listening…"
                           : "Voice: e.g. Select high urgency items · Over $500 · Clear selection"
                       }
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-100 text-sm outline-none focus:border-gray-300 placeholder:text-gray-400"
+                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 dark:bg-[#1A1F2E] border border-gray-100 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-gray-300 dark:focus:border-slate-500 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                     />
 
                     <button
@@ -829,7 +829,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                           toggleVoiceListen();
                         }
                       }}
-                      className="h-10 px-3 rounded-xl bg-white border border-gray-200 text-xs font-bold inline-flex items-center gap-1.5 hover:bg-gray-50 transition-colors"
+                      className="h-10 px-3 rounded-xl bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 hover:bg-gray-50 dark:hover:bg-[#23283A] transition-colors"
                     >
                       <Search className="w-3.5 h-3.5" />
                       Apply
@@ -837,7 +837,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                   </div>
 
                   {voiceTranscript && (
-                    <p className="font-mono text-[10px] text-purple-600 px-1">
+                    <p className="font-mono text-[10px] text-purple-600 dark:text-purple-400 px-1">
                       Last voice transcript: “{voiceTranscript.slice(0, 80)}”
                     </p>
                   )}
@@ -857,7 +857,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                       }
                     />
 
-                    <div className="max-h-[min(560px,60vh)] overflow-auto rounded-3xl border border-gray-100 bg-white/50 p-2 space-y-2">
+                    <div className="max-h-[min(560px,60vh)] overflow-auto rounded-3xl border border-gray-100 dark:border-slate-800 bg-white/50 dark:bg-[#0B0D13]/60 p-2 space-y-2">
                       {scanResult.detectedAssets.map((a: DetectedAsset, idx: number) => {
                         const id = a.id ?? `detected-${idx}`;
                         return (
@@ -880,10 +880,10 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                       {scanResult.detectedAssets.length === 0 && (
                         <div className="p-8 text-center">
                           <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto" />
-                          <p className="mt-2 text-sm font-semibold text-gray-700">
+                          <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-slate-300">
                             No resaleable assets detected.
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                             {scanResult.portfolioSummary.scanNotes}
                           </p>
                         </div>
@@ -895,7 +895,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                     <button
                       type="button"
                       onClick={() => reset()}
-                      className="h-11 px-4 rounded-xl bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                      className="h-11 px-4 rounded-xl bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#23283A] transition-colors"
                     >
                       New Scan
                     </button>
@@ -903,7 +903,7 @@ export default function SpatialScanModal({ open, onOpenChange, onCommitted }: Pr
                       type="button"
                       disabled={selectedIds.size === 0 || state !== "results"}
                       onClick={() => void doCommit()}
-                      className="h-11 px-6 rounded-xl bg-gray-900 text-white text-sm font-black tracking-wide disabled:opacity-40 hover:bg-black inline-flex items-center gap-2 justify-center min-w-[180px] transition-colors"
+                      className="h-11 px-6 rounded-xl bg-gray-900 dark:bg-[#7C3AED] text-white text-sm font-black tracking-wide disabled:opacity-40 hover:bg-black dark:hover:bg-[#6D28D9] inline-flex items-center gap-2 justify-center min-w-[180px] transition-colors"
                     >
                       {state === "committing"
                         ? "Committing…"

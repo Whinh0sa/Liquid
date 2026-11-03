@@ -26,9 +26,9 @@ export function ConditionGrader({
   const discount = currentValue - adjusted;
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 shadow-sm" style={{ backgroundColor: "#FAFAFA" }}>
+    <div className="rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm bg-slate-50/60 dark:bg-[#1A1F2E]">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <Activity className="w-4 h-4 text-amber-500" />
           Condition Grader
         </h3>
@@ -52,14 +52,14 @@ export function ConditionGrader({
               onClick={() => setCondition(key)}
               className="flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition-all"
               style={{
-                borderColor: selected ? c.color : "#E5E7EB",
-                backgroundColor: selected ? c.bg : "#FFFFFF",
+                borderColor: selected ? c.color : "#334155",
+                backgroundColor: selected ? c.bg : "transparent",
               }}
             >
-              <span className="text-xs font-bold" style={{ color: selected ? c.color : "#6B7280" }}>
+              <span className="text-xs font-bold" style={{ color: selected ? c.color : "#94A3B8" }}>
                 {c.label}
               </span>
-              <span className="text-[9px] font-medium" style={{ color: selected ? c.color : "#9CA3AF" }}>
+              <span className="text-[9px] font-medium" style={{ color: selected ? c.color : "#64748B" }}>
                 {(c.multiplier * 100).toFixed(0)}%
               </span>
             </button>
@@ -67,7 +67,7 @@ export function ConditionGrader({
         })}
       </div>
 
-      <p className="text-xs text-gray-400 italic mb-3">{conf.sub}</p>
+      <p className="text-xs text-gray-400 dark:text-slate-400 italic mb-3">{conf.sub}</p>
 
       {/* Adjusted value box */}
       <div
@@ -77,7 +77,7 @@ export function ConditionGrader({
         <div>
           <p className="text-xs font-semibold" style={{ color: conf.color }}>Condition-adjusted value</p>
           {condition !== "mint" && discount > 0 && (
-            <p className="text-[10px] text-gray-400 mt-0.5">−{f(discount)} from wear &amp; condition</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">−{f(discount)} from wear &amp; condition</p>
           )}
         </div>
         <p className="font-poppins font-bold text-lg" style={{ color: conf.color }}>{f(adjusted)}</p>

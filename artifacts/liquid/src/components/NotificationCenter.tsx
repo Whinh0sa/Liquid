@@ -62,11 +62,11 @@ export default function NotificationCenter() {
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
+        className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors relative"
       >
         <Bell className="w-4 h-4" />
         {hasUnread && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#0B0D13] animate-pulse" />
         )}
       </button>
 
@@ -80,17 +80,17 @@ export default function NotificationCenter() {
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label="Active signals and alerts"
-            className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-[#0B0D13]/70">
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-[#7C3AED]" />
-                <h3 className="font-poppins font-bold text-xs uppercase tracking-wider text-slate-900">
+                <h3 className="font-poppins font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-slate-100">
                   Signals &amp; Alerts
                 </h3>
                 {notifications.length > 0 && (
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
                     {notifications.length}
                   </span>
                 )}
@@ -99,18 +99,18 @@ export default function NotificationCenter() {
                 type="button"
                 aria-label="Close notification popover"
                 onClick={() => setOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E]"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center flex flex-col items-center gap-2">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                  <p className="text-xs font-semibold text-slate-800">All Systems Nominal</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">All Systems Nominal</p>
                   <p className="text-[11px] text-slate-400">
                     No urgent cliffs or price floor breaches active across your tracked assets.
                   </p>
@@ -123,13 +123,13 @@ export default function NotificationCenter() {
                   return (
                     <div
                       key={n.id}
-                      className="p-3.5 hover:bg-slate-50 transition-colors flex items-start gap-3"
+                      className="p-3.5 hover:bg-slate-50 dark:hover:bg-[#1A1F2E] transition-colors flex items-start gap-3"
                     >
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                           isUrgent
-                            ? "bg-red-50 text-red-600 border border-red-100"
-                            : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                            ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50"
+                            : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50"
                         }`}
                       >
                         {isUrgent ? (
@@ -141,7 +141,7 @@ export default function NotificationCenter() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <p className="text-xs font-semibold text-slate-900 truncate">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
                             {n.model}
                           </p>
                           <span
@@ -155,12 +155,12 @@ export default function NotificationCenter() {
                             {pill.label}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                           {n.depreciationCliff.reason}
                         </p>
                         <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
                           <span>Cliff in {n.depreciationCliff.daysAway}d</span>
-                          <span className="font-mono font-semibold text-red-600">
+                          <span className="font-mono font-semibold text-red-600 dark:text-red-400">
                             −{formatCurrencyWhole(n.drop)}
                           </span>
                         </div>
@@ -172,11 +172,11 @@ export default function NotificationCenter() {
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0B0D13]/50 flex items-center justify-between">
               <Link
                 href="/alerts"
                 onClick={() => setOpen(false)}
-                className="w-full text-center text-xs font-semibold text-[#7C3AED] hover:text-[#6D28D9] flex items-center justify-center gap-1.5 py-1"
+                className="w-full text-center text-xs font-semibold text-[#7C3AED] dark:text-purple-400 hover:text-[#6D28D9] dark:hover:text-purple-300 flex items-center justify-center gap-1.5 py-1"
               >
                 <span>Open Full Signals Feed</span>
                 <ArrowRight className="w-3.5 h-3.5" />

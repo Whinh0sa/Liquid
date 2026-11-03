@@ -180,7 +180,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
-            className="fixed top-0 right-0 h-full flex flex-col bg-white overflow-hidden shadow-2xl"
+            className="fixed top-0 right-0 h-full flex flex-col bg-white dark:bg-[#131722] border-l border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl"
             style={{
               zIndex: 51,
               width: "min(500px, 100vw)",
@@ -188,12 +188,12 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
             data-testid="asset-drawer"
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-gray-100 dark:border-slate-800">
               <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
+                <p className="text-xs text-gray-400 dark:text-slate-400 font-medium uppercase tracking-wider mb-1">
                   {asset.category}
                 </p>
-                <h2 className="font-poppins font-bold text-xl text-gray-900 leading-tight">
+                <h2 className="font-poppins font-bold text-xl text-gray-900 dark:text-slate-100 leading-tight">
                   {asset.model}
                 </h2>
               </div>
@@ -202,14 +202,14 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
                 aria-label="Close asset details"
                 onClick={onClose}
                 data-testid="btn-close-drawer"
-                className="mt-1 p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                className="mt-1 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1F2E] transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Product Hero Image */}
-            <div className="relative w-full h-44 bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
+            <div className="relative w-full h-44 bg-slate-100 dark:bg-[#0B0D13] overflow-hidden border-b border-slate-100 dark:border-slate-800 shrink-0">
               <AssetImage
                 model={asset.model}
                 category={asset.category}
@@ -224,16 +224,16 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
               {/* Valuation Overview */}
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-xs text-gray-400 font-medium mb-1">Current Estimated Value</p>
-                  <p className="font-poppins font-bold text-3xl text-gray-900">{fmt(currentValue)}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-400 font-medium mb-1">Current Estimated Value</p>
+                  <p className="font-poppins font-bold text-3xl text-gray-900 dark:text-slate-100">{fmt(currentValue)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400 font-medium mb-1">Since Purchase</p>
-                  <p className={`text-lg font-bold ${isDown ? "text-red-500" : "text-emerald-500"}`}>
+                  <p className="text-xs text-gray-400 dark:text-slate-400 font-medium mb-1">Since Purchase</p>
+                  <p className={`text-lg font-bold ${isDown ? "text-red-500" : "text-emerald-500 dark:text-emerald-400"}`}>
                     {totalPnl >= 0 ? "+" : ""}
                     {totalPnl.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-gray-400">{fmt(purchaseValue)} baseline</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{fmt(purchaseValue)} baseline</p>
                 </div>
               </div>
 
@@ -357,9 +357,9 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
             </div>
 
             {/* Sticky Action Footer */}
-            <div className="px-6 pb-6 pt-4 border-t border-gray-100 space-y-3">
+            <div className="px-6 pb-6 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-3">
               {isAlreadySold ? (
-                <div className="w-full h-14 flex items-center justify-center rounded-xl text-sm font-semibold text-red-500 bg-red-50 border border-red-100">
+                <div className="w-full h-14 flex items-center justify-center rounded-xl text-sm font-semibold text-red-500 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50">
                   {asset.status === "LIQUIDATE" ? "Sale pending…" : "In transit"}
                 </div>
               ) : (
@@ -392,7 +392,7 @@ export default function AssetDrawer({ asset, onClose, onSell, isSelling: _isSell
                     type="button"
                     data-testid="btn-generate-exit-listing"
                     onClick={() => setShowExitModal(true)}
-                    className="w-full h-11 rounded-xl font-bold text-sm tracking-wide bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                    className="w-full h-11 rounded-xl font-bold text-sm tracking-wide bg-white dark:bg-[#1A1F2E] border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-[#23283A] transition-colors inline-flex items-center justify-center gap-1.5"
                   >
                     Generate Exit Listing
                   </button>

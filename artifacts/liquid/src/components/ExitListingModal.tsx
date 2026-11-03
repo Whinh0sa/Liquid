@@ -56,15 +56,15 @@ export default function ExitListingModal({ open, onOpenChange, assetId, assetMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(860px,94vw)] w-[94vw] max-h-[88vh] overflow-hidden p-0 bg-[#F8F9FA] border-gray-200 flex flex-col sm:rounded-3xl">
+      <DialogContent className="max-w-[min(860px,94vw)] w-[94vw] max-h-[88vh] overflow-hidden p-0 bg-[#F8F9FA] dark:bg-[#0B0D13] border-gray-200 dark:border-slate-800 flex flex-col sm:rounded-3xl">
         <DialogTitle className="sr-only">Exit Listing — {assetModel}</DialogTitle>
-        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 bg-white flex items-center justify-between">
-          <div className="flex items-center gap-3"><div className="w-9 h-9 rounded-xl bg-purple-600 text-white grid place-items-center"><Rocket className="w-4 h-4" /></div><div><p className="text-xs font-black tracking-[0.2em] uppercase text-purple-600">EXIT GENERATOR</p><p className="text-sm font-bold text-gray-900 truncate max-w-[260px] sm:max-w-none">{assetModel}</p></div></div>
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-[#131722] flex items-center justify-between">
+          <div className="flex items-center gap-3"><div className="w-9 h-9 rounded-xl bg-purple-600 text-white grid place-items-center"><Rocket className="w-4 h-4" /></div><div><p className="text-xs font-black tracking-[0.2em] uppercase text-purple-600 dark:text-purple-400">EXIT GENERATOR</p><p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate max-w-[260px] sm:max-w-none">{assetModel}</p></div></div>
           {result && <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">{result.source}</span>}
         </div>
-        <div className="flex items-center gap-1.5 px-5 sm:px-6 py-3 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-1.5 px-5 sm:px-6 py-3 bg-white dark:bg-[#131722] border-b border-gray-100 dark:border-slate-800">
           {(["eBay", "Swappa", "Marketplace"] as ListingPlatform[]).map((p) => (
-            <button key={p} type="button" onClick={() => setActiveTab(p)} className={["h-8 px-3 rounded-full text-xs font-bold transition-colors inline-flex items-center gap-1.5", activeTab===p ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"].join(" ")}>
+            <button key={p} type="button" onClick={() => setActiveTab(p)} className={["h-8 px-3 rounded-full text-xs font-bold transition-colors inline-flex items-center gap-1.5", activeTab===p ? "bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900" : "bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#23283A]"].join(" ")}>
               {p==="Swappa" ? <Package className="w-3.5 h-3.5" /> : p==="eBay" ? <Store className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}{p}
             </button>
           ))}
@@ -80,8 +80,8 @@ export default function ExitListingModal({ open, onOpenChange, assetId, assetMod
             )}
             {result && (
               <motion.div key={activeTab} initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }} className="space-y-4">
-                <div className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm">
-                  <div className="flex items-start justify-between gap-2"><div className="flex-1 min-w-0"><p className="text-[10px] font-bold tracking-[0.14em] uppercase text-gray-400">{activeTab} Listing</p><h3 className="font-poppins font-bold text-base text-gray-900 leading-tight mt-1">{result.listing.title}</h3></div><button onClick={() => { void handleCopy(activeTab); }} className="h-8 w-8 rounded-full bg-gray-900 text-white grid place-items-center hover:bg-black shrink-0">{copied===activeTab ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}</button></div>
+                <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-[#131722] p-4 sm:p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-2"><div className="flex-1 min-w-0"><p className="text-[10px] font-bold tracking-[0.14em] uppercase text-gray-400">{activeTab} Listing</p><h3 className="font-poppins font-bold text-base text-gray-900 dark:text-slate-100 leading-tight mt-1">{result.listing.title}</h3></div><button onClick={() => { void handleCopy(activeTab); }} className="h-8 w-8 rounded-full bg-gray-900 text-white grid place-items-center hover:bg-black shrink-0">{copied===activeTab ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}</button></div>
                   {rec && <div className="mt-3 flex flex-wrap gap-1.5"><span className="text-[11px] font-mono px-2 py-1 rounded-full bg-gray-900 text-white inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />List {formatCurrencyWhole(rec.suggestedPrice)}</span><span className="text-[11px] font-mono px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">You net {formatCurrency(rec.netPayout)}</span><span className="text-[10px] text-gray-400">{activeTab==="eBay" ? "87% net" : activeTab==="Swappa" ? "90% net" : "98% net"}</span></div>}
                 </div>
                 {activeTab==="eBay" && (
@@ -105,7 +105,7 @@ export default function ExitListingModal({ open, onOpenChange, assetId, assetMod
                     <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4"><p className="text-xs font-semibold text-amber-800 mb-2">Safe Meetup Checklist</p><ul className="space-y-1.5">{MARKETPLACE_MEETUP_CHECKLIST.map((c,i)=><li key={i} className="text-sm text-amber-900 flex gap-2"><span className="w-4 h-4 rounded border border-amber-200 grid place-items-center text-[10px]">☐</span>{c}</li>)}</ul></div>
                   </div>
                 )}
-                <div className="flex gap-2"><button onClick={() => { void handleCopy(activeTab); }} className="flex-1 h-11 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-black inline-flex items-center justify-center gap-2">{copied===activeTab ? <><Check className="w-4 h-4" />Copied {activeTab}</> : <><Copy className="w-4 h-4" />Copy {activeTab} Listing</>}</button><button onClick={() => onOpenChange(false)} className="h-11 px-4 rounded-xl bg-white border border-gray-200 text-sm font-semibold">Close</button></div>
+                <div className="flex gap-2"><button onClick={() => { void handleCopy(activeTab); }} className="flex-1 h-11 rounded-xl bg-gray-900 dark:bg-[#7C3AED] text-white text-sm font-bold hover:bg-black dark:hover:bg-[#6D28D9] inline-flex items-center justify-center gap-2">{copied===activeTab ? <><Check className="w-4 h-4" />Copied {activeTab}</> : <><Copy className="w-4 h-4" />Copy {activeTab} Listing</>}</button><button onClick={() => onOpenChange(false)} className="h-11 px-4 rounded-xl bg-white dark:bg-[#1A1F2E] border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200">Close</button></div>
               </motion.div>
             )}
           </AnimatePresence>

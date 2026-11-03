@@ -55,7 +55,7 @@ function RecoveryCard({
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="rounded-2xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50/40 to-white p-5 flex flex-col gap-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
+      className="rounded-2xl border border-emerald-200/90 dark:border-emerald-800/60 bg-gradient-to-b from-emerald-50/40 to-white dark:from-emerald-950/20 dark:to-[#131722] p-5 flex flex-col gap-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -157,10 +157,10 @@ export default function AssetCard({
 
   // Border styling using strict semantic tokens
   const cardBorderClass = isAlertFired
-    ? "border-amber-300 ring-2 ring-amber-100/80 bg-amber-50/20"
+    ? "border-amber-300 dark:border-amber-500/50 ring-2 ring-amber-100/80 dark:ring-amber-900/30 bg-amber-50/20 dark:bg-amber-950/10"
     : alertPrice !== undefined
-    ? "border-amber-200"
-    : "border-slate-200/90 hover:border-slate-300";
+    ? "border-amber-200 dark:border-amber-700/50"
+    : "border-slate-200/90 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700";
 
   // ── Alert input row ────────────────────────────────────────────────────────
   const alertRow = !alertPrice ? (
@@ -180,12 +180,12 @@ export default function AssetCard({
           }}
           placeholder={current.toFixed(0)}
           autoFocus
-          className="flex-1 h-7 px-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:border-purple-500 min-w-0"
+          className="flex-1 h-7 px-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1A1F2E] text-slate-900 dark:text-slate-100 focus:outline-none focus:border-purple-500 min-w-0"
         />
         <button
           type="button"
           onClick={confirmAlert}
-          className="h-7 px-2.5 text-xs font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shrink-0 transition-colors"
+          className="h-7 px-2.5 text-xs font-bold text-white bg-slate-900 dark:bg-slate-100 dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 shrink-0 transition-colors"
         >
           Save
         </button>
@@ -196,7 +196,7 @@ export default function AssetCard({
             setShowAlertInput(false);
             setAlertInput("");
           }}
-          className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-lg shrink-0"
+          className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg shrink-0"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -209,7 +209,7 @@ export default function AssetCard({
           setShowAlertInput(true);
           setAlertInput(current.toFixed(0));
         }}
-        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
       >
         <Bell className="w-3 h-3 text-slate-400" />
         <span>Set price floor alert</span>
@@ -217,15 +217,15 @@ export default function AssetCard({
     )
   ) : (
     <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-        <Bell className="w-3 h-3 text-amber-600" />
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+        <Bell className="w-3 h-3 text-amber-600 dark:text-amber-400" />
         Alert set at {fmt(alertPrice)}
       </span>
       <button
         type="button"
         aria-label="Clear alert"
         onClick={() => onSetAlert(asset.id, null)}
-        className="text-slate-400 hover:text-slate-600 transition-colors p-0.5"
+        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5"
       >
         <X className="w-3.5 h-3.5" />
       </button>
@@ -240,7 +240,7 @@ export default function AssetCard({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
+        className={`bg-white dark:bg-[#131722] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none hover:shadow-md ${cardBorderClass}`}
         onClick={() => onOpen(asset)}
       >
         <div className="flex items-center gap-3.5 flex-1 min-w-0">
@@ -249,7 +249,7 @@ export default function AssetCard({
             category={asset.category}
             alt={asset.model}
             aspectRatio="square"
-            className="w-12 h-12 rounded-xl border border-slate-200"
+            className="w-12 h-12 rounded-xl border border-slate-200 dark:border-slate-800"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
@@ -267,7 +267,7 @@ export default function AssetCard({
                 {urgencyPill.label}
               </span>
             </div>
-            <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors truncate">
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
               {asset.model}
             </h3>
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
@@ -278,20 +278,20 @@ export default function AssetCard({
         </div>
 
         {isAlertFired && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
-            <BellRing className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold">
+            <BellRing className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>Floor hit (&le; {fmt(alertPrice ?? 0)})</span>
           </div>
         )}
 
         <div className="flex items-center gap-6 self-end sm:self-auto shrink-0">
           <div className="text-right">
-            <span className="font-poppins font-bold text-xl text-slate-900 block">
+            <span className="font-poppins font-bold text-xl text-slate-900 dark:text-slate-100 block">
               {fmt(current)}
             </span>
             <span
               className={`text-xs font-semibold inline-flex items-center gap-0.5 ${
-                pnl < 0 ? "text-rose-500" : "text-emerald-600"
+                pnl < 0 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"
               }`}
             >
               {pnl < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
@@ -314,7 +314,7 @@ export default function AssetCard({
               type="button"
               aria-label={`Inspect ${asset.model} details`}
               onClick={() => onOpen(asset)}
-              className="h-8 px-3 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              className="h-8 px-3 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] transition-colors"
             >
               Inspect
             </button>
@@ -331,11 +331,11 @@ export default function AssetCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`bg-white rounded-2xl p-4 flex flex-col gap-3.5 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md ${cardBorderClass}`}
+      className={`bg-white dark:bg-[#131722] rounded-2xl p-4 flex flex-col gap-3.5 cursor-pointer group transition-all duration-200 border shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none hover:shadow-md ${cardBorderClass}`}
       onClick={() => onOpen(asset)}
     >
       {/* Product Image Header */}
-      <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
+      <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#0B0D13] border border-slate-100 dark:border-slate-800">
         <AssetImage
           model={asset.model}
           category={asset.category}
@@ -362,26 +362,26 @@ export default function AssetCard({
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
             {asset.category}
           </span>
-          <h3 className="font-semibold text-slate-900 text-sm leading-tight group-hover:text-purple-600 transition-colors line-clamp-1">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-1">
             {asset.model}
           </h3>
         </div>
       </div>
 
       {isAlertFired && (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200">
-          <BellRing className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          <p className="text-xs font-semibold text-amber-800 flex-1">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+          <BellRing className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 flex-1">
             Floor reached (&le; {fmt(alertPrice ?? 0)})
           </p>
         </div>
       )}
 
       <div className="flex items-baseline justify-between pt-1">
-        <span className="font-poppins font-bold text-2xl text-slate-900">{fmt(current)}</span>
+        <span className="font-poppins font-bold text-2xl text-slate-900 dark:text-slate-100">{fmt(current)}</span>
         <span
           className={`text-xs font-semibold flex items-center gap-0.5 ${
-            pnl < 0 ? "text-rose-500" : "text-emerald-600"
+            pnl < 0 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"
           }`}
         >
           {pnl < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
@@ -390,8 +390,8 @@ export default function AssetCard({
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-600">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-400">
           <Clock className="w-3 h-3 text-slate-400" />
           <span>{sellWindow.sellByLabel}</span>
         </div>
@@ -414,13 +414,13 @@ export default function AssetCard({
           type="button"
           aria-label={`Inspect ${asset.model} details`}
           onClick={() => onOpen(asset)}
-          className="h-8 px-3.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+          className="h-8 px-3.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] transition-colors"
         >
           Inspect
         </button>
       </div>
 
-      <div className="pt-2 border-t border-slate-100 mt-auto">{alertRow}</div>
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 mt-auto">{alertRow}</div>
     </motion.div>
   );
 }
