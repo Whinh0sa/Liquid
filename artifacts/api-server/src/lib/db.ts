@@ -23,10 +23,10 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Sane production defaults
+  ssl: { rejectUnauthorized: false },
   max: 10,            // max concurrent connections
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
+  connectionTimeoutMillis: 10_000,
 });
 
 pool.on("error", (err: Error) => {

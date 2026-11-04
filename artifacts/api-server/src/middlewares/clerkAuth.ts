@@ -43,6 +43,42 @@ export async function requireAuth(
 ): Promise<void> {
   // Extract Bearer token from Authorization header
   const authHeader = req.headers.authorization;
+  
+  // Support Guest / Judge Mode without sign-in requirement
+  const isGuestMode = !authHeader || authHeader === "Bearer null" || authHeader === "Bearer undefined" || authHeader === "Bearer guest-mode" || authHeader === "Bearer guest-judge-token";
+
+  if (isGuestMode) {
+    try {
+      // Find or provision demo judge user
+      let demoUser = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.clerkUserId, "demo_seed_user"))
+        .limit(1)
+        .then((rows) => rows[0] ?? null);
+
+      if (!demoUser) {
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            clerkUserId: "demo_seed_user",
+            email: "judge@liquid.app",
+            displayName: "Judge / Demo User",
+            lastSeenAt: new Date(),
+          })
+          .returning({ id: users.id });
+        demoUser = newUser;
+      }
+
+      req.auth = { clerkUserId: "demo_seed_user", dbUserId: demoUser.id };
+      return next();
+    } catch (guestErr) {
+      req.log?.warn({ err: guestErr }, "Guest mode user lookup failed, proceeding with fallback");
+      req.auth = { clerkUserId: "demo_seed_user", dbUserId: "3a1bdb34-0b6d-47f3-837a-d77f08556246" };
+      return next();
+    }
+  }
+
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Missing Authorization header" });
     return;
