@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import type { CanvasBox, ScanUrgency } from "@/services/apiValidators";
+export type ScanUrgency = "Low" | "Medium" | "High" | "Critical";
+
+export interface SpatialBox {
+  ymin: number;
+  xmin: number;
+  ymax: number;
+  xmax: number;
+}
+
+export interface CanvasBox {
+  id: string;
+  label: string;
+  box: SpatialBox;
+  urgency: ScanUrgency;
+  selected?: boolean;
+  highlighted?: boolean;
+}
 
 interface Props {
   src: string;

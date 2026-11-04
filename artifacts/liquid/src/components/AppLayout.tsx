@@ -152,8 +152,8 @@ export default function AppLayout({
               <div className="px-4 py-3 space-y-1">
                 {NAV_LINKS.map(({ label, href }) => {
                   const isActive =
-                    href === "/dashboard"
-                      ? location === "/dashboard" || location === "/app"
+                    href === "/"
+                      ? location === "/" || location === "/dashboard" || location === "/app"
                       : location === href;
                   return (
                     <Link

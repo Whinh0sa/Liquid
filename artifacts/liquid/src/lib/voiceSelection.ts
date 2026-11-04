@@ -57,7 +57,7 @@ export function parseVoiceCommand(
     }
   }
 
-  if (/\b(high|critical)\b/.test(text) && /urgenc|priority|risk/.test(text)) {
+  if (/\b(urgent|urgency|high|critical)\b/.test(text) || (/\b(priority|risk)\b/.test(text) && !/\blow\b/.test(text))) {
     const fn = (a: VoiceSelectableAsset): boolean => a.urgency === "High" || a.urgency === "Critical";
     return result("select", idsWhere(detectedAssets, fn), "high urgency", fn);
   }
