@@ -1,51 +1,65 @@
-# Liquid 2.0 — Autonomous Spatial Asset Terminal
+# Liquid 2.0 — Multimodal Spatial Asset Liquidity Terminal
 
-> **Meta AI Developer Hackathon Submission**  
+> **Meta Global AI Developer Hackathon 2026 — Track 1: Build for Your World**  
 > *Transforming idle consumer electronics into liquid capital via Meta SAM 3.1, Muse Spark 1.3 visual spatial segmentation, and algorithmic secondary-market arbitrage.*
 
 🌐 **Live Terminal (Zero Login Required)**: [https://liquid-terminal.vercel.app/](https://liquid-terminal.vercel.app/)  
-⚡ **Demo Video & Presentation Kit**: [scripts/motion_title_generator.html](scripts/motion_title_generator.html)
+⚡ **GitHub Repository**: [https://github.com/Whinh0sa/Liquid](https://github.com/Whinh0sa/Liquid)
 
 ---
 
 ## ⚡ Executive Summary & Thesis
 
-Over **$100 billion in consumer electronics** sits idle in drawers and offices—what we define as **"dead capital."** Device owners procrastinate selling because cataloging serial numbers, assessing condition, and creating listings creates friction. By the time they act, their hardware has cascaded down steep **hardware depreciation cliffs**.
+Over **$100 billion in consumer electronics** sits idle in drawers and offices—what we define as **"dead capital."** Device owners procrastinate selling because cataloging serial numbers, assessing cosmetic condition, looking up fair market comps, and drafting listings across multiple platforms introduces immense friction. By the time they act, their hardware has cascaded down steep **hardware depreciation cliffs** triggered by next-generation product announcements.
 
-**Liquid 2.0** is an autonomous multimodal spatial asset terminal that eliminates this friction entirely. With a single workspace photo, Liquid detects hardware assets, maps depreciation vectors, and generates 1-click platform exit drafts ahead of market repricing events.
+**Liquid 2.0** is an autonomous multimodal spatial asset terminal that eliminates this friction entirely. With a single workspace photo, Liquid spatially segments hardware assets, calculates holding costs, maps upcoming depreciation vectors, and generates 1-click platform exit drafts ahead of market repricing events.
 
 ---
 
-## 🚀 Key Features & Meta AI Integration
+## 🛠️ Core Tech Stack
+
+- **Computer Vision & Spatial Segmentation**: Meta Segment Anything Model (SAM 3.1)
+- **Multimodal Intelligence & Valuation**: Meta Muse Spark 1.3
+- **Voice Intelligence**: Meta Muse Voice Transcribe
+- **Frontend Engine**: React 19, TypeScript, Tailwind CSS, Vite, Framer Motion
+- **Backend Architecture**: Express 5, Drizzle ORM, Neon PostgreSQL (SSL-pooled)
+- **Deployment & Edge Infrastructure**: Vercel Edge Network
+
+---
+
+## 🚀 Key Features & Meta AI Capabilities
 
 ### 1. Spatial Hardware Scanning (Meta SAM 3.1 & Muse Spark 1.3)
-- Drop or capture any desk or room photo.
+- Drop or capture any desk or room photo, or click **"Sample Desk (1-Click Scan)"**.
 - SAM 3.1 visual segmentation isolates each device in the frame (`MacBook Pro`, `Sony Headphones`, `Mechanical Keyboard`, `4K Display`).
 - Extracts **real visual image crop thumbnails** directly from the source photo.
-- Ticker immediately calculates the **Cost of Inaction** (e.g. *Holding this setup burns $3.85/day in passive depreciation*).
+- Telemetry ticker immediately calculates the **Cost of Inaction** (e.g. *Holding this setup burns $3.85/day in passive depreciation*). Total detected value: **$1,415**.
 
 ### 2. Hands-Free Voice Commands (Muse Voice Transcribe)
-- Natural language command filter: `"Select urgent items"`, `"Over $500"`, `"Select all"`, or `"Clear"`.
-- Instantly isolates assets facing imminent depreciation cliffs for 1-click batch commitment.
+- Natural language command filter via live speech recognition or tactile simulation chips:
+  - `⚡ "Select urgent items"` — automatically filters to assets facing an imminent cliff.
+  - `✓ "Select all"` — selects all detected segments for batch import.
+  - `✕ "Clear"` — resets selections.
+- Prominent **`[🎙️ Mic]`** button allows full hands-free control.
 
 ### 3. Concentric Portfolio Health Rings
-- Tri-color concentric SVG risk model:
-  - 🟣 **Portfolio Vitality** (Overall portfolio health score /100)
-  - 🟢 **Capital Protected** (Percentage of capital insulated from near-term cliff drops)
-  - 🟡 **Stable Inventory** (Velocity outside active liquidation window)
-- Recalculates dynamically upon committing scanned assets or executing exits.
+- Real-time concentric SVG risk and capital allocation telemetry:
+  - 🟣 **Portfolio Vitality / Health %** (Overall hardware condition and portfolio resilience /100)
+  - 🟢 **Capital Protected %** (Percentage of capital insulated from near-term cliff drops)
+  - 🟡 **Stable Inventory %** (Velocity outside active liquidation window)
+- Center indicator reflects active portfolio grade (e.g. `A-`). Recalculates dynamically upon committing scanned assets or executing exits.
 
 ### 4. 1-Click Multi-Platform Exit Listings
-- Algorithmic platform-tailored listing drafts:
-  - **eBay**: Keyword SEO, title optimization, and fee calculations (87% net).
-  - **Swappa**: Clean spec sheets and pre-listing IMEI verification checklists (90% net).
-  - **Facebook Marketplace**: Local pickup safety notes and cash-on-delivery guidelines (98% net).
+- Opening any asset card reveals the **Depreciation Radar** and 1-click **Generate Exit Listing**:
+  - **eBay**: Keyword SEO, title optimization, and fee calculations (87% net payout).
+  - **Swappa**: Clean hardware spec sheets and pre-listing IMEI verification checklists (90% net payout).
+  - **Facebook Marketplace**: Local pickup safety notes and cash-on-delivery guidelines (98% net payout).
 
 ---
 
 ## 🎯 Quickstart for Hackathon Judges
 
-### Option A: Instant Live Web Evaluation (Recommended)
+### Option A: Instant Live Web Evaluation (Zero Login Required)
 Open **[https://liquid-terminal.vercel.app/](https://liquid-terminal.vercel.app/)**.  
 The live site is **completely ungated** (no signup or login required). It loads with a calibrated portfolio, interactive concentric rings, and a 1-click **Sample Desk** scanner.
 
@@ -55,7 +69,7 @@ The live site is **completely ungated** (no signup or login required). It loads 
 
 #### Prerequisites
 - **Node.js**: v20 or higher (v24 recommended)
-- **pnpm**: v9 or higher (or npm)
+- **pnpm**: v9 or higher
 
 #### 1. Clone the Repository
 ```bash
@@ -99,8 +113,7 @@ Liquid-Repository/
 │           ├── routes/      # AI scan, import-batch, listing generation, portfolio
 │           └── services/    # Meta Model SDK (muse-spark-1.3) client integration
 ├── lib/                     # Shared packages (api-client, db schema)
-└── scripts/
-    └── motion_title_generator.html # 60fps presentation graphic engine
+└── README.md                # Submission narrative, architecture, and judge instructions
 ```
 
 ---

@@ -53,3 +53,12 @@ Thumbs.db
 .env.*
 .env.local
 *.log
+
+!.env.example
+.jules/
+*.scratchpad*
+replit.md
+.replit
+.replitignore
+.replit-artifact/
+liquid_roadmap*.md
