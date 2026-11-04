@@ -296,8 +296,7 @@ export default function Landing() {
             <SignedIn>
               <Link href="/dashboard">
                 <button
-                  className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-bold text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
-                  style={{ backgroundColor: "#9126EF", boxShadow: "0 8px 30px rgba(145,38,239,0.30)" }}
+                  className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-bold text-white shadow-xs transition-all hover:bg-[#6D28D9] active:scale-98 bg-[#7C3AED]"
                 >
                   Go to Dashboard
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -307,8 +306,7 @@ export default function Landing() {
             <SignedOut>
               <SignInButton mode="modal">
                 <button
-                  className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-bold text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
-                  style={{ backgroundColor: "#9126EF", boxShadow: "0 8px 30px rgba(145,38,239,0.30)" }}
+                  className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-bold text-white shadow-xs transition-all hover:bg-[#6D28D9] active:scale-98 bg-[#7C3AED]"
                 >
                   Start Tracking Free
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -525,8 +523,7 @@ export default function Landing() {
 
             {/* Floating alert badge */}
             <div
-              className="absolute -top-4 -right-4 bg-white border border-amber-200 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-2.5"
-              style={{ boxShadow: "0 4px 20px rgba(245,158,11,0.15)" }}
+              className="absolute -top-4 -right-4 bg-white border border-amber-200 rounded-2xl px-4 py-3 shadow-md flex items-center gap-2.5"
             >
               <Bell className="w-4 h-4 text-amber-500 shrink-0" />
               <div>
@@ -607,8 +604,7 @@ export default function Landing() {
           <motion.div variants={fadeUp}>
             <Link href="/dashboard">
               <button
-                className="group flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-                style={{ backgroundColor: "#9126EF", boxShadow: "0 8px 30px rgba(145,38,239,0.28)" }}
+                className="group flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all bg-[#7C3AED] hover:bg-[#6D28D9] active:scale-98 shadow-xs"
               >
                 Start Tracking Your Net Worth
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

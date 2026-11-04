@@ -523,8 +523,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setShowBatchModal(true)}
-              className="flex items-center gap-2.5 px-5 py-3 rounded-full font-bold text-white text-xs shadow-xl whitespace-nowrap transition-all hover:scale-105 active:scale-95"
-              style={{ backgroundColor: "#059669", boxShadow: "0 8px 24px rgba(5,150,105,0.35)" }}
+              className="flex items-center gap-2.5 px-5 py-3 rounded-full font-bold text-white text-xs shadow-md whitespace-nowrap transition-all hover:scale-102 active:scale-98 bg-emerald-600 hover:bg-emerald-700"
             >
               <Package className="w-4 h-4" />
               <span>Liquidate All In Window</span>

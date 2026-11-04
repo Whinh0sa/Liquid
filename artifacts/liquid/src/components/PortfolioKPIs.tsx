@@ -107,8 +107,7 @@ export default function PortfolioKPIs({
               aria-label="Scan physical asset with camera"
               onClick={onScanClick}
               data-testid="btn-spatial-scan"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all hover:opacity-95 hover:-translate-y-0.5 flex items-center gap-1.5"
-              style={{ backgroundColor: "#7C3AED", boxShadow: "0 4px 14px rgba(124,58,237,0.25)" }}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all flex items-center gap-1.5 active:scale-95"
             >
               <Zap className="w-3.5 h-3.5" />
               Spatial Scan
