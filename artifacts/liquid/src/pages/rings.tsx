@@ -6,6 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -30,9 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Rings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data, isLoading } = useGetPortfolio({
-    query: { queryKey: getGetPortfolioQueryKey() },
-  });
+  const { data, isLoading } = usePortfolio();
   const portfolio = data?.portfolio ?? [];
 
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);

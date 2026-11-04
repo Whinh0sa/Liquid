@@ -260,7 +260,7 @@
 
 .btn-sell:hover {
   background-color: #059669;
-  box-shadow: 0 4px 12px rgba(16,185,129,0.35);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 /* Scrollbar — minimal light */

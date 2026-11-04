@@ -23,12 +23,16 @@ import {
   Watch,
   Flame,
   Info,
+  TrendingDown,
+  Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetPortfolioQueryKey, customFetch } from "@workspace/api-client-react";
 import AssetImage from "@/components/ui/AssetImage";
 import { formatCurrencyWhole } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
+import { isDemoMode, addDemoAsset } from "@/lib/demoData";
 
 interface AddItemModalProps {
   open: boolean;
@@ -54,24 +58,24 @@ interface CategoryMeta {
 }
 
 const CATEGORIES: CategoryMeta[] = [
-  { id: "TECH", label: "Tech & Hardware", icon: Laptop, defaultDropRate: 0.16, sampleMakes: ["Apple", "Samsung", "Dell"] },
-  { id: "AUDIO", label: "Audio & Hi-Fi", icon: Headphones, defaultDropRate: 0.12, sampleMakes: ["Sony", "Bose", "Sennheiser"] },
-  { id: "CAMERA", label: "Camera & Optics", icon: Camera, defaultDropRate: 0.10, sampleMakes: ["Sony", "Canon", "Leica"] },
-  { id: "GAMING", label: "Gaming & GPU", icon: Gamepad2, defaultDropRate: 0.18, sampleMakes: ["NVIDIA", "Sony", "Nintendo"] },
-  { id: "WATCH", label: "Horology / Watches", icon: Watch, defaultDropRate: 0.07, sampleMakes: ["Rolex", "Omega", "Patek"] },
-  { id: "FASHION", label: "Luxury & Apparel", icon: Sparkles, defaultDropRate: 0.14, sampleMakes: ["Gucci", "Louis Vuitton", "Prada"] },
-  { id: "SNEAKER", label: "Sneakers", icon: Flame, defaultDropRate: 0.15, sampleMakes: ["Nike", "Jordan", "Adidas"] },
-  { id: "OTHER", label: "Other Assets", icon: Package, defaultDropRate: 0.12, sampleMakes: ["Herman Miller", "Custom"] },
+  { id: "TECH", label: "Tech & Hardware", icon: Laptop, defaultDropRate: 0.16, sampleMakes: ["Apple", "Samsung", "Dell", "Lenovo"] },
+  { id: "AUDIO", label: "Audio & Hi-Fi", icon: Headphones, defaultDropRate: 0.12, sampleMakes: ["Sony", "Bose", "Sennheiser", "Apple"] },
+  { id: "CAMERA", label: "Camera & Optics", icon: Camera, defaultDropRate: 0.10, sampleMakes: ["Sony", "Canon", "Fujifilm", "Leica"] },
+  { id: "GAMING", label: "Gaming & GPU", icon: Gamepad2, defaultDropRate: 0.18, sampleMakes: ["NVIDIA", "Sony", "Nintendo", "Valve"] },
+  { id: "WATCH", label: "Horology & Watches", icon: Watch, defaultDropRate: 0.07, sampleMakes: ["Rolex", "Omega", "Tudor", "Seiko"] },
+  { id: "FASHION", label: "Luxury & Apparel", icon: Sparkles, defaultDropRate: 0.14, sampleMakes: ["Gucci", "Louis Vuitton", "Prada", "Dior"] },
+  { id: "SNEAKER", label: "Sneakers", icon: Flame, defaultDropRate: 0.15, sampleMakes: ["Nike", "Jordan", "Adidas", "New Balance"] },
+  { id: "OTHER", label: "Other Assets", icon: Package, defaultDropRate: 0.12, sampleMakes: ["Herman Miller", "Dyson", "Teenage Engineering"] },
 ];
 
 const PRESET_MODELS: Record<string, string[]> = {
-  Apple: ["iPhone 15 Pro Max", "iPhone 16 Pro", "MacBook Pro M3", "iPad Pro M4", "AirPods Max"],
-  Sony: ["A7IV Body", "WH-1000XM5", "PlayStation 5 Pro", "FX3 Cinema Line"],
+  Apple: ["iPhone 16 Pro", "iPhone 15 Pro Max", "MacBook Pro M3", "iPad Pro M4", "AirPods Max"],
+  Sony: ["WH-1000XM5", "A7IV Body", "PlayStation 5 Pro", "FX3 Cinema Line"],
   Rolex: ["Submariner Date", "Daytona Chronograph", "GMT-Master II"],
   Nike: ["Air Jordan 1 High OG", "Dunk Low Retro", "Air Max 95"],
   Samsung: ["Galaxy S24 Ultra", "Galaxy Z Fold 6", "Odyssey OLED G9"],
   Canon: ["EOS R5 Mark II", "RF 24-70mm f/2.8L", "EOS R6"],
-  NVIDIA: ["GeForce RTX 4090", "GeForce RTX 4080 Super"],
+  NVIDIA: ["GeForce RTX 4090", "GeForce RTX 4080 Super", "RTX 4070 Ti Super"],
   Nintendo: ["Switch OLED", "Switch 2 Pre-Order"],
   Leica: ["M11 Rangefinder", "Q3 28mm"],
 };
@@ -138,23 +142,36 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
     cliffDate.setDate(cliffDate.getDate() + cliffDays);
     cliffDate.setHours(12, 0, 0, 0);
 
+    const assetPayload = {
+      category,
+      make: make.trim(),
+      model: model.trim(),
+      storageCapacity: storageCapacity.trim() || undefined,
+      purchasePrice: purchase,
+      currentEstimatedValue: current,
+      projectedDrop,
+      cliffDate: cliffDate.toISOString(),
+      cliffReason: cliffReason.trim() || "Lifecycle depreciation event",
+      status: cliffDays <= 14 ? "ACTION_REQUIRED" : "HOLD",
+    };
+
     setIsSubmitting(true);
     try {
-      await customFetch("/api/portfolio", {
-        method: "POST",
-        body: JSON.stringify({
-          category,
-          make: make.trim(),
-          model: model.trim(),
-          storageCapacity: storageCapacity.trim() || undefined,
-          purchasePrice: purchase,
-          currentEstimatedValue: current,
-          projectedDrop,
-          cliffDate: cliffDate.toISOString(),
-          cliffReason: cliffReason.trim() || "Lifecycle depreciation event",
-          status: cliffDays <= 14 ? "ACTION_REQUIRED" : "HOLD",
-        }),
-      });
+      if (isDemoMode()) {
+        // Direct local addition for offline / demo mode
+        addDemoAsset(assetPayload);
+      } else {
+        try {
+          await customFetch("/api/portfolio", {
+            method: "POST",
+            body: JSON.stringify(assetPayload),
+          });
+        } catch (apiErr: any) {
+          // If live API returns 401 or network error, transparently persist to local store
+          console.warn("Backend unavailable or unauthorized, falling back to local store:", apiErr);
+          addDemoAsset(assetPayload);
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: getGetPortfolioQueryKey() });
 
@@ -168,7 +185,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
     } catch (err: any) {
       toast({
         title: "Failed to Add Asset",
-        description: err?.message || "Could not register asset in the database.",
+        description: err?.message || "Could not register asset. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -178,66 +195,87 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(680px,96vw)] w-[96vw] max-h-[92vh] overflow-y-auto p-0 bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
+      <DialogContent className="max-w-[min(640px,94vw)] w-[94vw] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
         <DialogTitle className="sr-only">Add Portfolio Asset</DialogTitle>
 
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-[#0B0D13]/60">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-[#0B0D13]/70 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shrink-0 shadow-xs">
               <PlusCircle className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="font-poppins font-bold text-lg text-slate-900 dark:text-slate-100 leading-tight">
+                <h2 className="font-poppins font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                   Add Asset to Portfolio
                 </h2>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                  Step {step} of 2
-                </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {step === 1
-                  ? "Select item category and hardware specification."
-                  : "Calibrate valuation, depreciation trajectory, and cliff event."}
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {step === 1 ? "Step 1 of 2 · Category & Hardware Specs" : "Step 2 of 2 · Financials & Cliff Trajectory"}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
+            aria-label="Close modal"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-[#1A1F2E] transition-colors shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Step Progress Bar */}
-        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1">
-          <div
-            className="h-full bg-[#7C3AED] transition-all duration-300"
-            style={{ width: step === 1 ? "50%" : "100%" }}
-          />
+        {/* Step Indicator Tabs */}
+        <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-[#0B0D13]/40 shrink-0">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className={`flex-1 py-2.5 text-xs font-semibold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+              step === 1
+                ? "border-[#7C3AED] text-[#7C3AED] dark:text-purple-400 bg-white dark:bg-[#131722]"
+                : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <span className="w-4 h-4 rounded-full bg-current/15 text-[10px] flex items-center justify-center font-mono">1</span>
+            <span>1. Hardware Spec</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNextStep()}
+            className={`flex-1 py-2.5 text-xs font-semibold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+              step === 2
+                ? "border-[#7C3AED] text-[#7C3AED] dark:text-purple-400 bg-white dark:bg-[#131722]"
+                : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <span className="w-4 h-4 rounded-full bg-current/15 text-[10px] flex items-center justify-center font-mono">2</span>
+            <span>2. Valuation & Risk</span>
+          </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5">
+        {/* Form Body - Scrollable */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
                 key="step-1"
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.18 }}
-                className="space-y-5"
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.16 }}
+                className="space-y-4"
               >
                 {/* Category Selection Grid */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    1. Select Asset Category
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Select Asset Category
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {(dropRate * 100).toFixed(0)}% base risk
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {CATEGORIES.map((c) => {
                       const Icon = c.icon;
                       const isSelected = category === c.id;
@@ -251,16 +289,16 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                               setMake(c.sampleMakes[0]);
                             }
                           }}
-                          className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-2 ${
+                          className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
                             isSelected
-                              ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-sm"
-                              : "bg-white dark:bg-[#1A1F2E] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#23283A]"
+                              ? "bg-[#7C3AED] text-white border-[#7C3AED] shadow-sm ring-1 ring-[#7C3AED]"
+                              : "bg-slate-50 dark:bg-[#1A1F2E] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <Icon className={`w-4 h-4 ${isSelected ? "text-purple-300 dark:text-purple-700" : "text-slate-500 dark:text-slate-400"}`} />
-                            <span className="text-[10px] font-mono opacity-80">
-                              {(c.defaultDropRate * 100).toFixed(0)}% drop
+                          <div className="flex items-center justify-between w-full">
+                            <Icon className={`w-4 h-4 ${isSelected ? "text-white" : "text-slate-500 dark:text-slate-400"}`} />
+                            <span className={`text-[10px] font-mono ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
+                              {(c.defaultDropRate * 100).toFixed(0)}%
                             </span>
                           </div>
                           <span className="text-xs font-semibold truncate leading-tight">
@@ -273,10 +311,10 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 </div>
 
                 {/* Brand & Model Input Row */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Manufacturer / Brand
+                      Brand / Manufacturer
                     </label>
                     <input
                       type="text"
@@ -284,7 +322,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                       value={make}
                       onChange={(e) => setMake(e.target.value)}
                       placeholder="e.g. Apple, Sony, Rolex"
-                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
+                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium transition-colors"
                     />
                     <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
                       {selectedCatMeta.sampleMakes.map((p) => (
@@ -295,7 +333,11 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                             setMake(p);
                             if (PRESET_MODELS[p]?.[0]) setModel(PRESET_MODELS[p][0]);
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap ${
+                            make === p
+                              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-700"
+                              : "bg-slate-100 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#23283A]"
+                          }`}
                         >
                           {p}
                         </button>
@@ -305,7 +347,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Model Name &amp; Spec
+                      Model & Hardware Variant
                     </label>
                     <input
                       type="text"
@@ -313,7 +355,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                       value={model}
                       onChange={(e) => setModel(e.target.value)}
                       placeholder="e.g. iPhone 15 Pro Max, Submariner"
-                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
+                      className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium transition-colors"
                     />
                     {PRESET_MODELS[make] && (
                       <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
@@ -322,7 +364,11 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                             key={m}
                             type="button"
                             onClick={() => setModel(m)}
-                            className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 whitespace-nowrap transition-colors"
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap ${
+                              model === m
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-700"
+                                : "bg-purple-50/70 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60"
+                            }`}
                           >
                             {m}
                           </button>
@@ -335,58 +381,58 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Storage & Spec Variant */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Storage / Variant / Condition Note (Optional)
+                    Storage / Condition Note (Optional)
                   </label>
                   <input
                     type="text"
                     value={storageCapacity}
                     onChange={(e) => setStorageCapacity(e.target.value)}
-                    placeholder="e.g. 256GB Titanium, 44mm Oystersteel, Mint with Box"
-                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
+                    placeholder="e.g. 256GB Titanium, Mint in Box, 16GB Unified RAM"
+                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium transition-colors"
                   />
                 </div>
 
                 {/* Live Preview Card */}
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-white dark:bg-[#0B0D13] border border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white dark:bg-[#0B0D13] border border-slate-200 dark:border-slate-800 shrink-0">
                     <AssetImage
                       model={model}
                       make={make}
                       category={category}
                       alt={model}
                       aspectRatio="square"
-                      className="w-full h-full"
+                      className="w-full h-full object-contain p-1"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        Live Studio Imagery
+                        Live Matched Asset
                       </span>
                     </div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
                       {make} {model} {storageCapacity ? `(${storageCapacity})` : ""}
                     </p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Category default risk profile: {(dropRate * 100).toFixed(0)}% projected drop.
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      Base category risk profile: {(dropRate * 100).toFixed(0)}% drop on release.
                     </p>
                   </div>
                 </div>
 
                 {/* Step 1 Actions */}
-                <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => onOpenChange(false)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-sm active:scale-98 flex items-center gap-2"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-sm active:scale-98 flex items-center gap-1.5"
                   >
                     Continue to Valuation
                     <ArrowRight className="w-4 h-4" />
@@ -398,14 +444,14 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
             {step === 2 && (
               <motion.div
                 key="step-2"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.18 }}
-                className="space-y-5"
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.16 }}
+                className="space-y-4"
               >
                 {/* Financials: Purchase vs Current Resale */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Original Purchase Price ($)
@@ -449,13 +495,13 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                   </div>
                 </div>
 
-                {/* Valuation Analysis Box */}
-                <div className="p-3.5 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 grid grid-cols-3 gap-3 text-center">
+                {/* Valuation Metrics Summary */}
+                <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 grid grid-cols-3 gap-2 text-center">
                   <div>
                     <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
                       Value Retained
                     </span>
-                    <span className="font-mono text-base font-bold text-purple-900 dark:text-purple-100">
+                    <span className="font-mono text-sm sm:text-base font-bold text-purple-900 dark:text-purple-100">
                       {retentionPct}%
                     </span>
                   </div>
@@ -463,15 +509,15 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
                       Cliff Drop Rate
                     </span>
-                    <span className="font-mono text-base font-bold text-purple-900 dark:text-purple-100">
+                    <span className="font-mono text-sm sm:text-base font-bold text-purple-900 dark:text-purple-100">
                       {(dropRate * 100).toFixed(0)}%
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold uppercase tracking-wider block">
+                    <span className="text-[10px] text-rose-700 dark:text-rose-300 font-semibold uppercase tracking-wider block">
                       Projected Loss
                     </span>
-                    <span className="font-mono text-base font-bold text-rose-600 dark:text-rose-400">
+                    <span className="font-mono text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400">
                       -${projectedDropDollars}
                     </span>
                   </div>
@@ -480,7 +526,8 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Days to Cliff Slider */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
                       Days Until Depreciation Cliff
                     </label>
                     <div className="flex items-center gap-2">
@@ -497,10 +544,10 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                           ? "Action Required"
                           : cliffDays <= 45
                             ? "Window Open"
-                            : "Monitoring / Safe"}
+                            : "Safe Horizon"}
                       </span>
                       <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#1A1F2E] px-2 py-0.5 rounded">
-                        {cliffDays} days
+                        {cliffDays}d
                       </span>
                     </div>
                   </div>
@@ -515,13 +562,13 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                   />
 
                   {/* Preset Quick Jumps */}
-                  <div className="flex items-center gap-1.5 mt-2">
+                  <div className="grid grid-cols-5 gap-1.5 mt-2">
                     {[7, 14, 30, 60, 90].map((d) => (
                       <button
                         key={d}
                         type="button"
                         onClick={() => setCliffDays(d)}
-                        className={`flex-1 py-1 text-xs font-mono font-semibold rounded-lg border transition-all ${
+                        className={`py-1 text-xs font-mono font-semibold rounded-lg border transition-all text-center ${
                           cliffDays === d
                             ? "bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs"
                             : "bg-slate-50 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#23283A]"
@@ -536,7 +583,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 {/* Cliff Reason & Presets */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Depreciation Catalyst / Expected Event
+                    Depreciation Catalyst Event
                   </label>
                   <input
                     type="text"
@@ -544,7 +591,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     value={cliffReason}
                     onChange={(e) => setCliffReason(e.target.value)}
                     placeholder="e.g. Hardware Keynote Expected"
-                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium"
+                    className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-[#1A1F2E] border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7C3AED] focus:bg-white dark:focus:bg-[#0B0D13] text-slate-900 dark:text-slate-100 font-medium transition-colors"
                   />
                   <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 scrollbar-none">
                     {CLIFF_REASONS.map((r) => (
@@ -552,7 +599,11 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                         key={r}
                         type="button"
                         onClick={() => setCliffReason(r)}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#1A1F2E] hover:bg-slate-200 dark:hover:bg-[#23283A] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap ${
+                          cliffReason === r
+                            ? "bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-700"
+                            : "bg-slate-100 dark:bg-[#1A1F2E] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#23283A]"
+                        }`}
                       >
                         {r}
                       </button>
@@ -561,11 +612,11 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                 </div>
 
                 {/* Step 2 Actions */}
-                <div className="pt-2 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors flex items-center gap-1.5"
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors flex items-center justify-center gap-1.5"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
@@ -574,17 +625,17 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     <button
                       type="button"
                       onClick={() => onOpenChange(false)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors"
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A1F2E] transition-colors text-center"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-sm active:scale-98 disabled:opacity-50 flex items-center gap-1.5"
+                      className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-all shadow-sm active:scale-98 disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                       <PlusCircle className="w-4 h-4" />
-                      {isSubmitting ? "Registering..." : "Add Asset to Workstation"}
+                      {isSubmitting ? "Adding..." : "Add to Portfolio"}
                     </button>
                   </div>
                 </div>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Liquid 2.0 — Motion Graphics & Launch Deck</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #F1F5F9;
+      color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(148, 163, 184, 0.3) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.3) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 40%, rgba(241, 245, 249, 0.85) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .deck-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1200px;
+      aspect-ratio: 16 / 9;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px -15px rgba(100, 116, 139, 0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      overflow: hidden;
+    }
+    .scene {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .scene.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10B981;
+      margin-bottom: 24px;
+    }
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #F59E0B;
+    }
+    .badge-crimson {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #EF4444;
+    }
+    .headline {
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #0F172A 0%, #334155 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtext {
+      font-size: 24px;
+      color: #475569;
+      max-width: 800px;
+      line-height: 1.4;
+      font-weight: 400;
+    }
+    .counter {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 88px;
+      font-weight: 900;
+      color: #10B981;
+      letter-spacing: -1px;
+      margin: 16px 0;
+      /* clean text */
+    }
+    .stat-row {
+      display: flex;
+      gap: 32px;
+      margin-top: 36px;
+    }
+    .stat-card {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      padding: 20px 32px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stat-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+    .stat-lbl {
+      font-size: 13px;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .controls {
+      position: fixed;
+      bottom: 24px;
+      z-index: 50;
+      display: flex;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(12px);
+      border: 1px solid #CBD5E1;
+      padding: 8px 16px;
+      border-radius: 9999px;
+    }
+    button {
+      background: #F8FAFC;
+      color: #0F172A;
+      border: 1px solid #CBD5E1;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover {
+      background: #E2E8F0;
+      border-color: #10B981;
+      color: #10B981;
+    }
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: #10B981;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-grid"></div>
+  <div class="vignette"></div>
+
+  <div class="deck-container">
+    <!-- Slide 1: Hook -->
+    <div class="scene active" id="s1">
+      <div class="badge badge-crimson">PROBLEM · DEAD CAPITAL</div>
+      <div class="counter" id="deadCapCounter">$100,000,000,000</div>
+      <div class="subtext">In usable consumer hardware sits idle in drawers and desks worldwide, losing value every single day.</div>
+    </div>
+
+    <!-- Slide 2: Hardware Cliff -->
+    <div class="scene" id="s2">
+      <div class="badge badge-amber">MARKET TIMING · THE CLIFF</div>
+      <div class="headline">Depreciation Isn't Linear.</div>
+      <div class="subtext">Hardware falls off steep cliffs on release cycles. Liquid tracks the drop before it happens.</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color: #EF4444">-22% Drop</div>
+          <div class="stat-lbl">On Next Flagship Release</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #F59E0B">14 Days</div>
+          <div class="stat-lbl">Optimal Sell Window</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #10B981">+$215 Saved</div>
+          <div class="stat-lbl">Vs. Waiting 60 Days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: SAM 3.1 & Muse Spark -->
+    <div class="scene" id="s3">
+      <div class="badge">META AI STACK · SAM 3.1 + MUSE SPARK 1.3</div>
+      <div class="headline">Spatial Workspace Scan</div>
+      <div class="subtext">One photo. Zero manual entry. Computer vision bounds every device and estimates secondary market floors.</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color: #10B981">$1,415</div>
+          <div class="stat-lbl">Dead Capital Unlocked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #F59E0B">$4.20 / day</div>
+          <div class="stat-lbl">Cost of Inaction Burn</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #60A5FA">4 Assets</div>
+          <div class="stat-lbl">Segmented in 0.8s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Autonomous Exit Execution -->
+    <div class="scene" id="s4">
+      <div class="badge">EXIT ENGINE · MULTI-PLATFORM ARBITRAGE</div>
+      <div class="headline">From Idle Clutter to Cold Cash</div>
+      <div class="subtext">1-click draft listings for eBay, Swappa, and Facebook Marketplace with fee-optimized net arbitrage.</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color: #10B981">$828 Net</div>
+          <div class="stat-lbl">Swappa (3% Fee)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #94A3B8">$800 Net</div>
+          <div class="stat-lbl">eBay (13.25% Fee)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #F8FAFC">100% Free</div>
+          <div class="stat-lbl">Local Marketplace</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Terminal Live Closing -->
+    <div class="scene" id="s5">
+      <div class="badge">META GLOBAL AI HACKATHON · LIQUID 2.0</div>
+      <div class="headline">Liquid 2.0</div>
+      <div class="subtext">Autonomous Multimodal Spatial Liquidity Terminal</div>
+      <div class="counter" style="font-size: 38px; color: #60A5FA; margin-top: 24px;">liquid-terminal.vercel.app</div>
+      <div class="subtext" style="font-size: 16px; margin-top: 12px; color: #64748B;">Priesthood Winosa Patricks · Track 1: Indie Developer</div>
+    </div>
+
+    <div class="progress-bar" id="pbar" style="width: 20%;"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="prev()">← Previous</button>
+    <button onclick="next()">Next (Space) →</button>
+    <button id="autoPlayBtn" onclick="autoPlay()">▶ Auto Play</button>
+  </div>
+
+  <script>
+    let cur = 1;
+    const total = 5;
+    let timer = null;
+
+    function show(idx) {
+      for (let i = 1; i <= total; i++) {
+        document.getElementById('s' + i).classList.remove('active');
+      }
+      document.getElementById('s' + idx).classList.add('active');
+      document.getElementById('pbar').style.width = (idx / total * 100) + '%';
+      cur = idx;
+    }
+
+    function next() {
+      cur = cur >= total ? 1 : cur + 1;
+      show(cur);
+    }
+
+    function prev() {
+      cur = cur <= 1 ? total : cur - 1;
+      show(cur);
+    }
+
+    function autoPlay() {
+      const btn = document.getElementById('autoPlayBtn');
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        if (btn) btn.textContent = '▶ Auto Play';
+      } else {
+        timer = setInterval(next, 5000);
+        if (btn) btn.textContent = '⏸ Pause';
+      }
+    }
+
+    // Auto-start playback when page loads
+    window.addEventListener('load', () => { autoPlay(); });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft') prev();
+    });
+  </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import {
   getGetPortfolioQueryKey,
   useUpdateAssetStatus,
 } from "@workspace/api-client-react";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -34,9 +35,7 @@ type AlertFilter = "ALL" | "ACTIONABLE" | "MONITORING";
 export default function Alerts() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data, isLoading } = useGetPortfolio({
-    query: { queryKey: getGetPortfolioQueryKey() },
-  });
+  const { data, isLoading } = usePortfolio();
   const portfolio = data?.portfolio ?? [];
 
   const [filter, setFilter] = useState<AlertFilter>("ALL");

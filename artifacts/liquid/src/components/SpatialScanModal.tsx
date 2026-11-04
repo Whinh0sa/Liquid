@@ -137,7 +137,7 @@ function TerminalHeader({
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-3">
-      <div className="rounded-3xl border border-gray-900 bg-gray-950 text-white p-4 sm:p-5 shadow-[0_0_0_1px_rgba(16,185,129,0.08)_inset,0_0_30px_rgba(145,38,239,0.12)] flex flex-col gap-3">
+      <div className="rounded-2xl border border-slate-800 bg-slate-950 text-white p-4 sm:p-5 shadow-sm flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="font-mono text-[10px] tracking-[0.24em] text-emerald-300">
             LIQUID TERMINAL // SCAN {String(source ?? "mock").toUpperCase()}
@@ -231,7 +231,7 @@ function HudCard({
       className={[
         "group rounded-3xl border bg-white dark:bg-[#131722] p-4 shadow-sm transition-all",
         focused
-          ? "border-purple-300 dark:border-purple-500/50 shadow-[0_0_0_3px_rgba(145,38,239,0.12)]"
+          ? "border-purple-500 dark:border-purple-400"
           : "border-gray-100 dark:border-slate-800 hover:border-gray-200 dark:hover:border-slate-700",
         selected ? "bg-purple-50/40 dark:bg-purple-950/20" : "",
       ].join(" ")}

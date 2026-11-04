@@ -33,6 +33,7 @@ import AssetLedgerGrid from "@/components/AssetLedgerGrid";
 import LiquidationRadar from "@/components/LiquidationRadar";
 import SpatialScanModal from "@/components/SpatialScanModal";
 import AddItemModal from "@/components/AddItemModal";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import EmptyPortfolio from "@/components/EmptyPortfolio";
 import { computeSellWindow } from "@/lib/sellWindow";
 import { computePortfolioHealth } from "@/lib/portfolioHealth";
@@ -92,7 +93,7 @@ export default function Home() {
     }
   };
 
-  const { data, isLoading } = useGetPortfolio({ query: { queryKey: getGetPortfolioQueryKey() } });
+  const { data, isLoading } = usePortfolio();
 
   const portfolio = (data?.portfolio ?? []) as PortfolioAsset[];
   const portfolioById = useMemo(() => new Map(portfolio.map((a) => [a.id, a])), [portfolio]);
