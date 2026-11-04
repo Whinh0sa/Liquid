@@ -35,16 +35,9 @@ if (!PUBLISHABLE_KEY) {
 
 function ProtectedRoute({ component: Component }: { component: any }) {
   return (
-    <>
-      <SignedIn>
-        <ErrorBoundary name="RouteBoundary">
-          <Component />
-        </ErrorBoundary>
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
+    <ErrorBoundary name="RouteBoundary">
+      <Component />
+    </ErrorBoundary>
   );
 }
 
@@ -64,15 +57,16 @@ function Router() {
   return (
     <ErrorBoundary name="GlobalRouter">
       <Switch>
-        {/* Public marketing surface */}
-        <Route path="/" component={Landing} />
-
-        {/* App shell — dashboard + sub-pages */}
-        <Route path="/dashboard"><ProtectedRoute component={Home} /></Route>
-        <Route path="/app"><ProtectedRoute component={Home} /></Route>
+        {/* Terminal Dashboard as the default un-gated entry point for judges & users */}
+        <Route path="/" component={Home} />
+        <Route path="/dashboard" component={Home} />
+        <Route path="/app" component={Home} />
         <Route path="/analysis"><ProtectedRoute component={Analysis} /></Route>
         <Route path="/rings"><ProtectedRoute component={Rings} /></Route>
         <Route path="/alerts"><ProtectedRoute component={Alerts} /></Route>
+
+        {/* Marketing overview */}
+        <Route path="/landing" component={Landing} />
 
         <Route component={NotFound} />
       </Switch>

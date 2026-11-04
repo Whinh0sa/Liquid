@@ -124,17 +124,17 @@ function LandingNav() {
               </Link>
             </SignedIn>
             <SignedOut>
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50">
-                  Log in
-                </button>
-              </SignInButton>
-              <SignInButton mode="modal">
+              <Link href="/">
                 <button
                   className="px-4 py-2 text-sm font-bold text-white rounded-xl transition-all hover:opacity-90 active:scale-95"
                   style={{ backgroundColor: "#9126EF" }}
                 >
-                  Start tracking free
+                  Open Terminal
+                </button>
+              </Link>
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50">
+                  Log in
                 </button>
               </SignInButton>
             </SignedOut>
@@ -194,21 +194,20 @@ function LandingNav() {
                   </Link>
                 </SignedIn>
                 <SignedOut>
+                  <Link href="/" onClick={() => setMobileOpen(false)}>
+                    <button
+                      className="w-full px-3 py-3 text-sm font-bold text-white rounded-xl"
+                      style={{ backgroundColor: "#9126EF" }}
+                    >
+                      Open Terminal (Instant Demo)
+                    </button>
+                  </Link>
                   <SignInButton mode="modal">
                     <button
                       onClick={() => setMobileOpen(false)}
                       className="w-full text-left px-3 py-3 text-sm font-semibold text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
                     >
                       Log in
-                    </button>
-                  </SignInButton>
-                  <SignInButton mode="modal">
-                    <button
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full px-3 py-3 text-sm font-bold text-white rounded-xl"
-                      style={{ backgroundColor: "#9126EF" }}
-                    >
-                      Start tracking free
                     </button>
                   </SignInButton>
                 </SignedOut>
@@ -304,17 +303,17 @@ export default function Landing() {
               </Link>
             </SignedIn>
             <SignedOut>
-              <SignInButton mode="modal">
+              <Link href="/">
                 <button
                   className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-bold text-white shadow-xs transition-all hover:bg-[#6D28D9] active:scale-98 bg-[#7C3AED]"
                 >
-                  Start Tracking Free
+                  Launch Terminal (Instant Demo)
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
-              </SignInButton>
+              </Link>
               <SignInButton mode="modal">
                 <button className="flex items-center gap-1.5 px-6 py-3.5 rounded-2xl text-base font-semibold text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
-                  Log In
+                  Sign In
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </SignInButton>

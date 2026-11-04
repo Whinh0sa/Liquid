@@ -8,6 +8,7 @@
 //
 // High-craft, streamlined styling aligned with Liquid Design System.
 
+import { Link } from "wouter";
 import { TrendingDown, Clock, ShieldCheck, Zap, Activity, Plus } from "lucide-react";
 import { formatCurrency as fmt } from "@/lib/currency";
 
@@ -180,32 +181,83 @@ export default function PortfolioKPIs({
           </span>
         </div>
 
-        {/* Metric 4: Liquidity Health Index */}
-        <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/70 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Liquidity Health
-            </span>
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          </div>
-          <div className="flex items-baseline gap-2 mt-0.5">
-            <span className="text-xl font-bold text-slate-900 dark:text-slate-100 font-poppins">
-              {isZeroInventory ? "Grade —" : `Grade ${healthScore.grade}`}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              {isZeroInventory ? "(No inventory)" : `(${healthScore.score}/100)`}
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1.5">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${isZeroInventory ? 0 : healthScore.score}%`,
-                backgroundColor: healthScore.score >= 80 ? "#10B981" : healthScore.score >= 60 ? "#F59E0B" : "#EF4444",
-              }}
-            />
-          </div>
-        </div>
+        {/* Metric 4: Concentric Portfolio Health Rings */}
+        {(() => {
+          const healthVal = isZeroInventory ? 0 : healthScore.score;
+          const protectedVal = isZeroInventory ? 0 : Math.max(0, 100 - Math.min(100, Math.round(((atRiskTotal || 0) / Math.max(1, displayedNetWorth)) * 100)));
+          const stableVal = isZeroInventory ? 0 : Math.max(0, 100 - Math.min(100, Math.round(((urgentCount || 0) / Math.max(1, itemCount)) * 100)));
+          const ringsData = [
+            { label: "Portfolio Health", value: healthVal, color: "#7C3AED", track: "rgba(124, 58, 237, 0.15)", radius: 26 },
+            { label: "Capital Protected", value: protectedVal, color: "#10B981", track: "rgba(16, 185, 129, 0.15)", radius: 20 },
+            { label: "Stable Inventory", value: stableVal, color: "#F59E0B", track: "rgba(245, 158, 11, 0.15)", radius: 14 },
+          ];
+
+          return (
+            <Link
+              href="/rings"
+              className="flex flex-col justify-between p-3 rounded-xl bg-slate-50/70 dark:bg-[#1A1F2E] border border-slate-100 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-800 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Portfolio Rings
+                </span>
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 group-hover:text-purple-500 transition-colors" />
+              </div>
+
+              <div className="flex items-center gap-2.5 my-1">
+                <div className="relative w-14 h-14 shrink-0 grid place-items-center">
+                  <svg width={56} height={56} viewBox="0 0 56 56" className="rotate-[-90deg]">
+                    {ringsData.map((r, i) => {
+                      const circ = 2 * Math.PI * r.radius;
+                      const offset = circ - (circ * r.value) / 100;
+                      return (
+                        <g key={i}>
+                          <circle cx={28} cy={28} r={r.radius} fill="none" stroke={r.track} strokeWidth={3.5} />
+                          <circle
+                            cx={28}
+                            cy={28}
+                            r={r.radius}
+                            fill="none"
+                            stroke={r.color}
+                            strokeWidth={3.5}
+                            strokeDasharray={circ}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            className="transition-all duration-700 ease-out"
+                          />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <span className="font-poppins font-black text-[11px] text-slate-900 dark:text-slate-100 leading-none">
+                      {healthScore.grade}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-600 dark:text-slate-300 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] shrink-0" />
+                    <span>Health: {healthScore.score}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-600 dark:text-slate-300 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] shrink-0" />
+                    <span>Protected: {protectedVal}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-600 dark:text-slate-300 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] shrink-0" />
+                    <span>Stable: {stableVal}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 group-hover:underline">
+                Concentric Health Model &rarr;
+              </span>
+            </Link>
+          );
+        })()}
       </div>
     </section>
   );

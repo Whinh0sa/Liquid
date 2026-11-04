@@ -17,7 +17,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Nav links ────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
-  { label: "Portfolio", href: "/dashboard" },
+  { label: "Portfolio", href: "/" },
   { label: "Analysis",  href: "/analysis" },
   { label: "Rings",     href: "/rings" },
   { label: "Alerts",    href: "/alerts" },
@@ -46,12 +46,12 @@ export default function AppLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           {/* Logo & Workspace Selector */}
           <div className="flex items-center gap-6 sm:gap-8">
-            <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer select-none">
+            <Link href="/" className="flex items-center gap-2 group cursor-pointer select-none">
               <span className="font-poppins font-black text-xl tracking-tight text-slate-950 dark:text-white">
                 Liquid
               </span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200/80 uppercase tracking-wider dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800/60">
-                Pro
+                2.0
               </span>
             </Link>
 
@@ -59,8 +59,8 @@ export default function AppLayout({
             <div className="hidden md:flex items-center gap-1">
               {NAV_LINKS.map(({ label, href }) => {
                 const isActive =
-                  href === "/dashboard"
-                    ? location === "/dashboard" || location === "/app"
+                  href === "/"
+                    ? location === "/" || location === "/dashboard" || location === "/app"
                     : location === href;
                 return (
                   <Link
@@ -106,11 +106,15 @@ export default function AppLayout({
               />
             </SignedIn>
             <SignedOut>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Guest Mode</span>
+              </div>
               <SignInButton mode="modal">
                 <button
                   type="button"
                   aria-label="Sign into your Liquid account"
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                  className="px-2.5 py-1 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Sign In
                 </button>
