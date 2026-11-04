@@ -22,7 +22,7 @@ const STORAGE_KEY = "liquid-theme";
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") return "light";
   try {
     const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (saved && (saved === "light" || saved === "dark" || saved === "system")) {
@@ -31,7 +31,7 @@ function getInitialTheme(): Theme {
   } catch {
     // LocalStorage blocked
   }
-  return "system";
+  return "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const initial = getInitialTheme();
     if (initial === "dark") return true;
     if (initial === "light") return false;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return false;
   });
 
   useEffect(() => {
