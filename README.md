@@ -10,6 +10,10 @@
 
 ## ⚡ Executive Summary & Thesis
 
+<p align="center">
+  <img src="docs/images/badge_01.png" width="85%" alt="Liquid 2.0 Hero" />
+</p>
+
 Over **$100 billion in consumer electronics** sits idle in drawers and offices—what we define as **"dead capital."** Device owners procrastinate selling because cataloging serial numbers, assessing cosmetic condition, looking up fair market comps, and drafting listings across multiple platforms introduces immense friction. By the time they act, their hardware has cascaded down steep **hardware depreciation cliffs** triggered by next-generation product announcements.
 
 **Liquid 2.0** is an autonomous multimodal spatial asset terminal that eliminates this friction entirely. With a single workspace photo, Liquid spatially segments hardware assets, calculates holding costs, maps upcoming depreciation vectors, and generates 1-click platform exit drafts ahead of market repricing events.
@@ -17,6 +21,10 @@ Over **$100 billion in consumer electronics** sits idle in drawers and offices�
 ---
 
 ## 🛠️ Core Tech Stack
+
+<p align="center">
+  <img src="docs/images/badge_05.png" width="85%" alt="Liquid 2.0 Architecture" />
+</p>
 
 - **Computer Vision & Spatial Segmentation**: Meta Segment Anything Model (SAM 3.1)
 - **Multimodal Intelligence & Valuation**: Meta Muse Spark 1.3
@@ -30,12 +38,22 @@ Over **$100 billion in consumer electronics** sits idle in drawers and offices�
 ## 🚀 Key Features & Meta AI Capabilities
 
 ### 1. Spatial Hardware Scanning (Meta SAM 3.1 & Muse Spark 1.3)
+
+<p align="center">
+  <img src="docs/images/badge_02.png" width="85%" alt="Computer Vision SAM 3.1" />
+</p>
+
 - Drop or capture any desk or room photo, or click **"Sample Desk (1-Click Scan)"**.
 - SAM 3.1 visual segmentation isolates each device in the frame (`MacBook Pro`, `Sony Headphones`, `Mechanical Keyboard`, `4K Display`).
 - Extracts **real visual image crop thumbnails** directly from the source photo.
 - Telemetry ticker immediately calculates the **Cost of Inaction** (e.g. *Holding this setup burns $3.85/day in passive depreciation*). Total detected value: **$1,415**.
 
 ### 2. Hands-Free Voice Commands (Muse Voice Transcribe)
+
+<p align="center">
+  <img src="docs/images/badge_03.png" width="85%" alt="Voice Intelligence" />
+</p>
+
 - Natural language command filter via live speech recognition or tactile simulation chips:
   - `⚡ "Select urgent items"` — automatically filters to assets facing an imminent cliff.
   - `✓ "Select all"` — selects all detected segments for batch import.
@@ -50,6 +68,11 @@ Over **$100 billion in consumer electronics** sits idle in drawers and offices�
 - Center indicator reflects active portfolio grade (e.g. `A-`). Recalculates dynamically upon committing scanned assets or executing exits.
 
 ### 4. 1-Click Multi-Platform Exit Listings
+
+<p align="center">
+  <img src="docs/images/badge_04.png" width="85%" alt="1-Click Secondary Commerce Exit" />
+</p>
+
 - Opening any asset card reveals the **Depreciation Radar** and 1-click **Generate Exit Listing**:
   - **eBay**: Keyword SEO, title optimization, and fee calculations (87% net payout).
   - **Swappa**: Clean hardware spec sheets and pre-listing IMEI verification checklists (90% net payout).
