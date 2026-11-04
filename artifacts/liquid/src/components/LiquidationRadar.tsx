@@ -96,11 +96,6 @@ function HeatmapPanel({
           )}
         </div>
       </div>
-
-      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-[11px] text-slate-400">
-        <span>&larr; Immediate Cliff</span>
-        <span>Safe Holding &rarr;</span>
-      </div>
     </div>
   );
 }
