@@ -17,6 +17,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Nav links ────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
+  { label: "Home",      href: "/landing" },
   { label: "Portfolio", href: "/" },
   { label: "Analysis",  href: "/analysis" },
   { label: "Rings",     href: "/rings" },
