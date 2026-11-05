@@ -35,25 +35,31 @@ const stagger = {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const VALUE_PROPS = [
   {
-    icon: TrendingDown,
-    iconColor: "#9126EF",
-    iconBg: "rgba(145,38,239,0.08)",
-    title: "Depreciation Tracking",
-    body: "Know exactly what every item in your inventory is worth today — not what you paid for it.",
+    kpi: "-34%",
+    kpiLabel: "Year 1 curve",
+    asset: "Consumer Tech",
+    title: "Depreciation Velocity",
+    body: "Live secondary market decay curves across eBay, Back Market, and Swappa. Know current liquidation floor before holding cost compounds.",
+    badge: "Live indexing",
+    badgeColor: "#7C3AED",
   },
   {
-    icon: Bell,
-    iconColor: "#059669",
-    iconBg: "rgba(5,150,105,0.08)",
-    title: "Optimal Sell Windows",
-    body: "Algorithmic alerts fire before the price drops. Sell at the peak, not after it.",
+    kpi: "14d",
+    kpiLabel: "Average window",
+    asset: "Optimal Sell Windows",
+    title: "Pre-Cliff Liquidation",
+    body: "Algorithmic alert vectors trigger 14 days before successor hardware launches crush secondary demand. Exit at the cycle peak.",
+    badge: "Predictive",
+    badgeColor: "#059669",
   },
   {
-    icon: Zap,
-    iconColor: "#F59E0B",
-    iconBg: "rgba(245,158,11,0.08)",
-    title: "Frictionless Liquidation",
-    body: "Condition-aware pricing, pre-filled listings, one-click routes to the right resale platform.",
+    kpi: "1-Click",
+    kpiLabel: "Execution",
+    asset: "Cross-Market Routing",
+    title: "Condition-Adjusted Exit",
+    body: "Automated route dispatch across Chrono24, StockX, and eBay with grade-calibrated pricing, pre-filled manifests, and platform fee netting.",
+    badge: "Zero friction",
+    badgeColor: "#D97706",
   },
 ];
 
@@ -350,30 +356,58 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── Value props ───────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto w-full px-6 py-24 sm:py-32">
+      {/* ── Value props / Architecture Matrix (taste-skill v2.5 standard) ─── */}
+      <section className="max-w-7xl mx-auto w-full px-6 py-20 sm:py-28 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div>
+            <p className="text-xs font-mono uppercase tracking-widest text-[#7C3AED] font-semibold">Engine Mechanics</p>
+            <h2 className="font-poppins font-bold text-3xl sm:text-4xl text-gray-900 mt-2 tracking-tight">
+              Physical inventory priced like liquid financial markets.
+            </h2>
+          </div>
+          <p className="text-sm text-gray-500 max-w-sm font-sans leading-relaxed">
+            Direct telemetry from 40+ secondary exchange feeds. Every physical asset has a live spread and a terminal exit date.
+          </p>
+        </div>
+
         <motion.div
           variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {VALUE_PROPS.map(({ icon: Icon, iconColor, iconBg, title, body }) => (
+          {VALUE_PROPS.map(({ kpi, kpiLabel, asset, title, body, badge, badgeColor }) => (
             <motion.div
               key={title}
               variants={fadeUp}
-              className="bg-white rounded-3xl p-8 border border-gray-100 flex flex-col gap-5 hover:border-gray-200 transition-all duration-300 shadow-sm hover:shadow-md"
+              className="bg-white rounded-2xl p-7 border border-gray-200/80 flex flex-col justify-between hover:border-gray-300 transition-all duration-200 hover:shadow-xs group"
             >
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: iconBg }}
-              >
-                <Icon className="w-6 h-6" style={{ color: iconColor }} />
-              </div>
               <div>
+                <div className="flex items-center justify-between pb-6 border-b border-gray-100">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-gray-500 font-medium">{asset}</span>
+                  <span
+                    className="text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
+                    style={{ color: badgeColor, backgroundColor: `${badgeColor}12` }}
+                  >
+                    {badge}
+                  </span>
+                </div>
+
+                <div className="py-6 flex items-baseline gap-2">
+                  <span className="font-mono text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 group-hover:text-[#7C3AED] transition-colors">
+                    {kpi}
+                  </span>
+                  <span className="text-xs text-gray-400 font-mono">{kpiLabel}</span>
+                </div>
+
                 <h3 className="font-poppins font-semibold text-lg text-gray-900 mb-2">{title}</h3>
-                <p className="text-gray-600 leading-relaxed text-sm">{body}</p>
+                <p className="text-gray-600 leading-relaxed text-sm font-sans">{body}</p>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400 font-mono">
+                <span>0.00% manual entry</span>
+                <span className="text-[#7C3AED]">Automated feed →</span>
               </div>
             </motion.div>
           ))}
