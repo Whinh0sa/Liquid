@@ -339,6 +339,59 @@ export default function Landing() {
             ))}
           </motion.div>
         </motion.div>
+
+        {/* ── Real Product UI Preview (taste-skill authentic visual standard) ─── */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="relative z-10 w-full max-w-5xl mx-auto mt-14 rounded-2xl border border-gray-200/80 bg-[#0B0D13] p-2.5 shadow-2xl shadow-purple-950/20 overflow-hidden"
+        >
+          {/* Terminal Window Header Bar */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+              <span className="ml-2 font-mono text-[11px] text-gray-400">liquid.terminal // live-depreciation-engine</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                42 EXCHANGE FEEDS LIVE
+              </span>
+            </div>
+          </div>
+
+          {/* Real Workspace Image */}
+          <div className="relative rounded-xl overflow-hidden border border-white/5 bg-black">
+            <img
+              src="/sample-workspace.jpg"
+              alt="Liquid Terminal Workspace Interface"
+              className="w-full h-auto object-cover max-h-[520px] opacity-95 hover:opacity-100 transition-opacity"
+            />
+            {/* Overlay Telemetry HUD */}
+            <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-[#0B0D13]/90 backdrop-blur-md border border-white/10 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-400">Total Monitored Value</p>
+                  <p className="text-xl font-mono font-bold text-white">£24,840.00</p>
+                </div>
+                <div className="h-8 w-px bg-white/10 hidden sm:block" />
+                <div className="hidden sm:block">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-400">Active Sell Signals</p>
+                  <p className="text-sm font-mono font-semibold text-amber-400">2 optimal exit windows closing</p>
+                </div>
+              </div>
+              <Link href="/">
+                <button className="px-4 py-2 rounded-lg text-xs font-mono font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-colors flex items-center gap-1.5">
+                  Launch Interactive Studio →
+                </button>
+              </Link>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* ── Asset categories ticker ───────────────────────────────────────── */}
@@ -521,25 +574,62 @@ export default function Landing() {
                   +£1,240 protected
                 </div>
               </div>
-              {/* Asset rows */}
+              {/* Asset rows with authentic imagery */}
               {[
-                { name: "iPhone 15 Pro Max", tag: "Sell now", tagColor: "#059669", tagBg: "#ECFDF5", value: "£840", pct: "-12%", pctColor: "#DC2626" },
-                { name: "Rolex Submariner",  tag: "Planned hold", tagColor: "#475569", tagBg: "#F1F5F9", value: "£9,200", pct: "+4%", pctColor: "#059669" },
-                { name: "Air Jordan 1 OG",   tag: "Urgent cliff", tagColor: "#D97706", tagBg: "#FFFBEB", value: "£620", pct: "-8%", pctColor: "#DC2626" },
-              ].map(({ name, tag, tagColor, tagBg, value, pct, pctColor }) => (
-                <div key={name} className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                { 
+                  name: "iPhone 15 Pro Max", 
+                  category: "Electronics",
+                  img: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=120&q=80",
+                  tag: "Sell now", 
+                  tagColor: "#059669", 
+                  tagBg: "#ECFDF5", 
+                  value: "£840", 
+                  pct: "-12%", 
+                  pctColor: "#DC2626" 
+                },
+                { 
+                  name: "Rolex Submariner Date", 
+                  category: "Luxury Horology",
+                  img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=120&q=80",
+                  tag: "Planned hold", 
+                  tagColor: "#475569", 
+                  tagBg: "#F1F5F9", 
+                  value: "£9,200", 
+                  pct: "+4%", 
+                  pctColor: "#059669" 
+                },
+                { 
+                  name: "Air Jordan 1 Retro OG", 
+                  category: "Sneakers",
+                  img: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=120&q=80",
+                  tag: "Urgent cliff", 
+                  tagColor: "#D97706", 
+                  tagBg: "#FFFBEB", 
+                  value: "£620", 
+                  pct: "-8%", 
+                  pctColor: "#DC2626" 
+                },
+              ].map(({ name, category, img, tag, tagColor, tagBg, value, pct, pctColor }) => (
+                <div key={name} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors bg-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="w-4 h-4 text-gray-400" />
-                    </div>
+                    <img
+                      src={img}
+                      alt={name}
+                      className="w-11 h-11 rounded-lg object-cover border border-gray-100 shrink-0"
+                    />
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{name}</p>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 inline-block" style={{ color: tagColor, backgroundColor: tagBg }}>{tag}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-gray-400 font-mono">{category}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.2 rounded-full inline-block" style={{ color: tagColor, backgroundColor: tagBg }}>
+                          {tag}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-gray-900">{value}</p>
-                    <p className="text-xs font-semibold" style={{ color: pctColor }}>{pct}</p>
+                    <p className="text-sm font-mono font-bold text-gray-900">{value}</p>
+                    <p className="text-xs font-mono font-semibold" style={{ color: pctColor }}>{pct}</p>
                   </div>
                 </div>
               ))}
